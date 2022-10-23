@@ -1,6 +1,6 @@
 """Class Stone"""
 
-from typing import List
+import numpy as np
 
 from src.utils import Color
 
@@ -11,28 +11,22 @@ class Stone:
 
     Attributes:
         - color(Color): Color of the stone (black or white)
-        - pos_x(int): Position X on the board
-        - pos_y(int): Position Y on the board
-        - neighbours(List[Stone]): List of the stone's neighbours
+        - coordinates(np.array): Coordinates X and Y of the stone in the board
+        - neighbours(np.array): List of the stone's neighbours
     """
 
-    def __init__(self, color, x, y):
+    def __init__(self, color, coordinates):
         self.color: Color = color
-        self.pos_x: int = x
-        self.pos_y: int = y
-        self.neighbours: List[Stone] = []
+        self.coordinates = np.array(coordinates, ndmin=2, dtype=np.int8)
+        self.neighbours: np.array
 
     def __repr__(self) -> str:
         return self.color.value
 
-    def coord(self):
-        """Return X and Y position of the stone"""
-        return self.pos_x, self.pos_y
-
     def add_neighbour(self, neighbour):
         """Add neighbours to the list"""
-        self.neighbours.append(neighbour)
+        pass
 
     def remove_neighbour(self, neighbour):
         """Remove a neighbours from the list"""
-        self.neighours.remove(neighbour)
+        pass
