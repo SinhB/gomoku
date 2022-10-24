@@ -11,7 +11,7 @@ class Stone:
 
     Attributes:
         - color(Color): Color of the stone (black or white)
-        - coordinates(np.array): Coordinates X and Y of the stone in the board
+        - coordinates(np.array): Coordinates Y and X of the stone in the board
         - neighbours(np.array): List of the stone's neighbours
     """
 
