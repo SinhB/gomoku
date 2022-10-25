@@ -101,6 +101,27 @@ class Board:
         ] = Color.BLACK.value
         return self._board
 
+    def get_available_pos(self):
+        """ """
+        all_stones = np.concatenate(
+            (self.coordinates[Color.WHITE], self.coordinates[Color.BLACK]), axis=0
+        )
+        moves = np.array(
+            [[1, 0], [-1, 0], [0, 1], [0, -1], [1, -1], [-1, 1], [1, 1], [-1, -1]]
+        )
+        possible_pos = np.vstack(all_stones + moves[:, None])
+        possible_pos = possible_pos[
+            np.all(np.any((possible_pos - all_stones[:, None]), axis=2), axis=0)
+        ]
+        print(f"Possible moves: {len(possible_pos)}")
+        return possible_pos
+
+    def place_available_pos(self):
+        """ """
+        pos = self.get_available_pos()
+        b = self._board
+        np.put(b, np.ravel_multi_index(pos.T, b.shape), 3)
+
     def get_diagonals(self):
         """Get diagonals of the current board
 
