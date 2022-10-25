@@ -17,15 +17,17 @@ export default function Row(props: { col: number }) {
     <div>
       {[...Array(19)].map((cell, i) => (
         <span key={cell}>
-          {pawns?.map((currentElement, i) =>
-            true == true ? (
-              <Pawn color="black" />
-            ) : (
-              <>
-                <EmptySpace />
-              </>
-            )
-          )}
+          {pawns?.map((pawn, i) => (
+            <span key={pawn.id}>
+              {pawn.id == 1 ? (
+                <Pawn color="black" />
+              ) : (
+                <>
+                  <EmptySpace />
+                </>
+              )}
+            </span>
+          ))}
         </span>
       ))}
     </div>
