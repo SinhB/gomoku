@@ -1,0 +1,12 @@
+.pawn {
+  height: 25px;
+  width: 25px;
+  border-radius: 50%;
+  display: inline-block;
+  &.black {
+    background-color: #000;
+  }
+  &.white {
+    background-color: #fff;
+  }
+}
