@@ -3,7 +3,6 @@
 import numpy as np
 
 from src.utils import Color
-from stone import Stone
 
 
 class Player:
@@ -22,11 +21,11 @@ class Player:
         self.prisoners: np.array
         self.stones: np.array
 
-    def add_prisoner(self, prisoner: Stone):
+    def add_prisoner(self, prisoner):
         """Add a stone in prisoners list"""
         self.prisoners.append(prisoner)
 
-    def add_stone(self, stone: Stone):
+    def add_stone(self, stone):
         """Add a stone to the list"""
         self.stones.append(stone)
 

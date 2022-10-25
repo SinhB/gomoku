@@ -5,20 +5,18 @@ from typing import Dict
 import numpy as np
 from termcolor import colored
 
-from src.stone import Stone
-from src.utils import (BLACK_SEQUENCES, BLACK_VALUE, WHITE_VALUE, Color,
-                       change_sequences_to_white, timeit)
+from src.utils import BLACK_VALUE, SEQUENCES, WHITE_VALUE, Color, timeit
 
 BLACK_STONE_COLOR = "red"
 WHITE_STONE_COLOR = "blue"
 
 COLOR_REPLACEMENT = {
+    WHITE_VALUE: colored(2, WHITE_STONE_COLOR),
     BLACK_VALUE: colored(BLACK_VALUE, BLACK_STONE_COLOR),
-    WHITE_VALUE: colored(WHITE_VALUE, WHITE_STONE_COLOR),
 }
 
 
-class Board:
+class BoardState:
     """
     A Gomoku Ninuki board
 
@@ -31,19 +29,31 @@ class Board:
     from black and white stones
     """
 
-    def __init__(self, color, size=19) -> None:
+    def __init__(
+        self, color, size=19, board=None, coordinates=None, seq_frequence=None
+    ) -> None:
         self.color: Color = color
         self._size: int = size
-        self._board: np.ndarray = self.create(size)
-        self.coordinates = {Color.WHITE: None, Color.BLACK: None}
+        self._board: np.ndarray = board if board is not None else self.create(size)
+        self.coordinates = coordinates or {Color.WHITE: None, Color.BLACK: None}
         self.score: int = 0
-        self.sequence_frequence = {
-            "five": 0,
-            "open_four": 0,
-            "simple_four": 0,
-            "open_three": 0,
-            "broken_three": 0,
-            "simple_three": 0,
+        self.sequence_frequence = seq_frequence or {
+            Color.BLACK: {
+                "five": 0,
+                "open_four": 0,
+                "simple_four": 0,
+                "open_three": 0,
+                "broken_three": 0,
+                "simple_three": 0,
+            },
+            Color.WHITE: {
+                "five": 0,
+                "open_four": 0,
+                "simple_four": 0,
+                "open_three": 0,
+                "broken_three": 0,
+                "simple_three": 0,
+            },
         }
 
     def create(self, size: int):
@@ -59,18 +69,19 @@ class Board:
         """
         return np.zeros((size, size), dtype=np.int8)
 
-    def add_stone_coordinates(self, stone: Stone):
+    def add_stone_coordinates(self, color, position):
         """Get all stones coordinates
 
         Parameters
         ----------
         stone  : Stone object
         """
-        if self.coordinates[stone.color] is None:
-            self.coordinates[stone.color] = stone.coordinates
+        position = np.array(position, ndmin=2, dtype=np.int8)
+        if self.coordinates[color] is None:
+            self.coordinates[color] = position
         else:
-            self.coordinates[stone.color] = np.append(
-                self.coordinates[stone.color], stone.coordinates, axis=0
+            self.coordinates[color] = np.append(
+                self.coordinates[color], position, axis=0
             )
 
     def get_stones_coordinates(self):
@@ -101,6 +112,40 @@ class Board:
         ] = Color.BLACK.value
         return self._board
 
+    def copy(self):
+        """ """
+        b = np.copy(self._board)
+        return BoardState(
+            color=self.color.swap(),
+            size=self._size,
+            board=b,
+            coordinates=self.coordinates,
+            seq_frequence=self.sequence_frequence,
+        )
+
+    def next(self, position):
+        """ """
+        color = self.color.swap()
+        next_state = self.copy()
+        if self.is_legal_move(color, position):
+            next_state.add_stone_coordinates(color, position)
+            next_state.update()
+            return next_state
+        return None
+
+    def is_legal_move(self, color, position):
+        """ """
+        if self._board[position[0], position[1]] != 0:
+            return False
+        b = self.copy()
+        actual_open_three = self.sequence_frequence["open_three"]
+        b.add_stone_coordinates(color, position)
+        b.update()
+        b.get_score()
+        if b.sequence_frequence["open_three"] >= actual_open_three + 2:
+            return False
+        return True
+
     def get_available_pos(self):
         """ """
         all_stones = np.concatenate(
@@ -110,6 +155,13 @@ class Board:
             [[1, 0], [-1, 0], [0, 1], [0, -1], [1, -1], [-1, 1], [1, 1], [-1, -1]]
         )
         possible_pos = np.vstack(all_stones + moves[:, None])
+        in_board = (
+            (possible_pos[:, 0] >= 0)
+            & (possible_pos[:, 0] < self._board.shape[0])
+            & (possible_pos[:, 1] >= 0)
+            & (possible_pos[:, 1] < self._board.shape[1])
+        )
+        possible_pos = possible_pos[in_board, :]
         possible_pos = possible_pos[
             np.all(np.any((possible_pos - all_stones[:, None]), axis=2), axis=0)
         ]
@@ -117,8 +169,9 @@ class Board:
         return possible_pos
 
     def place_available_pos(self):
-        """ """
+        """For debug purpose"""
         pos = self.get_available_pos()
+        # b = np.copy(self._board)
         b = self._board
         np.put(b, np.ravel_multi_index(pos.T, b.shape), 3)
 
@@ -174,7 +227,7 @@ class Board:
         columns = columns[~np.all(columns == 0, axis=1)]
         return columns
 
-    def search_sequence(self, arr, seq, seq_type, seq_list):
+    def search_sequence(self, arr, seq, seq_type):
         """Find sequence in an array using NumPy only.
 
         Parameters
@@ -185,6 +238,9 @@ class Board:
         seq_list : score associate to the sequence type
         """
 
+        black_seq = seq * Color.BLACK.value
+        white_seq = seq * Color.WHITE.value
+
         # Store sizes of input array and sequence
         Na, Nseq = arr.size, seq.size
 
@@ -194,45 +250,40 @@ class Board:
         # Create a 2D array of sliding indices across the entire length of
         # input array.
         # Match up with the input sequence & get the matching starting indices.
-        M = (arr[np.arange(Na - Nseq + 1)[:, None] + r_seq] == seq).all(1)
+        black_match = (arr[np.arange(Na - Nseq + 1)[:, None] + r_seq] == black_seq).all(
+            1
+        )
+        white_match = (arr[np.arange(Na - Nseq + 1)[:, None] + r_seq] == white_seq).all(
+            1
+        )
 
         # Get the range of those indices as final output
-        if M.any() > 0:
-            self.sequence_frequence[seq_type] += M.sum()
-            s_tmp = M.sum() * (seq_list[1] * seq_list[2])
-            self.score += s_tmp
+        if black_match.any() > 0:
+            self.sequence_frequence[Color.BLACK][seq_type] += black_match.sum()
+        if white_match.any() > 0:
+            self.sequence_frequence[Color.WHITE][seq_type] += white_match.sum()
 
     @timeit
-    def get_score(self):
+    def get_sequence_frequences(self):
         """Get the score of the current board
 
         The score is calculated comparing each rows, columns, diagonals
         with sequences, and if a sequence is found, attribute a score
         depending on the sequence type
         """
-        if self.color == Color.BLACK:
-            seq = BLACK_SEQUENCES
-        else:
-            seq = change_sequences_to_white()
 
         diags = self.get_diagonals()
         rows = self.get_rows()
         columns = self.get_columns()
 
-        for seq_type, seq_list in seq.items():
+        for seq_type, seq_list in SEQUENCES.items():
             for s in seq_list[0]:
-                np.apply_along_axis(
-                    self.search_sequence, 1, diags, s, seq_type, seq_list
-                )
-                np.apply_along_axis(
-                    self.search_sequence, 1, rows, s, seq_type, seq_list
-                )
-                np.apply_along_axis(
-                    self.search_sequence, 1, columns, s, seq_type, seq_list
-                )
+                np.apply_along_axis(self.search_sequence, 1, diags, s, seq_type)
+                np.apply_along_axis(self.search_sequence, 1, rows, s, seq_type)
+                np.apply_along_axis(self.search_sequence, 1, columns, s, seq_type)
         print(f"Score dict : {self.sequence_frequence}")
-        print(f"Score total: {self.score}")
 
+    @timeit
     def display(self):
         """Print the board
 
@@ -246,5 +297,6 @@ class Board:
 
         for row in self._board:
             str_row = "".join(str(row)).translate({ord(char): "" for char in "[,]"})
+            str_row = " ".join(str_row.split())
             colored_row = _color_black_and_white(str_row, COLOR_REPLACEMENT)
             print(colored_row)

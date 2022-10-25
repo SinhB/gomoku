@@ -7,23 +7,23 @@ from functools import wraps
 import numpy as np
 
 BLACK_VALUE = 1
-WHITE_VALUE = 2
+WHITE_VALUE = -1
 
-BLACK_SEQUENCES = {
+SEQUENCES = {
     "five": [[np.array((1, 1, 1, 1, 1))], 5, 1],
     "open_four": [
         [
             np.array((0, 1, 1, 1, 1, 0)),
-            np.array((2, 1, 1, 0, 1, 1, 0, 1, 1, 2)),
-            np.array((2, 1, 1, 1, 0, 1, 0, 1, 1, 1, 2)),
+            np.array((-1, 1, 1, 0, 1, 1, 0, 1, 1, -1)),
+            np.array((-1, 1, 1, 1, 0, 1, 0, 1, 1, 1, -1)),
         ],
         4,
         2,
     ],
     "simple_four": [
         [
-            np.array((2, 1, 1, 1, 1, 0)),
-            np.array((0, 1, 1, 1, 1, 2)),
+            np.array((-1, 1, 1, 1, 1, 0)),
+            np.array((0, 1, 1, 1, 1, -1)),
             np.array((0, 1, 1, 0, 1, 1, 0)),
         ],
         4,
@@ -41,20 +41,20 @@ BLACK_SEQUENCES = {
     "broken_three": [
         [
             np.array((0, 1, 0, 1, 1, 0)),
-            np.array((2, 0, 1, 1, 1, 0, 0)),
-            np.array((0, 0, 1, 1, 1, 0, 2)),
+            np.array((-1, 0, 1, 1, 1, 0, 0)),
+            np.array((0, 0, 1, 1, 1, 0, -1)),
         ],
         3,
         2,
     ],
     "simple_three": [
         [
-            np.array((2, 1, 1, 1, 0)),
-            np.array((0, 1, 1, 1, 2)),
-            np.array((2, 1, 1, 0, 1, 0)),
-            np.array((0, 1, 0, 1, 1, 2)),
-            np.array((2, 1, 0, 1, 1, 0)),
-            np.array((0, 1, 1, 0, 1, 2)),
+            np.array((-1, 1, 1, 1, 0)),
+            np.array((0, 1, 1, 1, -1)),
+            np.array((-1, 1, 1, 0, 1, 0)),
+            np.array((0, 1, 0, 1, 1, -1)),
+            np.array((-1, 1, 0, 1, 1, 0)),
+            np.array((0, 1, 1, 0, 1, -1)),
         ],
         3,
         1,
@@ -76,18 +76,6 @@ class Color(Enum):
         if self.value == BLACK_VALUE:
             return Color.WHITE
         return Color.BLACK
-
-
-def change_sequences_to_white():
-    sequences = BLACK_SEQUENCES
-    for seq_list in sequences.values():
-        for i, seq in enumerate(seq_list[0]):
-            seq_list[0][i] = np.select(
-                [seq == BLACK_VALUE, seq == WHITE_VALUE],
-                [WHITE_VALUE, BLACK_VALUE],
-                seq,
-            )
-    return sequences
 
 
 def timeit(func):
