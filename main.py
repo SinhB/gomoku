@@ -26,7 +26,7 @@ if __name__ =="__main__":
     board.place_available_pos()
     board.display()
     print(f"NEXT STEP")
-    bis = board.next([3,8])
+    bis = board.next([10,10])
     if bis:
         bis.display()
     else:

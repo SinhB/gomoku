@@ -123,6 +123,7 @@ class BoardState:
             seq_frequence=self.sequence_frequence,
         )
 
+    @timeit
     def next(self, position):
         """ """
         color = self.color.swap()
@@ -133,16 +134,17 @@ class BoardState:
             return next_state
         return None
 
+    @timeit
     def is_legal_move(self, color, position):
         """ """
         if self._board[position[0], position[1]] != 0:
             return False
         b = self.copy()
-        actual_open_three = self.sequence_frequence["open_three"]
+        actual_open_three = self.sequence_frequence[color]["open_three"]
         b.add_stone_coordinates(color, position)
         b.update()
-        b.get_score()
-        if b.sequence_frequence["open_three"] >= actual_open_three + 2:
+        b.get_sequence_frequences()
+        if b.sequence_frequence[color]["open_three"] >= actual_open_three + 2:
             return False
         return True
 
