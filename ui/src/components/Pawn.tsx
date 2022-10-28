@@ -1,5 +1,5 @@
-export default function Pawn(props: { color: string }) {
-  const { color } = props;
+export default function Pawn(props: { color: string; id: number }) {
+  const { color, id } = props;
 
-  return <div className={`pawn ${color}`}></div>;
+  return <div className={`pawn ${color}`}>{id}</div>;
 }

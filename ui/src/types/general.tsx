@@ -1,10 +1,13 @@
 export interface ICell {
-  coordinates: number[];
+  coordinates: ICoordinates;
   id: number;
 }
 
-export interface IPawn {
+export interface ICoordinates {
   coordinates: number[];
+}
+
+export type IPawn = ICoordinates & {
   id: number;
   color: string;
-}
+};

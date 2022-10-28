@@ -1,4 +1,3 @@
-import "./App.css";
 import Board from "./components/Board";
 
 function App() {
@@ -6,8 +5,12 @@ function App() {
     <div className="App">
       <header className="App-header">
         <p>Gomoku</p>
-        <Board />
       </header>
+      <body>
+        <section className="board-section">
+          <Board />
+        </section>
+      </body>
     </div>
   );
 }
