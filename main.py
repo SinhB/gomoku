@@ -1,7 +1,6 @@
 """Run a Gomoku Ninuki game"""
 
 import sys
-from src.algorithm import get_best_move
 from src.board import BoardState
 from src.utils import Color
 
@@ -14,7 +13,6 @@ if __name__ =="__main__":
     board.add_stone_coordinates([3, 6])
     print(board.coordinates)
     print(board.color)
-    board = board.next(get_best_move(board, 2))
     print(board.color)
     board = board.next([3, 4])
     print(board.color)
@@ -34,8 +32,6 @@ if __name__ =="__main__":
     print(board.color)
     board = board.next([10,10])
     print(board.color)
-    board = board.next(get_best_move(board, 2))
-    print(board.color)
+    board.update_board()
     board.display()
-    board = board.next(get_best_move(board, 2))
     sys.exit()

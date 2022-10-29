@@ -1,5 +1,7 @@
 """Class Game"""
+from xml.dom import minidom
 from players import IA, Player
+from src.algorithm import minimax
 from src.board import BoardState
 
 
@@ -23,8 +25,10 @@ class Game:
         return True
 
     def ai_turn(self):
-        move = self.state.get_best_move(depth=self.depth)
-        self.state = self.state.next(move)
-        self.finished = self.state.is_finished()
-        return True, move
+        moves = self.state.get_best_moves()
+        # for move in moves:
+        #     best_move = minimax(self.state, 0, 0, 10, True)
+        # self.state = self.state.next(best_move)
+        # self.finished = self.state.is_finished()
+        return True
 

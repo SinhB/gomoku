@@ -1,6 +1,8 @@
 import numpy as np
 from numba import njit
 
+from src.utils import Color
+
 @njit(fastmath=True)
 def numba_search_sequence(arr, seq, i):
     """Find sequence in an array using NumPy only.
@@ -12,6 +14,31 @@ def numba_search_sequence(arr, seq, i):
     seq_type : name of the sequence
     seq_list : score associate to the sequence type
     """
+
+    d = {
+        Color.BLACK: {
+                "five": 0,
+                "open_four": 0,
+                "simple_four": 0,
+                "open_three": 0,
+                "broken_three": 0,
+                "simple_three": 0,
+                "open_two": 0,
+                "broken_two": 0,
+                "simple_two": 0,
+            },
+            Color.WHITE: {
+                "five": 0,
+                "open_four": 0,
+                "simple_four": 0,
+                "open_three": 0,
+                "broken_three": 0,
+                "simple_three": 0,
+                "open_two": 0,
+                "broken_two": 0,
+                "simple_two": 0,
+            },
+    }
 
     black_seq = seq * 1
     white_seq = seq * -1
