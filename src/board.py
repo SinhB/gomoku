@@ -1,11 +1,14 @@
 """Class Board"""
 
+from copy import deepcopy
+from numba import njit, jit
 from typing import Dict
 
 import numpy as np
 from termcolor import colored
 
-from src.utils import BLACK_VALUE, SEQUENCES, WHITE_VALUE, Color, timeit
+from src.utils import BLACK_VALUE, SEQUENCES, STRING_SEQUENCES, WHITE_VALUE, Color, timeit
+from src.heuristic import get_numba_sequence_frequences
 
 BLACK_STONE_COLOR = "red"
 WHITE_STONE_COLOR = "blue"
@@ -14,7 +17,6 @@ COLOR_REPLACEMENT = {
     WHITE_VALUE: colored(2, WHITE_STONE_COLOR),
     BLACK_VALUE: colored(BLACK_VALUE, BLACK_STONE_COLOR),
 }
-
 
 class BoardState:
     """
@@ -69,7 +71,7 @@ class BoardState:
         """
         return np.zeros((size, size), dtype=np.int8)
 
-    def add_stone_coordinates(self, color, position):
+    def add_stone_coordinates(self, position):
         """Get all stones coordinates
 
         Parameters
@@ -77,11 +79,11 @@ class BoardState:
         stone  : Stone object
         """
         position = np.array(position, ndmin=2, dtype=np.int8)
-        if self.coordinates[color] is None:
-            self.coordinates[color] = position
+        if self.coordinates[self.color] is None:
+            self.coordinates[self.color] = position
         else:
-            self.coordinates[color] = np.append(
-                self.coordinates[color], position, axis=0
+            self.coordinates[self.color] = np.append(
+                self.coordinates[self.color], position, axis=0
             )
 
     def get_stones_coordinates(self):
@@ -96,7 +98,7 @@ class BoardState:
         white_coordinates = np.argwhere(self._board == WHITE_VALUE)
         return black_coordinates, white_coordinates
 
-    def update(self):
+    def update_board(self):
         """Update the board by adding stones
 
         Output
@@ -104,55 +106,97 @@ class BoardState:
         Output : 2D Array representing the board.
         """
         coord = self.coordinates
-        self._board[
-            coord[Color.WHITE][:, 0], coord[Color.WHITE][:, 1]
-        ] = Color.WHITE.value
-        self._board[
-            coord[Color.BLACK][:, 0], coord[Color.BLACK][:, 1]
-        ] = Color.BLACK.value
+        if coord[Color.WHITE] is not None:
+            self._board[
+                coord[Color.WHITE][:, 0], coord[Color.WHITE][:, 1]
+            ] = Color.WHITE.value
+        if coord[Color.BLACK] is not None:
+            self._board[
+                coord[Color.BLACK][:, 0], coord[Color.BLACK][:, 1]
+            ] = Color.BLACK.value
         return self._board
 
+    def copy_to_next(self):
+        """Copy the current state while swaping its color
+
+        Output
+        ------
+        Output : New BoardState object
+        """
+        board_copy = deepcopy(self)
+        board_copy.color = self.color.swap()
+        return board_copy
+
     def copy(self):
-        """ """
-        b = np.copy(self._board)
-        return BoardState(
-            color=self.color.swap(),
-            size=self._size,
-            board=b,
-            coordinates=self.coordinates,
-            seq_frequence=self.sequence_frequence,
-        )
+        """Copy the current state
+
+        Output
+        ------
+        Output : New BoardState object
+        """
+        return deepcopy(self)
 
     @timeit
     def next(self, position):
-        """ """
-        color = self.color.swap()
-        next_state = self.copy()
-        if self.is_legal_move(color, position):
-            next_state.add_stone_coordinates(color, position)
-            next_state.update()
-            return next_state
-        return None
+        """Copy the current state while swaping its color
 
-    @timeit
-    def is_legal_move(self, color, position):
-        """ """
+        Parameters
+        ----------
+        position  : [x, y] add the position to the new state
+        Output
+        ------
+        Output    : New BoardState object
+        """
+        next_state = self.copy_to_next()
+        next_state.add_stone_coordinates(position)
+        return next_state
+
+    def is_finished(self):
+        pass
+
+    # @timeit
+    def is_legal_move(self, position):
+        """Check if the given position is possible
+
+        Output
+        ------
+        Output : Boolean
+        """
         if self._board[position[0], position[1]] != 0:
             return False
-        b = self.copy()
-        actual_open_three = self.sequence_frequence[color]["open_three"]
-        b.add_stone_coordinates(color, position)
-        b.update()
-        b.get_sequence_frequences()
-        if b.sequence_frequence[color]["open_three"] >= actual_open_three + 2:
+        if not (position[0] >= 0 & position[0] < self._size 
+            & position[1] >= 0 & position[1] < self._size):
             return False
+        
+        b = self.copy()
+        actual_open_three = self.sequence_frequence[self.color]["open_three"]
+        b.add_stone_coordinates(position)
+        b.update_board()
+
+        d, r, c = get_numba_sequence_frequences(b._board, self.color)
+        print(f"diags shape: {d}")
+        print(f"rows shape: {r}")
+        print(f"columns shape: {c}")
+        # Call condition to check if new pos is legal
+        if b.sequence_frequence[self.color]["open_three"] >= actual_open_three + 2:
+            return False 
         return True
 
+    @timeit
     def get_available_pos(self):
-        """ """
-        all_stones = np.concatenate(
-            (self.coordinates[Color.WHITE], self.coordinates[Color.BLACK]), axis=0
-        )
+        """Calculate the possible positions
+
+        Positions are 1 radius around all current known positions
+
+        Output
+        ------
+        Output : 2D array of all possible positions"""
+        if self.coordinates[Color.WHITE] is not None and self.coordinates[Color.BLACK] is not None:
+            all_stones = np.concatenate(
+                (self.coordinates[Color.WHITE], self.coordinates[Color.BLACK]), axis=0
+            )
+        else:
+            all_stones = self.coordinates[Color.WHITE] or self.coordinates[Color.BLACK]
         moves = np.array(
             [[1, 0], [-1, 0], [0, 1], [0, -1], [1, -1], [-1, 1], [1, 1], [-1, -1]]
         )
@@ -164,15 +208,15 @@ class BoardState:
             & (possible_pos[:, 1] < self._board.shape[1])
         )
         possible_pos = possible_pos[in_board, :]
-        possible_pos = possible_pos[
+        possible_pos = np.unique(possible_pos[
             np.all(np.any((possible_pos - all_stones[:, None]), axis=2), axis=0)
-        ]
-        print(f"Possible moves: {len(possible_pos)}")
+        ], axis=0)
         return possible_pos
 
-    def place_available_pos(self):
+    def place_available_pos(self, pos=None):
         """For debug purpose"""
-        pos = self.get_available_pos()
+        if pos is None:
+            pos = self.get_available_pos()
         # b = np.copy(self._board)
         b = self._board
         np.put(b, np.ravel_multi_index(pos.T, b.shape), 3)
@@ -266,12 +310,8 @@ class BoardState:
             self.sequence_frequence[Color.WHITE][seq_type] += white_match.sum()
 
     @timeit
-    def get_sequence_frequences(self):
-        """Get the score of the current board
-
-        The score is calculated comparing each rows, columns, diagonals
-        with sequences, and if a sequence is found, attribute a score
-        depending on the sequence type
+    def get_numpy_sequence_frequences(self):
+        """Get the frequence of sequences in a board
         """
 
         diags = self.get_diagonals()
@@ -283,7 +323,33 @@ class BoardState:
                 np.apply_along_axis(self.search_sequence, 1, diags, s, seq_type)
                 np.apply_along_axis(self.search_sequence, 1, rows, s, seq_type)
                 np.apply_along_axis(self.search_sequence, 1, columns, s, seq_type)
-        print(f"Score dict : {self.sequence_frequence}")
+        # print(f"Sequence frequences : {self.sequence_frequence}")
+
+    @timeit
+    def get_string_sequence_frequences(self):
+        """Get the score of the current board
+
+        The score is calculated comparing each rows, columns, diagonals
+        with sequences, and if a sequence is found, attribute a score
+        depending on the sequence type
+        """
+
+        diags = self.get_diagonals()
+        rows = self.get_rows()
+        columns = self.get_columns()
+
+        for seq_type, seq_list in STRING_SEQUENCES.items():
+            for s in seq_list[0]:
+                black_seq = s * Color.BLACK.value
+                self.sequence_frequence[Color.BLACK][seq_type] += repr(diags).count(black_seq)
+                self.sequence_frequence[Color.BLACK][seq_type] += repr(rows).count(black_seq)
+                self.sequence_frequence[Color.BLACK][seq_type] += repr(columns).count(black_seq)
+
+                white_seq = s * Color.WHITE.value
+                self.sequence_frequence[Color.WHITE][seq_type] += repr(diags).count(white_seq)
+                self.sequence_frequence[Color.WHITE][seq_type] += repr(rows).count(white_seq)
+                self.sequence_frequence[Color.WHITE][seq_type] += repr(columns).count(white_seq)
+
 
     @timeit
     def display(self):
