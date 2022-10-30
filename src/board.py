@@ -156,7 +156,6 @@ class BoardState:
         
         self.add_stone_coordinates(position)
         next_state = self.copy_to_next()
-        # next_state.add_stone_coordinates(position)
         next_state.update_board()
         return next_state
 
