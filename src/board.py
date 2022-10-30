@@ -32,7 +32,7 @@ class BoardState:
     """
 
     def __init__(
-        self, color, size=19, board=None, board_infos=None, coordinates=None) -> None:
+        self, color, size=19, board=None, coordinates=None) -> None:
         self.color: Color = color
         self._size: int = size
         self._board: np.ndarray = board if board is not None else self.create_int_board(size)
@@ -153,8 +153,11 @@ class BoardState:
         ------
         Output    : New BoardState object
         """
+        
+        self.add_stone_coordinates(position)
         next_state = self.copy_to_next()
-        next_state.add_stone_coordinates(position)
+        # next_state.add_stone_coordinates(position)
+        next_state.update_board()
         return next_state
 
     def is_finished(self):
@@ -199,21 +202,20 @@ class BoardState:
         """
         if self._board[position[0], position[1]] != 0:
             return False
-        if not (position[0] >= 0 & position[0] < self._size 
-            & position[1] >= 0 & position[1] < self._size):
+        if not ((position[0] >= 0 & position[0] < self._size) & (position[1] >= 0 & position[1] < self._size)):
             return False
         
+        actual_open_three = self.sequence_frequences[self.color]["open_three"]
+
         b = self.copy()
-        actual_open_three = self.sequence_frequence[self.color]["open_three"]
         b.add_stone_coordinates(position)
         b.update_board()
 
-        d, r, c = get_numba_sequence_frequences(b._board, self.color)
-        print(f"diags shape: {d}")
-        print(f"rows shape: {r}")
-        print(f"columns shape: {c}")
+        d = get_numba_sequence_frequences(b._board, self.color)
+        print(f"Sequence number: {d}")
+
         # Call condition to check if new pos is legal
-        if b.sequence_frequence[self.color]["open_three"] >= actual_open_three + 2:
+        if b.sequence_frequences[self.color]["open_three"] >= actual_open_three + 2:
             return False 
         return True
 

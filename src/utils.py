@@ -149,7 +149,6 @@ class Color(Enum):
             return Color.WHITE
         return Color.BLACK
 
-
 def timeit(func):
     @wraps(func)
     def timeit_wrapper(*args, **kwargs):

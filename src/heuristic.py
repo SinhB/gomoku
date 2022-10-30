@@ -1,10 +1,14 @@
+from bisect import bisect_left
+from copy import deepcopy
 import numpy as np
-from numba import njit
+from numba import njit, jit, typeof
+from numba.core import types
+from numba.typed import Dict
 
-from src.utils import Color
+from src.utils import Color, timeit
 
 @njit(fastmath=True)
-def numba_search_sequence(arr, seq, i):
+def numba_search_sequence(arr, seq, sequence_index):
     """Find sequence in an array using NumPy only.
 
     Parameters
@@ -14,31 +18,6 @@ def numba_search_sequence(arr, seq, i):
     seq_type : name of the sequence
     seq_list : score associate to the sequence type
     """
-
-    d = {
-        Color.BLACK: {
-                "five": 0,
-                "open_four": 0,
-                "simple_four": 0,
-                "open_three": 0,
-                "broken_three": 0,
-                "simple_three": 0,
-                "open_two": 0,
-                "broken_two": 0,
-                "simple_two": 0,
-            },
-            Color.WHITE: {
-                "five": 0,
-                "open_four": 0,
-                "simple_four": 0,
-                "open_three": 0,
-                "broken_three": 0,
-                "simple_three": 0,
-                "open_two": 0,
-                "broken_two": 0,
-                "simple_two": 0,
-            },
-    }
 
     black_seq = seq * 1
     white_seq = seq * -1
@@ -50,17 +29,17 @@ def numba_search_sequence(arr, seq, i):
     flatten_arr = fill.flatten()
 
     # Check for sequence in the flatten board
-    black_count = 0
-    white_count = 0
+    black_seq_count = 0
+    white_seq_count = 0
     flatten_len, seq_len = flatten_arr.size, seq.size
     upper_bound = flatten_len - seq_len + 1
     for i in range(upper_bound):
         if np.array_equal(flatten_arr[i:i+seq_len], black_seq):
-            black_count += 1
+            black_seq_count += 1
         if np.array_equal(flatten_arr[i:i+seq_len], white_seq):
-            white_count += 1
+            white_seq_count += 1
 
-    return black_count + white_count
+    return black_seq_count, white_seq_count
 
 @njit(fastmath=True)
 def remove_blank_line(array):
@@ -106,81 +85,100 @@ def get_diagonals(board) -> np.ndarray:
 
     return all_diags
 
-# @timeit
-@njit
+@timeit
+# @njit
 def get_numba_sequence_frequences(board, color):
     """Get the frequence of sequences in a board
     """
 
+    def _get_sequence_key_from_index(index):
+        max_index = [0, 3, 6, 9, 13, 19, 22, 33, 45]
+        keys = ["five", "open_four", "simple_four", "open_three", "broken_three", "simple_three", "open_two", "broken_two", "simple_two"]
+        i = bisect_left(max_index, index)
+        return keys[i]
+
     NUMBA_SEQUENCE = [
-            np.array((1, 1, 1, 1, 1)), #Five in a row 100000
+        np.array((1, 1, 1, 1, 1)), #Five in a row 100000
 
-            np.array((0, 1, 1, 1, 1, 0)), #OpenFour (4,2)
-            np.array((-1, 1, 1, 0, 1, 1, 0, 1, 1, -1)), #OpenFour (4,2)
-            np.array((-1, 1, 1, 1, 0, 1, 0, 1, 1, 1, -1)), #OpenFour (4,2)
+        np.array((0, 1, 1, 1, 1, 0)), #OpenFour (4,2)
+        np.array((-1, 1, 1, 0, 1, 1, 0, 1, 1, -1)), #OpenFour (4,2)
+        np.array((-1, 1, 1, 1, 0, 1, 0, 1, 1, 1, -1)), #OpenFour (4,2)
 
-            np.array((-1, 1, 1, 1, 1, 0)), #SimpleFour (4,1)
-            np.array((0, 1, 1, 1, 1, -1)), #SimpleFour (4,1)
-            np.array((0, 1, 1, 0, 1, 1, 0)), #SimpleFour (4,1)
+        np.array((-1, 1, 1, 1, 1, 0)), #SimpleFour (4,1)
+        np.array((0, 1, 1, 1, 1, -1)), #SimpleFour (4,1)
+        np.array((0, 1, 1, 0, 1, 1, 0)), #SimpleFour (4,1)
 
-            np.array((0, 0, 1, 1, 1, 0, 0)), #OpenThree (3,3)
-            np.array((0, 1, 0, 1, 1, 0, 1, 0)), #OpenThree (3,3)
-            np.array((1, 0, 1, 0, 1, 0, 1, 0, 1)), #OpenThree (3,3)
+        np.array((0, 0, 1, 1, 1, 0, 0)), #OpenThree (3,3)
+        np.array((0, 1, 0, 1, 1, 0, 1, 0)), #OpenThree (3,3)
+        np.array((1, 0, 1, 0, 1, 0, 1, 0, 1)), #OpenThree (3,3)
 
-            np.array((0, 1, 0, 1, 1, 0)), #BrokenThree (3,2)
-            np.array((0, 1, 1, 0, 1, 0)), #BrokenThree (3,2)
-            np.array((-1, 0, 1, 1, 1, 0, 0)), #BrokenThree (3,2)
-            np.array((0, 0, 1, 1, 1, 0, -1)), #BrokenThree (3,2)
+        np.array((0, 1, 0, 1, 1, 0)), #BrokenThree (3,2)
+        np.array((0, 1, 1, 0, 1, 0)), #BrokenThree (3,2)
+        np.array((-1, 0, 1, 1, 1, 0, 0)), #BrokenThree (3,2)
+        np.array((0, 0, 1, 1, 1, 0, -1)), #BrokenThree (3,2)
 
-            np.array((-1, 1, 1, 1, 0, 0)), #SimpleThree (3,1)
-            np.array((0, 0, 1, 1, 1, -1)), #SimpleThree (3,1)
-            np.array((-1, 1, 1, 0, 1, 0)), #SimpleThree (3,1)
-            np.array((0, 1, 0, 1, 1, -1)), #SimpleThree (3,1)
-            np.array((-1, 1, 0, 1, 1, 0)), #SimpleThree (3,1)
-            np.array((0, 1, 1, 0, 1, -1)), #SimpleThree (3,1)
+        np.array((-1, 1, 1, 1, 0, 0)), #SimpleThree (3,1)
+        np.array((0, 0, 1, 1, 1, -1)), #SimpleThree (3,1)
+        np.array((-1, 1, 1, 0, 1, 0)), #SimpleThree (3,1)
+        np.array((0, 1, 0, 1, 1, -1)), #SimpleThree (3,1)
+        np.array((-1, 1, 0, 1, 1, 0)), #SimpleThree (3,1)
+        np.array((0, 1, 1, 0, 1, -1)), #SimpleThree (3,1)
 
-            np.array((0, 0, 1, 1, 0, 0, 0)), #OpenTwo (2,3)
-            np.array((0, 0, 1, 0, 1, 0, 0)), #OpenTwo (2,3)
-            np.array((0, 0, 0, 1, 1, 0, 0)), #OpenTwo (2,3)
+        np.array((0, 0, 1, 1, 0, 0, 0)), #OpenTwo (2,3)
+        np.array((0, 0, 1, 0, 1, 0, 0)), #OpenTwo (2,3)
+        np.array((0, 0, 0, 1, 1, 0, 0)), #OpenTwo (2,3)
 
-            np.array((0, 1, 0, 0, 1, 0)), #BrokenTwo (2,2)
-            np.array((0, 0, 0, 1, 1, 0)), #BrokenTwo (2,2)
-            np.array((0, 1, 1, 0, 0, 0)), #BrokenTwo (2,2)
-            np.array((0, 1, 0, 1, 0, 0)), #BrokenTwo (2,2)
-            np.array((0, 0, 1, 0, 1, 0)), #BrokenTwo (2,2)
-            np.array((-1, 0, 0, 1, 1, 0, 0)), #BrokenTwo (2,2)
-            np.array((-1, 0, 1, 0, 1, 0, 0)), #BrokenTwo (2,2)
-            np.array((-1, 0, 1, 1, 0, 0, 0)), #BrokenTwo (2,2)
-            np.array((0, 0, 1, 1, 0, 0, -1)), #BrokenTwo (2,2)
-            np.array((0, 0, 1, 0, 1, 0, -1)), #BrokenTwo (2,2)
-            np.array((0, 0, 0, 1, 1, 0, -1)), #BrokenTwo (2,2)
+        np.array((0, 1, 0, 0, 1, 0)), #BrokenTwo (2,2)
+        np.array((0, 0, 0, 1, 1, 0)), #BrokenTwo (2,2)
+        np.array((0, 1, 1, 0, 0, 0)), #BrokenTwo (2,2)
+        np.array((0, 1, 0, 1, 0, 0)), #BrokenTwo (2,2)
+        np.array((0, 0, 1, 0, 1, 0)), #BrokenTwo (2,2)
+        np.array((-1, 0, 0, 1, 1, 0, 0)), #BrokenTwo (2,2)
+        np.array((-1, 0, 1, 0, 1, 0, 0)), #BrokenTwo (2,2)
+        np.array((-1, 0, 1, 1, 0, 0, 0)), #BrokenTwo (2,2)
+        np.array((0, 0, 1, 1, 0, 0, -1)), #BrokenTwo (2,2)
+        np.array((0, 0, 1, 0, 1, 0, -1)), #BrokenTwo (2,2)
+        np.array((0, 0, 0, 1, 1, 0, -1)), #BrokenTwo (2,2)
 
-            np.array((-1, 0, 1, 1, 0, 0)), #SimpleTwo (2,1)
-            np.array((-1, 1, 0, 1, 0, 0)), #SimpleTwo (2,1)
-            np.array((-1, 1, 1, 0, 0, 0)), #SimpleTwo (2,1)
-            np.array((-1, 1, 0, 0, 1, 0)), #SimpleTwo (2,1)
-            np.array((-1, 0, 1, 0, 1, 0)), #SimpleTwo (2,1)
-            np.array((-1, 0, 0, 1, 1, 0)), #SimpleTwo (2,1)
-            np.array((0, 0, 1, 1, 0, -1)), #SimpleTwo (2,1)
-            np.array((0, 0, 1, 0, 1, -1)), #SimpleTwo (2,1)
-            np.array((0, 0, 0, 1, 1, -1)), #SimpleTwo (2,1)
-            np.array((0, 1, 0, 1, 0, -1)), #SimpleTwo (2,1)
-            np.array((0, 1, 0, 0, 1, -1)), #SimpleTwo (2,1)
-            np.array((0, 1, 1, 0, 0, -1)), #SimpleTwo (2,1)
+        np.array((-1, 0, 1, 1, 0, 0)), #SimpleTwo (2,1)
+        np.array((-1, 1, 0, 1, 0, 0)), #SimpleTwo (2,1)
+        np.array((-1, 1, 1, 0, 0, 0)), #SimpleTwo (2,1)
+        np.array((-1, 1, 0, 0, 1, 0)), #SimpleTwo (2,1)
+        np.array((-1, 0, 1, 0, 1, 0)), #SimpleTwo (2,1)
+        np.array((-1, 0, 0, 1, 1, 0)), #SimpleTwo (2,1)
+        np.array((0, 0, 1, 1, 0, -1)), #SimpleTwo (2,1)
+        np.array((0, 0, 1, 0, 1, -1)), #SimpleTwo (2,1)
+        np.array((0, 0, 0, 1, 1, -1)), #SimpleTwo (2,1)
+        np.array((0, 1, 0, 1, 0, -1)), #SimpleTwo (2,1)
+        np.array((0, 1, 0, 0, 1, -1)), #SimpleTwo (2,1)
+        np.array((0, 1, 1, 0, 0, -1)), #SimpleTwo (2,1)
     ]
 
-
+    dict_value = {
+        "five": 0,
+        "open_four": 0,
+        "simple_four": 0,
+        "open_three": 0,
+        "broken_three": 0,
+        "simple_three": 0,
+        "open_two": 0,
+        "broken_two": 0,
+        "simple_two": 0,
+    }
+    
+    d = {Color.BLACK.name: dict_value.copy(), Color.WHITE.name: dict_value.copy()}
 
     b = board
     diags = remove_blank_line(get_diagonals(b))
     rows = remove_blank_line(b)
     columns = remove_blank_line(b.T)
 
-    total = 0
     for i, seq in enumerate(NUMBA_SEQUENCE):
-        total += numba_search_sequence(diags, seq, i)
-        total += numba_search_sequence(rows, seq, i)
-        total += numba_search_sequence(columns, seq, i)
-    # print(total)
-    # return total
-    return diags.shape, rows.shape, columns.shape 
+        key = _get_sequence_key_from_index(i)
+        bd, wd = numba_search_sequence(diags, seq, i)
+        br, wr = numba_search_sequence(rows, seq, i)
+        bc, wc = numba_search_sequence(columns, seq, i)
+        d[Color.BLACK.name][key] += (bd + br + bc)
+        d[Color.WHITE.name][key] += (wd + wr + wc)
+
+    return d
