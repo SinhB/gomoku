@@ -1,7 +1,6 @@
 """Class Game"""
-from xml.dom import minidom
+
 from players import IA, Player
-from src.algorithm import minimax
 from src.board import BoardState
 
 
@@ -12,7 +11,7 @@ class Game:
         self.player_one: player_one
         self.player_two: player_two
         self.state = BoardState(19)
-        self.depth=depth
+        self.depth = depth
 
     def start(self):
         pass
@@ -31,4 +30,3 @@ class Game:
         # self.state = self.state.next(best_move)
         # self.finished = self.state.is_finished()
         return True
-

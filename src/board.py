@@ -1,14 +1,13 @@
 """Class Board"""
 
 from copy import deepcopy
-from numba import njit, jit
-from typing import Dict, Sequence
+from typing import Dict
 
 import numpy as np
 from termcolor import colored
 
-from src.utils import BLACK_VALUE, SEQUENCES, STRING_SEQUENCES, WHITE_VALUE, Color, timeit
 from src.heuristic import get_numba_sequence_frequences
+from src.utils import BLACK_VALUE, WHITE_VALUE, Color, timeit
 
 BLACK_STONE_COLOR = "red"
 WHITE_STONE_COLOR = "blue"
@@ -17,6 +16,7 @@ COLOR_REPLACEMENT = {
     WHITE_VALUE: colored(2, WHITE_STONE_COLOR),
     BLACK_VALUE: colored(BLACK_VALUE, BLACK_STONE_COLOR),
 }
+
 
 class BoardState:
     """
@@ -31,11 +31,12 @@ class BoardState:
     from black and white stones
     """
 
-    def __init__(
-        self, color, size=19, board=None, coordinates=None) -> None:
+    def __init__(self, color, size=19, board=None, coordinates=None) -> None:
         self.color: Color = color
         self._size: int = size
-        self._board: np.ndarray = board if board is not None else self.create_int_board(size)
+        self._board: np.ndarray = (
+            board if board is not None else self.create_int_board(size)
+        )
         self.coordinates = coordinates or {Color.WHITE: None, Color.BLACK: None}
         self.sequence_frequences = {
             Color.BLACK: {
@@ -62,7 +63,6 @@ class BoardState:
             },
         }
 
-
     def create_int_board(self, size: int):
         """Create a 2D board
 
@@ -75,7 +75,6 @@ class BoardState:
         Output : 2D Array representing the board.
         """
         return np.zeros((size, size), dtype=np.int8)
-
 
     def add_stone_coordinates(self, position):
         """Get all stones coordinates
@@ -153,21 +152,20 @@ class BoardState:
         ------
         Output    : New BoardState object
         """
-        
+
         self.add_stone_coordinates(position)
         next_state = self.copy_to_next()
         next_state.update_board()
         return next_state
 
     def is_finished(self):
-        #Check capture winning
-        #Check Five in a row & not breakable & opponent doesn't win by capture
+        # Check capture winning
+        # Check Five in a row & not breakable & opponent doesn't win by capture
         pass
 
     @timeit
     def get_best_moves(self, is_maximiser):
-        """
-        """
+        """ """
         available_positions = self.get_available_pos()
         legal_positions = self.remove_illegal_pos(available_positions)
         best_moves = self.sort_moves(legal_positions, is_maximiser)
@@ -176,16 +174,16 @@ class BoardState:
     def remove_illegal_pos(self, positions):
         for position in positions:
             if not self.is_legal_move(position):
-                #delete position
+                # delete position
                 pass
         return positions
 
     def sort_moves(positions, is_maximiser):
         moves = []
         for position in positions:
-            #calculate score for each position
-            #move = (score, position)
-            #moves.append(move)
+            # calculate score for each position
+            # move = (score, position)
+            # moves.append(move)
             pass
         if is_maximiser:
             return max(moves)
@@ -201,9 +199,12 @@ class BoardState:
         """
         if self._board[position[0], position[1]] != 0:
             return False
-        if not ((position[0] >= 0 & position[0] < self._size) & (position[1] >= 0 & position[1] < self._size)):
+        if not (
+            (position[0] >= 0 & position[0] < self._size)
+            & (position[1] >= 0 & position[1] < self._size)
+        ):
             return False
-        
+
         actual_open_three = self.sequence_frequences[self.color]["open_three"]
 
         b = self.copy()
@@ -215,7 +216,7 @@ class BoardState:
 
         # Call condition to check if new pos is legal
         if b.sequence_frequences[self.color]["open_three"] >= actual_open_three + 2:
-            return False 
+            return False
         return True
 
     @timeit
@@ -227,7 +228,10 @@ class BoardState:
         Output
         ------
         Output : 2D array of all possible positions"""
-        if self.coordinates[Color.WHITE] is not None and self.coordinates[Color.BLACK] is not None:
+        if (
+            self.coordinates[Color.WHITE] is not None
+            and self.coordinates[Color.BLACK] is not None
+        ):
             all_stones = np.concatenate(
                 (self.coordinates[Color.WHITE], self.coordinates[Color.BLACK]), axis=0
             )
@@ -244,9 +248,12 @@ class BoardState:
             & (possible_pos[:, 1] < self._board.shape[1])
         )
         possible_pos = possible_pos[in_board, :]
-        possible_pos = np.unique(possible_pos[
-            np.all(np.any((possible_pos - all_stones[:, None]), axis=2), axis=0)
-        ], axis=0)
+        possible_pos = np.unique(
+            possible_pos[
+                np.all(np.any((possible_pos - all_stones[:, None]), axis=2), axis=0)
+            ],
+            axis=0,
+        )
         return possible_pos
 
     # def place_available_pos(self, pos=None):
@@ -256,7 +263,6 @@ class BoardState:
     #     # b = np.copy(self._board)
     #     b = self._board
     #     np.put(b, np.ravel_multi_index(pos.T, b.shape), 3)
-
 
     @timeit
     def display(self):
