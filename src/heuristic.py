@@ -106,7 +106,7 @@ def get_numba_sequence_frequences(board, color):
         i = bisect_left(max_index, index)
         return keys[i]
 
-    NUMBA_SEQUENCE = [
+    THREAT_PATTERNS = [
         np.array((1, 1, 1, 1, 1)),  # Five in a row 100000
         np.array((0, 1, 1, 1, 1, 0)),  # OpenFour (4,2)
         np.array((-1, 1, 1, 0, 1, 1, 0, 1, 1, -1)),  # OpenFour (4,2)
@@ -174,7 +174,7 @@ def get_numba_sequence_frequences(board, color):
     rows = remove_blank_line(b)
     columns = remove_blank_line(b.T)
 
-    for i, seq in enumerate(NUMBA_SEQUENCE):
+    for i, seq in enumerate(THREAT_PATTERNS):
         key = _get_sequence_key_from_index(i)
         bd, wd = numba_search_sequence(diags, seq, i)
         br, wr = numba_search_sequence(rows, seq, i)
