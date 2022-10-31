@@ -1,16 +1,12 @@
-import { useEffect, useState } from "react";
-import { IPawn } from "../types/general";
+import { IPlayerPositions } from "../types/general";
 import { areArraysEqual } from "../utils";
-import Pawn from "./Pawn";
+import Stone from "./Stone";
 
-export default function Row(props: { col: number }) {
-  const [pawns, setPawns] = useState<IPawn[]>([]);
-  const { col } = props;
-
-  useEffect(() => {
-    let originalPawns = [{ id: 1, color: "black", coordinates: [2, 5] }];
-    setPawns(originalPawns);
-  }, []);
+export default function Row(props: {
+  col: number;
+  positions: IPlayerPositions;
+}) {
+  const { col, positions } = props;
 
   function handleClickedCoordinates(coordinate: any) {
     console.log(coordinate);
@@ -24,12 +20,24 @@ export default function Row(props: { col: number }) {
           onClick={() => handleClickedCoordinates([col, i])}
         >
           <div>
-            {pawns?.map(
-              (pawn) =>
-                areArraysEqual(pawn.coordinates, [col, i]) && (
-                  <Pawn color={pawn.color} id={pawn.id} />
-                )
-            )}
+            {positions &&
+              Object.keys(positions).map((playerColor: string, idx: number) => {
+                return (
+                  <>
+                    {positions[playerColor as keyof IPlayerPositions].map(
+                      (stonePosition: number[], index: number) => {
+                        return (
+                          <>
+                            {areArraysEqual(stonePosition, [col, i]) && (
+                              <Stone color={playerColor} id={index} />
+                            )}
+                          </>
+                        );
+                      }
+                    )}
+                  </>
+                );
+              })}
           </div>
         </div>
       ))}
