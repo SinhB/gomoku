@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
-import { IPawn } from "../types/general";
+import { IStone } from "../types/general";
 import { areArraysEqual } from "../utils";
-import Pawn from "./Pawn";
+import Stone from "./Stone";
 
 export default function Row(props: { col: number }) {
-  const [pawns, setPawns] = useState<IPawn[]>([]);
+  const [stones, setStones] = useState<IStone[]>([]);
   const { col } = props;
 
   useEffect(() => {
-    let originalPawns = [{ id: 1, color: "black", coordinates: [2, 5] }];
-    setPawns(originalPawns);
+    let originalStones = [{ id: 1, color: "black", coordinates: [2, 5] }];
+    setStones(originalStones);
   }, []);
 
   function handleClickedCoordinates(coordinate: any) {
@@ -24,10 +24,10 @@ export default function Row(props: { col: number }) {
           onClick={() => handleClickedCoordinates([col, i])}
         >
           <div>
-            {pawns?.map(
+            {stones?.map(
               (pawn) =>
                 areArraysEqual(pawn.coordinates, [col, i]) && (
-                  <Pawn color={pawn.color} id={pawn.id} />
+                  <Stone color={pawn.color} id={pawn.id} />
                 )
             )}
           </div>
