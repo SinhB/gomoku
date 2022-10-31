@@ -1,4 +1,33 @@
-"""Class Game"""
+"""Class Game
+
+Response body:
+
+{
+    "turn": int,
+    "legal": Bool,
+    "game_status": {
+        "positions": {
+            "black": List[[int, int]],
+            "white": List[[int, int]]
+        },
+        "finished": {
+            "victory": bool,
+            "type": ["capture", "alignement"],
+            "winner": int #(color)
+        },
+        "players": {
+            "black": {
+                "score": int,
+                "stones": int #(captured)
+            },
+            "white":{
+                "score": int,
+                "stones": int #(captured)
+            }
+        }
+    }
+}
+"""
 
 from players import IA, Player
 from src.board import BoardState
@@ -24,9 +53,7 @@ class Game:
         return True
 
     def ai_turn(self):
-        moves = self.state.get_best_moves()
-        # for move in moves:
-        #     best_move = minimax(self.state, 0, 0, 10, True)
-        # self.state = self.state.next(best_move)
-        # self.finished = self.state.is_finished()
+        position = self.state.get_best_move()
+        self.state = self.state.next(position)
+        self.finished = self.state.is_finished()
         return True
