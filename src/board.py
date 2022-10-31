@@ -158,12 +158,6 @@ class BoardState:
         """
 
         next_state = self.copy_to_next()
-        # next_state = BoardState(
-        #     color=self.color.swap(),
-        #     size=self._size,
-        #     board=self._board,
-        #     coordinates=self.coordinates,
-        #     sequence_frequences=self.sequence_frequences)
         next_state.add_stone_coordinates(position)
         next_state.update_board()
         return next_state
