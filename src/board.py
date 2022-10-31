@@ -211,11 +211,8 @@ class BoardState:
     def sort_moves(self, positions, n, is_maximiser):
         moves = []
         for position in positions:
-            evaluation = evaluate_state(self.next(position), self.color)
-            # print(f"evaluation = {evaluation} for pos: {position} as {self.color}")
+            evaluation = evaluate_state(self.next(position)._board, self.color.name)
             moves.append((evaluation, position))
-        # print("-----------------------MOVES--------------------")
-        # print(moves)
         return sorted(moves, key=lambda x: x[0], reverse=is_maximiser)[:n]
 
     # @timeit
@@ -242,7 +239,7 @@ class BoardState:
 
         # d = get_numba_sequence_frequences(b._board)
         # print(f"Sequence number: {d}")
-        score = evaluate_state(b, self.color)
+        score = evaluate_state(b._board, self.color.name)
         print(score)
 
         # Call condition to check if new pos is legal
