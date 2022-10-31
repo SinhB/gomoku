@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 
+=======
+>>>>>>> main
 from fastapi import FastAPI
 
 app = FastAPI()
