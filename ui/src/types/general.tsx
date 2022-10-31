@@ -17,9 +17,19 @@ export interface IPlayerPositions {
   white: number[][];
 }
 
+export interface IPlayerGameState {
+  score: number;
+  stones: number;
+}
+
+export interface IPlayersGameState {
+  black: IPlayerGameState;
+  white: IPlayerGameState;
+}
+
 export interface IFinished {
   victory: boolean;
-  type: ["capture" | "alignement"];
+  type: "capture" | "alignement" | null;
   winner: number;
 }
 
@@ -31,5 +41,5 @@ export interface IGameStatus {
 export interface IGameState {
   turn: number;
   legal: boolean;
-  game_status: IGameStatus;
+  gameStatus: IGameStatus;
 }
