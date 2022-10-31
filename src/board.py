@@ -6,6 +6,7 @@ from typing import Dict
 import numpy as np
 from termcolor import colored
 
+from src.algorithm import evaluate_state, minimax
 from src.heuristic import get_numba_sequence_frequences
 from src.utils import BLACK_VALUE, WHITE_VALUE, Color, timeit
 
@@ -31,14 +32,16 @@ class BoardState:
     from black and white stones
     """
 
-    def __init__(self, color, size=19, board=None, coordinates=None) -> None:
+    def __init__(
+        self, color, size=19, board=None, coordinates=None, sequence_frequences=None
+    ) -> None:
         self.color: Color = color
         self._size: int = size
         self._board: np.ndarray = (
             board if board is not None else self.create_int_board(size)
         )
         self.coordinates = coordinates or {Color.WHITE: None, Color.BLACK: None}
-        self.sequence_frequences = {
+        self.sequence_frequences = sequence_frequences or {
             Color.BLACK: {
                 "five": 0,
                 "open_four": 0,
@@ -83,12 +86,13 @@ class BoardState:
         ----------
         stone  : Stone object
         """
+        color = self.color.swap()
         position = np.array(position, ndmin=2, dtype=np.int8)
-        if self.coordinates[self.color] is None:
-            self.coordinates[self.color] = position
+        if self.coordinates[color] is None:
+            self.coordinates[color] = position
         else:
-            self.coordinates[self.color] = np.append(
-                self.coordinates[self.color], position, axis=0
+            self.coordinates[color] = np.append(
+                self.coordinates[color], position, axis=0
             )
 
     def get_stones_coordinates(self):
@@ -141,7 +145,7 @@ class BoardState:
         """
         return deepcopy(self)
 
-    @timeit
+    # @timeit
     def next(self, position):
         """Copy the current state while swaping its color
 
@@ -153,8 +157,14 @@ class BoardState:
         Output    : New BoardState object
         """
 
-        self.add_stone_coordinates(position)
         next_state = self.copy_to_next()
+        # next_state = BoardState(
+        #     color=self.color.swap(),
+        #     size=self._size,
+        #     board=self._board,
+        #     coordinates=self.coordinates,
+        #     sequence_frequences=self.sequence_frequences)
+        next_state.add_stone_coordinates(position)
         next_state.update_board()
         return next_state
 
@@ -164,30 +174,49 @@ class BoardState:
         pass
 
     @timeit
+    def get_best_move(self, depth, is_maximiser):
+        sorted_moves = self.get_best_moves(is_maximiser)
+        best_score = -9999 if is_maximiser else 9999
+        for scored_move in sorted_moves:
+            move_pos = scored_move[1]
+            score = minimax(
+                self.next(move_pos),
+                np.iinfo(np.int32).min,
+                np.iinfo(np.int32).max,
+                depth - 1,
+                not is_maximiser,
+            )
+            if (is_maximiser and score > best_score) or (
+                not is_maximiser and score < best_score
+            ):
+                best_score = score
+                best_move = move_pos
+        return best_move, best_score
+
+    # @timeit
     def get_best_moves(self, is_maximiser):
         """ """
         available_positions = self.get_available_pos()
-        legal_positions = self.remove_illegal_pos(available_positions)
-        best_moves = self.sort_moves(legal_positions, is_maximiser)
+        # legal_positions = self.remove_illegal_pos(available_positions)
+        best_moves = self.sort_moves(available_positions, 10, is_maximiser)
         return best_moves
 
     def remove_illegal_pos(self, positions):
-        for position in positions:
-            if not self.is_legal_move(position):
-                # delete position
-                pass
+        # for position in positions:
+        # if not self.is_legal_move(position):
+        #     # delete position
+        #     pass
         return positions
 
-    def sort_moves(positions, is_maximiser):
+    def sort_moves(self, positions, n, is_maximiser):
         moves = []
         for position in positions:
-            # calculate score for each position
-            # move = (score, position)
-            # moves.append(move)
-            pass
-        if is_maximiser:
-            return max(moves)
-        return min(moves)
+            evaluation = evaluate_state(self.next(position), self.color)
+            # print(f"evaluation = {evaluation} for pos: {position} as {self.color}")
+            moves.append((evaluation, position))
+        # print("-----------------------MOVES--------------------")
+        # print(moves)
+        return sorted(moves, key=lambda x: x[0], reverse=is_maximiser)[:n]
 
     # @timeit
     def is_legal_move(self, position):
@@ -205,21 +234,23 @@ class BoardState:
         ):
             return False
 
-        actual_open_three = self.sequence_frequences[self.color]["open_three"]
+        # actual_open_three = self.sequence_frequences[self.color]["open_three"]
 
         b = self.copy()
         b.add_stone_coordinates(position)
         b.update_board()
 
-        d = get_numba_sequence_frequences(b._board, self.color)
-        print(f"Sequence number: {d}")
+        # d = get_numba_sequence_frequences(b._board)
+        # print(f"Sequence number: {d}")
+        score = evaluate_state(b, self.color)
+        print(score)
 
         # Call condition to check if new pos is legal
-        if b.sequence_frequences[self.color]["open_three"] >= actual_open_three + 2:
-            return False
+        # if b.sequence_frequences[self.color]["open_three"] >= actual_open_three + 2:
+        #     return False
         return True
 
-    @timeit
+    # @timeit
     def get_available_pos(self):
         """Calculate the possible positions
 

@@ -1,7 +1,7 @@
 from bisect import bisect_left
 
 import numpy as np
-from numba import njit
+from numba import jit, njit
 
 from src.utils import Color, timeit
 
@@ -33,9 +33,9 @@ def numba_search_sequence(arr, seq, sequence_index):
     flatten_len, seq_len = flatten_arr.size, seq.size
     upper_bound = flatten_len - seq_len + 1
     for i in range(upper_bound):
-        if np.array_equal(flatten_arr[i:i+seq_len], black_seq):
+        if np.array_equal(flatten_arr[i : i + seq_len], black_seq):
             black_seq_count += 1
-        if np.array_equal(flatten_arr[i:i+seq_len], white_seq):
+        if np.array_equal(flatten_arr[i : i + seq_len], white_seq):
             white_seq_count += 1
 
     return black_seq_count, white_seq_count
@@ -85,9 +85,9 @@ def get_diagonals(board) -> np.ndarray:
     return all_diags
 
 
-@timeit
-# @njit
-def get_numba_sequence_frequences(board, color):
+# @timeit
+# @jit
+def get_numba_sequence_frequences(board):
     """Get the frequence of sequences in a board"""
 
     def _get_sequence_key_from_index(index):
@@ -155,19 +155,42 @@ def get_numba_sequence_frequences(board, color):
         np.array((0, 1, 1, 0, 0, -1)),  # SimpleTwo (2,1)
     ]
 
-    dict_value = {
-        "five": 0,
-        "open_four": 0,
-        "simple_four": 0,
-        "open_three": 0,
-        "broken_three": 0,
-        "simple_three": 0,
-        "open_two": 0,
-        "broken_two": 0,
-        "simple_two": 0,
-    }
+    # dict_value = {
+    #     "five": 0,
+    #     "open_four": 0,
+    #     "simple_four": 0,
+    #     "open_three": 0,
+    #     "broken_three": 0,
+    #     "simple_three": 0,
+    #     "open_two": 0,
+    #     "broken_two": 0,
+    #     "simple_two": 0,
+    # }
 
-    d = {Color.BLACK.name: dict_value.copy(), Color.WHITE.name: dict_value.copy()}
+    d = {
+        Color.BLACK: {
+            "five": 0,
+            "open_four": 0,
+            "simple_four": 0,
+            "open_three": 0,
+            "broken_three": 0,
+            "simple_three": 0,
+            "open_two": 0,
+            "broken_two": 0,
+            "simple_two": 0,
+        },
+        Color.WHITE: {
+            "five": 0,
+            "open_four": 0,
+            "simple_four": 0,
+            "open_three": 0,
+            "broken_three": 0,
+            "simple_three": 0,
+            "open_two": 0,
+            "broken_two": 0,
+            "simple_two": 0,
+        },
+    }
 
     b = board
     diags = remove_blank_line(get_diagonals(b))
@@ -179,7 +202,7 @@ def get_numba_sequence_frequences(board, color):
         bd, wd = numba_search_sequence(diags, seq, i)
         br, wr = numba_search_sequence(rows, seq, i)
         bc, wc = numba_search_sequence(columns, seq, i)
-        d[Color.BLACK.name][key] += bd + br + bc
-        d[Color.WHITE.name][key] += wd + wr + wc
+        d[Color.BLACK][key] += bd + br + bc
+        d[Color.WHITE][key] += wd + wr + wc
 
     return d
