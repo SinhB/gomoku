@@ -1,15 +1,28 @@
 import { useEffect, useState } from "react";
-import { IStone } from "../types/general";
+import { IPlayerPositions } from "../types/general";
 import { areArraysEqual } from "../utils";
 import Stone from "./Stone";
 
 export default function Row(props: { col: number }) {
-  const [stones, setStones] = useState<IStone[]>([]);
+  const [playerPositions, setPlayerPositions] = useState<IPlayerPositions>(
+    {} as IPlayerPositions
+  );
   const { col } = props;
 
   useEffect(() => {
-    let originalStones = [{ id: 1, color: "black", coordinates: [2, 5] }];
-    setStones(originalStones);
+    let originalStones = {
+      black: [
+        [1, 2],
+        [8, 4],
+        [2, 10],
+      ],
+      white: [
+        [5, 6],
+        [2, 8],
+        [8, 18],
+      ],
+    };
+    setPlayerPositions(originalStones);
   }, []);
 
   function handleClickedCoordinates(coordinate: any) {
@@ -24,11 +37,24 @@ export default function Row(props: { col: number }) {
           onClick={() => handleClickedCoordinates([col, i])}
         >
           <div>
-            {stones?.map(
-              (pawn) =>
-                areArraysEqual(pawn.coordinates, [col, i]) && (
-                  <Stone color={pawn.color} id={pawn.id} />
-                )
+            {Object.keys(playerPositions).map(
+              (playerColor: string, idx: number) => {
+                return (
+                  <>
+                    {playerPositions[playerColor as keyof IPlayerPositions].map(
+                      (stonePosition: number[], index: number) => {
+                        return (
+                          <>
+                            {areArraysEqual(stonePosition, [col, i]) && (
+                              <Stone color={playerColor} id={index} />
+                            )}
+                          </>
+                        );
+                      }
+                    )}
+                  </>
+                );
+              }
             )}
           </div>
         </div>
