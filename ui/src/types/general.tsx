@@ -1,35 +1,37 @@
-export interface ICell {
-  coordinates: ICoordinates;
+export type StoneColor = "black" | "white";
+
+export type FinishedType = "capture" | "alignement" | null;
+
+export interface IStone {
   id: number;
+  color: StoneColor;
+}
+
+export interface ICell {
+  id: number;
+  coordinates: ICoordinates;
 }
 
 export interface ICoordinates {
   coordinates: number[];
 }
 
-export type TStone = ICoordinates & {
-  id: number;
-  color: string;
-};
-
 export interface IPlayerPositions {
-  black: number[][];
-  white: number[][];
+  [StoneColor: string]: number[][];
 }
 
 export interface IPlayerGameState {
-  score: number;
+  [score: string]: number;
   stones: number;
 }
 
 export interface IPlayersGameState {
-  black: IPlayerGameState;
-  white: IPlayerGameState;
+  [StoneColor: string]: IPlayerGameState;
 }
 
 export interface IFinished {
   victory: boolean;
-  type: "capture" | "alignement" | null;
+  type: FinishedType;
   winner: number;
 }
 

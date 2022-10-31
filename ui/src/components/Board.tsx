@@ -47,7 +47,7 @@ export default function Board() {
     <div className="board">
       <div className="container">
         {[...Array(19)].map((currentElement, i) => (
-          <div key={i}>
+          <div className="row-content" key={i}>
             <Row col={i} positions={gameState?.gameStatus?.positions} />
           </div>
         ))}

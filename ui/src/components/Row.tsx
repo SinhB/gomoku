@@ -1,4 +1,4 @@
-import { IPlayerPositions } from "../types/general";
+import { IPlayerPositions, StoneColor } from "../types/general";
 import { areArraysEqual } from "../utils";
 import Stone from "./Stone";
 
@@ -18,24 +18,28 @@ export default function Row(props: {
         <div
           className="square"
           onClick={() => handleClickedCoordinates([col, i])}
+          key={i}
         >
-          <div>
+          <div className="square-content">
             {positions &&
-              Object.keys(positions).map((playerColor: string, idx: number) => {
+              Object.keys(positions).map((playerColor, playerColorIdx) => {
                 return (
-                  <>
-                    {positions[playerColor as keyof IPlayerPositions].map(
-                      (stonePosition: number[], index: number) => {
+                  <span key={`${playerColor}-${playerColorIdx}`}>
+                    {positions[playerColor as StoneColor].map(
+                      (stonePosition: number[], stonePositionIdx: number) => {
                         return (
-                          <>
+                          <span key={`${stonePosition}-${stonePositionIdx}`}>
                             {areArraysEqual(stonePosition, [col, i]) && (
-                              <Stone color={playerColor} id={index} />
+                              <Stone
+                                color={playerColor as StoneColor}
+                                id={stonePositionIdx}
+                              />
                             )}
-                          </>
+                          </span>
                         );
                       }
                     )}
-                  </>
+                  </span>
                 );
               })}
           </div>
