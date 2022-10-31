@@ -1,17 +1,27 @@
-from bisect import bisect_left
-
 import numpy as np
-from numba import jit, njit
+from numba import njit
 
-from src.utils import Color, timeit
+from src.utils import timeit
 
 
 @njit(fastmath=True)
 def is_array_equal(arr, seq):
+    """Check equality for 2 given arrays
+    Arrays should be of same shape
+
+    Parameters
+    ----------
+    arr      : input 1D array
+    seq      : input 1D array
+    Output
+    ------
+    Output    : True if equal else False
+    """
     for arri, seqi in zip(arr, seq):
         if arri != seqi:
             return False
     return True
+
 
 @njit(fastmath=True)
 def numba_search_sequence(arr, seq):
@@ -19,10 +29,11 @@ def numba_search_sequence(arr, seq):
 
     Parameters
     ----------
-    arr      : input 2D array
+    arr      : input 1D array
     seq      : input 1D array
-    seq_type : name of the sequence
-    seq_list : score associate to the sequence type
+    Output
+    ------
+    Output    : black_seq number, white_seq number
     """
 
     black_seq = seq * 1
@@ -44,11 +55,19 @@ def numba_search_sequence(arr, seq):
 
 @njit(fastmath=True)
 def remove_blank_line(array):
-    """ """
+    """Remove blank lines and flatten the 2Darray
+
+    Parameters
+    ----------
+    position  : 2d array
+    Output
+    ------
+    Output    : Flatten non-blank 1d array
+    """
     sumrow = np.abs(array).sum(-1)
     array = array[sumrow > 0]
 
-     # Flatten the board with 3 as separator
+    # Flatten the board with 3 as separator
     Sa = array.shape
     fill = np.full((Sa[0], Sa[1] + 1), 3)
     fill[:, :-1] = array
@@ -91,8 +110,20 @@ def get_diagonals(board) -> np.ndarray:
 
     return all_diags
 
+
 @njit(fastmath=True)
 def _get_sequence_key_from_index(index):
+    """Get the key name from index in range
+
+    (bisect_left not supported by numba)
+
+    Parameters
+    ----------
+    position  : index (int)
+    Output
+    ------
+    Output    : name (string)
+    """
     max_index = (0, 3, 6, 9, 13, 19, 22, 33, 45)
     keys = (
         "five",
@@ -105,16 +136,25 @@ def _get_sequence_key_from_index(index):
         "broken_two",
         "simple_two",
     )
-    # i = bisect_left(max_index, index)
     for i, value in enumerate(max_index):
         if index <= value:
             return keys[i]
     return "none"
 
+
 # @timeit
 @njit(fastmath=True)
 def get_numba_sequence_frequences(board):
-    """Get the frequence of sequences in a board"""
+    """Get the frequence of sequences in a board
+
+    Parameters
+    ----------
+    position  : board (2d array)
+    Output
+    ------
+    Output    : Dict with the number of sequence for each
+                color in the board
+    """
 
     THREAT_PATTERNS = [
         np.array((1, 1, 1, 1, 1)),  # Five in a row 100000
@@ -190,10 +230,9 @@ def get_numba_sequence_frequences(board):
         },
     }
 
-    b = board
-    diags = remove_blank_line(get_diagonals(b))
-    rows = remove_blank_line(b)
-    columns = remove_blank_line(b.T)
+    diags = remove_blank_line(get_diagonals(board))
+    rows = remove_blank_line(board)
+    columns = remove_blank_line(board.T)
 
     for i, seq in enumerate(THREAT_PATTERNS):
         key = _get_sequence_key_from_index(i)
