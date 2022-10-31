@@ -3,7 +3,7 @@ export interface ICell {
   id: number;
 }
 
-export interface IPawn {
+export interface IStone {
   coordinates: number[];
   id: number;
   color: string;
