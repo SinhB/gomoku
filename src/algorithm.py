@@ -11,13 +11,18 @@ def minimax(state, alpha, beta, depth, is_maximiser):
     if is_maximiser:
         best_eval = -9999
         for sorted_move in state.get_best_moves(is_maximiser):
+            # print(f"Sorted moves : {sorted_move}")
             move = sorted_move[1]
+            # print(f"Move : {move}")
             evaluation = minimax(state.next(move), alpha, beta, depth - 1, False)
+            # print(f"Evaluation : {evaluation}")
             best_eval = max(best_eval, evaluation)
+            # print(f"best_eval : {best_eval}")
             alpha = max(alpha, evaluation)
+            state.delete_last_stone()
             if beta <= alpha:
                 break
-            return best_eval
+        return best_eval
     else:
         best_eval = 9999
         for sorted_move in state.get_best_moves(not is_maximiser):
@@ -25,9 +30,10 @@ def minimax(state, alpha, beta, depth, is_maximiser):
             evaluation = minimax(state.next(move), alpha, beta, depth - 1, True)
             best_eval = min(best_eval, evaluation)
             beta = min(beta, evaluation)
+            state.delete_last_stone()
             if beta <= alpha:
                 break
-            return best_eval
+        return best_eval
 
 
 @njit

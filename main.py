@@ -48,7 +48,9 @@ if __name__ =="__main__":
     board.display()
     print(f"NEW COLOR BEFORE GET BEST MOVE: {board.color}")
     pos = board.get_best_move(10, True)
+    pos = board.get_best_move(5, True)
     print(pos)
     board = board.next(pos[0])
     board.display()
+
     sys.exit()
