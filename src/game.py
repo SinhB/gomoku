@@ -29,8 +29,8 @@ Response body:
 }
 """
 
-from players import IA, Player
 from src.board import BoardState
+from src.players import IA, Player
 
 
 class Game:
