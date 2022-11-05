@@ -27,7 +27,8 @@ def get_available_positions(np.ndarray[np.int_t, ndim=2] board, int size):
         ],
         axis=0,
     )
-    return possible_pos
+    # return possible_pos
+    return possible_pos[:10,:]
 
 def remove_blank_line(array):
     # cdef np.ndarray[np.int_t, ndim=1] flatten_arr
@@ -79,10 +80,103 @@ def get_diagonals(np.ndarray[np.int_t, ndim=2] board, int size):
 
 def get_rows(np.ndarray[np.int_t, ndim=2] board, int size):
     cdef int i
-    rows = []
-    for i in range(size):
-        tmp = board[i].tolist()
-        if np.any(board[i]):
-            tmp.append(3)
-            rows += tmp
-    return np.array(rows)
+    cdef np.ndarray[np.int_t, ndim=2] rows
+
+    rows = board[~np.all(board == 0, axis=1)]
+    b = np.full((rows.shape[0], 1), 3)
+
+    rows = np.concatenate((rows, b), axis=1)
+
+    return np.concatenate(rows)
+
+def get_new_threats(np.ndarray[np.int_t, ndim=2] board, np.ndarray[np.int_t, ndim=1] position):
+    # print("check_rules")
+    # print(board)
+    # print(board[position[0]][position[1]])
+    print(type(position))
+    b = board[position[0]-3:position[0]+4, position[1]-3:position[1]+4]
+    # print(b)
+    b[3][3] = 9
+    # print(b)
+
+    diags = get_position_diagonals(b, 9)
+    rows = get_position_rows(b, 9)
+    columns = get_position_columns(b, 9)
+
+    # print(f"Diag : \n{diags}\n")
+    # print(f"rows : \n{rows}\n")
+    # print(f"columns : \n{columns}\n")
+
+    # [0, 0, 0, 9, 1, 1, 0] = open three
+    # [0, 0, 0, 9, 0, 1, 1] = ?
+    open_three = 0
+    for diag in diags:
+        left = diag[0:3]
+        right = diag[4:7]
+        # print(left)
+        # print(right)
+        if (left == 1).sum() >= 2 or (right == 1).sum() >= 2:
+            open_three += 1
+        # print((left == 1).sum())
+        # print((right == 1).sum())
+    
+    for row in rows:
+        left = row[0:3]
+        right = row[4:7]
+        if (left == 1).sum() >= 2 or (right == 1).sum() >= 2:
+            open_three += 1
+
+    for col in columns:
+        left = col[0:3]
+        right = col[4:7]
+        if (left == 1).sum() >= 2 or (right == 1).sum() >= 2:
+            open_three += 1
+
+    # print(f"open_three : {open_three}")
+
+    if open_three >= 2:
+        pass
+        # print("Double three")
+
+def check_eat(np.ndarray[np.int_t, ndim=2] board, color, np.ndarray[np.int_t, ndim=1] position):
+    b = board[position[0]-3:position[0]+4, position[1]-3:position[1]+4]
+    b[3][3] = 9
+    print(b)
+
+    diags = get_position_diagonals(b, 9)
+    rows = get_position_rows(b, 9)
+    columns = get_position_columns(b, 9)
+
+    for row in rows:
+        left = row[0:3]
+        right = row[4:7]
+        print(f"{left} : left.tolist() == [1, 2, 2] = {left.tolist() == [1, 2, 2]}")
+        print(f"{right} : right.tolist() == [1, 2, 2] = {right.tolist() == [2, 2, 1]}")
+        if (left.tolist() == [-1, 1, 1] or right.tolist() == [1, 1, -1]):
+            print("EATING PAWNS")
+
+def get_position_diagonals(b, exclude):
+    fltr = [exclude]
+    diags = [b[::-1, :].diagonal(i) for i in range(-b.shape[0] + 1, b.shape[1])]
+    # upper-left-to-lower-right
+    diags.extend(b.diagonal(i) for i in range(b.shape[1] - 1, -b.shape[0], -1))
+    # remove only zeros diagonals
+    diags = [d for d in diags if np.any(exclude in d)]
+    # Make an 2d array from padding diagonals with "3"
+    # (can't interfer with sequence search)
+    max_d_length = max(len(d) for d in diags)
+    diags = np.array(
+        [np.pad(d, (0, max_d_length - len(d)), constant_values=3) for d in diags]
+    )
+    return diags
+
+def get_position_rows(np.ndarray[np.int_t, ndim=2] b, exclude):
+    # remove only zeros rows
+    rows = b[~np.all(b == 0, axis=1)]
+    return [r for r in rows if np.any(exclude in r)]
+
+def get_position_columns(np.ndarray[np.int_t, ndim=2] b, exclude):
+    columns = b.T
+    # remove only zeros columns
+    columns = columns[~np.all(columns == 0, axis=1)]
+    return [c for c in columns if np.any(exclude in c)]
