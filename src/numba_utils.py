@@ -1,10 +1,11 @@
+
 import numpy as np
 from numba import njit, prange
 from numba.typed import List
 from numba.types import int8
+from termcolor import colored
 
 from src.utils import timeit
-
 
 @njit("boolean(int64[:], int64[:])", fastmath=True)
 def is_array_equal(arr, seq):
@@ -203,3 +204,25 @@ def get_numba_sequence_frequences(board):
         seq_counter_arr[1, seq_idx] += (wd + wr + wc)
 
     return seq_counter_arr
+
+
+@timeit
+def display(gamestate):
+        """Print the board
+
+        Print the board in the terminal with colors for each stone type
+        BLACK = blue
+        WHITE = red
+        """
+
+        def _color_black_and_white(row: str):
+            replacement = {-1: colored(2, "blue"), 1: colored(1, "red")}
+            for item, rep in replacement.items():
+                row = row.replace(str(item), rep)
+            return row
+
+        for row in gamestate.board:
+            str_row = "".join(str(row)).translate({ord(char): "" for char in "[,]"})
+            str_row = " ".join(str_row.split())
+            colored_row = _color_black_and_white(str_row)
+            print(colored_row)

@@ -77,7 +77,7 @@ class BoardState:
         ------
         Output : 2D Array representing the board.
         """
-        return np.zeros((size, size), dtype=np.int8)
+        return np.zeros((size, size), dtype=np.int64)
 
     def add_stone_coordinates(self, position):
         """Get all stones coordinates
@@ -88,7 +88,7 @@ class BoardState:
         """
         # color = self.color.swap()
         color = self.color
-        position = np.array(position, ndmin=2, dtype=np.int8)
+        position = np.array(position, ndmin=2, dtype=np.int64)
         if self.coordinates[color] is None:
             self.coordinates[color] = position
         else:
@@ -163,24 +163,24 @@ class BoardState:
     def is_finished(self):
         # Check capture winning
         # Check Five in a row & not breakable & opponent doesn't win by capture
-        pass
+        return False
 
     @timeit
     def get_best_move(self, depth, is_maximiser):
+        counter = 0
         sorted_moves = self.get_best_moves(is_maximiser)
-        print(sorted_moves)
-        print(len(sorted_moves))
+        # print(sorted_moves)
+        # print(len(sorted_moves))
         best_score = -9999 if is_maximiser else 9999
         for scored_move in sorted_moves:
-            # print(f"SCORED MOVE : {scored_move}")
-            # print(f"Depth: {depth}")
             move_pos = scored_move[1]
-            score = minimax(
+            score, counter = minimax(
                 self.next(move_pos),
                 np.iinfo(np.int32).min,
                 np.iinfo(np.int32).max,
                 depth - 1,
                 not is_maximiser,
+                counter + 1
             )
             self.delete_last_stone()
             if (is_maximiser and score > best_score) or (
@@ -188,7 +188,7 @@ class BoardState:
             ):
                 best_score = score
                 best_move = move_pos
-        return best_move, best_score
+        return best_move, best_score, counter
 
     # @timeit
     def get_best_moves(self, is_maximiser):
@@ -209,7 +209,9 @@ class BoardState:
     def sort_moves(self, positions, n, is_maximiser):
         moves = []
         for position in positions:
+            # print(f"POSITION: {position}")
             evaluation = evaluate_state(self.next(position)._board, self.color.name)
+            # print(f"Score: {evaluation}")
             self.delete_last_stone()
             moves.append((evaluation, position))
         return sorted(moves, key=lambda x: x[0], reverse=is_maximiser)[:n]
