@@ -1,4 +1,4 @@
-from typing import List
+from typing import Tuple
 
 from pydantic import BaseModel, PositiveInt
 from src.back.core.constants import StoneColorEnum
@@ -11,7 +11,7 @@ class Game(BaseModel):
     number_of_turns: PositiveInt = 0
 
 
-class PlacingStone(BaseModel):
+class Stone(BaseModel):
     id: PositiveInt
     stone_color: StoneColorEnum
-    coordinates: List[int, int]
+    coordinates: Tuple[int, int]

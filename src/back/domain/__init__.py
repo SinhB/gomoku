@@ -1,0 +1,3 @@
+"""
+Domain centric
+"""
