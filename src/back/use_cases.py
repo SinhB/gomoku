@@ -9,13 +9,18 @@ from src.back.domain.schemas.player import Player
 
 
 class StartGameUseCase:
-    def __init__(self, game: GameRepository) -> None:
-        self._game = game
+    repository: GameRepository
 
     def __call__(self, player_one: Player, player_two: Player) -> None:
         ...
+
+    def start_game(self):
+        self.repository.start_game()
 
 
 class PlacingStoneUseCase:
     def __call__(self, game: Game, stone: Stone) -> None:
         ...
+
+
+StartGameUseCase(repository=GameRepository()).start_game()

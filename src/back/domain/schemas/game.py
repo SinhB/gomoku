@@ -1,14 +1,16 @@
+from datetime import datetime
 from typing import Tuple
 
 from pydantic import BaseModel, PositiveInt
 from src.back.core.constants import StoneColorEnum
-from src.back.domain.schemas.player import Player
 
 
 class Game(BaseModel):
-    player_one: Player
-    player_two: Player
+    max_number_of_players: PositiveInt = 1
     number_of_turns: PositiveInt = 0
+    board_dimensions: str
+    start_time: datetime
+    end_time: datetime
 
 
 class Stone(BaseModel):
