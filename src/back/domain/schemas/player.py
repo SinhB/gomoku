@@ -5,4 +5,4 @@ from src.back.core.constants import StoneColorEnum
 class Player(BaseModel):
     id: PositiveInt
     name = "John Doe"
-    stone_color: StoneColorEnum
+    color: StoneColorEnum

@@ -6,7 +6,7 @@ from src.back.core.constants import StoneColorEnum
 
 
 class Game(BaseModel):
-    max_number_of_players: PositiveInt = 1
+    max_number_of_players: PositiveInt = 2
     number_of_turns: PositiveInt = 0
     board_dimensions: str
     start_time: datetime
@@ -15,5 +15,5 @@ class Game(BaseModel):
 
 class Stone(BaseModel):
     id: PositiveInt
-    stone_color: StoneColorEnum
+    color: StoneColorEnum
     coordinates: Tuple[int, int]

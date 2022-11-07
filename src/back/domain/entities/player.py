@@ -5,4 +5,10 @@ from dataclasses import dataclass
 class Player:
     id: int
     name: str
-    stone_color: str
+    color: str
+
+
+@dataclass
+class PlayerRegistration:
+    name: str
+    color: str

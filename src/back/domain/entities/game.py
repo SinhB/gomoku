@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Tuple
 
 from src.back.domain.entities.player import Player
@@ -6,15 +7,27 @@ from src.back.domain.entities.player import Player
 
 @dataclass(frozen=True, slots=True)
 class Game:
-    player_one: Player
-    player_two: Player
+    id: int
+    players: Tuple[Player, Player]
+    start_time: datetime = datetime.now()
+    max_number_of_players: int = 2
     number_of_turns: int = 0
+    board_dimensions: str = "19x19"
+
+
+@dataclass(frozen=True, slots=True)
+class GameCreationRequest:
+    start_time: datetime
+    players: Tuple[Player, Player]
+    max_number_of_players: int = 2
+    number_of_turns: int = 0
+    board_dimensions: str = "19x19"
 
 
 @dataclass(frozen=True, slots=True)
 class Stone:
     id: int
-    stone_color: str
+    color: str
     coordinates: Tuple[int, int]
 
 

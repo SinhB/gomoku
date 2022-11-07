@@ -1,13 +1,16 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, Table
+from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 from src.back.core.database import Base
 
-participants = Table(
-    "participants",
-    Base.metadata,
-    Column("game_id", ForeignKey("game.id"), primary_key=True),
-    Column("player_id", ForeignKey("player.id"), primary_key=True),
-)
+
+class Participant(Base):
+    __tablename__ = "participant"
+
+    game_id = Column(ForeignKey("game.id"), primary_key=True)
+    player_id = Column(ForeignKey("player.id"), primary_key=True)
+    score = Column(Integer)
+    player = relationship("Player", back_populates="games")
+    game = relationship("Game", back_populates="players")
 
 
 class Player(Base):
@@ -15,5 +18,5 @@ class Player(Base):
 
     id = Column(Integer, index=True, primary_key=True)
     name = Column(String, index=True)
-    stone_color: Column(String)
-    games = relationship("Game", secondary=participants, back_populates="players")
+    color = Column(String)
+    games = relationship("Participant", back_populates="player")
