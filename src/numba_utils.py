@@ -236,6 +236,39 @@ def get_numba_sequence_frequences(board, position):
 
     return seq_counter_arr
 
+@njit("UniTuple(UniTuple(int64, 2), 2)(int64[:,:], int64[:], int64)")
+def is_capture(board, pos, color):
+    x, y = pos[0], pos[1]
+    #row
+    if (y+3 <= 5) and (board[x,y+1] and board[x,y+2] == -color) and board[x,y+3] == color:
+        print("right row")
+        return (x,y+1), (x,y+2)
+    if (y-3 >= 0) and (board[x,y-1] and board[x,y-2] == -color) and board[x,y-3] == color:
+        print("left row")
+        return (x,y-1), (x,y-2)
+    #col
+    if (x+3 <= 5) and (board[x+1,y] and board[x+2,y] == -color) and board[x+3,y] == color:
+        print("down col")
+        return (x+1,y), (x+2,y)
+    if (x-3 >= 0) and (board[x-1,y] and board[x-2,y] == -color) and board[x-3,y] == color:
+        print("up col")
+        return (x-1,y), (x-2,y)
+    #left to right diag
+    if (x+3 <= 5 and y+3 <= 5) and (board[x+1,y+1] and board[x+2,y+2] == -color) and board[x+3,y+3] == color:
+        print("down right diag")
+        return (x+1,y+1), (x+2,y+2)
+    if (x-3 >= 0 and y-3 >= 0) and (board[x-1,y-1] and board[x-2,y-2] == -color) and board[x-3,y-3] == color:
+        print("up left diag")
+        return (x-1,y-1), (x-2,y-2)
+    #right to left diag
+    if (x+3 <= 5 and y-3 >= 0) and (board[x+1,y-1] and board[x+2,y-2] == -color) and board[x+3,y-3] == color:
+        print("down left diag")
+        return (x+1,y-1), (x+2,y-2)
+    if (x-3 >= 0 and y+3 <= 5) and (board[x-1,y+1] and board[x-2,y+2] == -color) and board[x-3,y+3] == color:
+        print("up right diag")
+        return (x-1,y+1), (x-2,y+2)
+    return (-1, -1), (-1, -1)
+
 # @timeit
 # @njit("int64[:,:](int64[:,:])", fastmath=True, parallel=True)
 # def get_numba_sequence_frequences(board):

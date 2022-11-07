@@ -12,7 +12,7 @@ from numba.types import bool_
 from math import pow
 
 from src.utils import timeit
-from src.numba_utils import is_array_equal, get_numba_sequence_frequences, display
+from src.numba_utils import is_array_equal, get_numba_sequence_frequences, display, is_capture
 from src.numba_algorithm import numba_minimax
 
 
@@ -162,6 +162,14 @@ class GameState:
         else:
             print("WHITE")
 
+@njit
+def update_if_capture(board, position, color):
+    stone_1, stone_2 = is_capture(board, position, color)
+    if stone_1 and stone_2:
+        add_value(board, np.array(stone_1, dtype=np.int64), 0)
+        add_value(board, np.array(stone_2, dtype=np.int64), 0)
+    return board
+
 def next(state, position):
         new_state = GameState(
             size=19,
@@ -175,6 +183,7 @@ def next(state, position):
         # new_state.sequence_frequences = state.sequence_frequences
         # new_state.last_move = position
         new_state.add_stone(position)
+        new_state.board = update_if_capture(state.board, position, state.color)
         new_state.update_sequence_frequences(position)
         # self.color = -self.color
         # self.add_stone(position)
@@ -187,22 +196,22 @@ def get_best_move(state, depth, is_maximiser):
     sorted_moves = state.get_best_moves(is_maximiser)
     best_move = sorted_moves[0]
     best_score = np.iinfo(np.int32).min if is_maximiser else np.iinfo(np.int32).max
-    # return best_move, 1
-    for i in range(len(sorted_moves)):
-        score = numba_minimax(
-            next(state, sorted_moves[i]),
-            np.iinfo(np.int32).min,
-            np.iinfo(np.int32).max,
-            depth - 1,
-            not is_maximiser,
-        )
-        # state.prev()
-        if (is_maximiser and score > best_score) or (
-            not is_maximiser and score < best_score
-        ):
-            best_score = score
-            best_move = sorted_moves[i]
-    return best_move, best_score
+    return best_move, 1
+    # for i in range(len(sorted_moves)):
+    #     score = numba_minimax(
+    #         next(state, sorted_moves[i]),
+    #         np.iinfo(np.int32).min,
+    #         np.iinfo(np.int32).max,
+    #         depth - 1,
+    #         not is_maximiser,
+    #     )
+    #     # state.prev()
+    #     if (is_maximiser and score > best_score) or (
+    #         not is_maximiser and score < best_score
+    #     ):
+    #         best_score = score
+    #         best_move = sorted_moves[i]
+    # return best_move, best_score
 
 # @njit(fastmath=True, parallel=True)
 @njit(fastmath=True)

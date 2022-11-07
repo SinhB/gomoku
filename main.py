@@ -35,42 +35,45 @@ if __name__ =="__main__":
     
     # print(f"moves: {state.prev_moves}")
 
-    pos = np.array([0, 1], dtype=np.int64)
+    pos = np.array([9, 9], dtype=np.int64)
     state = next(state, pos)
     state.print_color()
     print_state_attr(state)
+    # m, s = get_best_move(state, 5, True)
+    # print(m, s)
+
+    pos = np.array([8, 8], dtype=np.int64)
+    state = next(state, pos)
+    state.print_color()
+    print_state_attr(state)
+
+    pos = np.array([9, 8], dtype=np.int64)
+    state = next(state, pos)
+    state.print_color()
+    print_state_attr(state)
+
+    pos = np.array([9, 7], dtype=np.int64)
+    state = next(state, pos)
+    state.print_color()
+    print_state_attr(state)
+
+    pos = np.array([7, 9], dtype=np.int64)
+    state = next(state, pos)
+    state.print_color()
+    print_state_attr(state)
+
+    pos = np.array([10, 6], dtype=np.int64)
+    state = next(state, pos)
+    state.print_color()
+    print_state_attr(state)
+
+    pos = np.array([11, 5], dtype=np.int64)
+    state = next(state, pos)
+    state.print_color()
+    print_state_attr(state)
+
     m, s = get_best_move(state, 5, True)
     print(m, s)
-
-    pos = np.array([3, 3], dtype=np.int64)
-    state = next(state, pos)
-    state.print_color()
-    print_state_attr(state)
-
-    pos = np.array([4, 6], dtype=np.int64)
-    state = next(state, pos)
-    state.print_color()
-    print_state_attr(state)
-
-    pos = np.array([5, 5], dtype=np.int64)
-    state = next(state, pos)
-    state.print_color()
-    print_state_attr(state)
-
-    pos = np.array([3, 2], dtype=np.int64)
-    state = next(state, pos)
-    state.print_color()
-    print_state_attr(state)
-
-    pos = np.array([4, 2], dtype=np.int64)
-    state = next(state, pos)
-    state.print_color()
-    print_state_attr(state)
-
-    pos = np.array([1, 2], dtype=np.int64)
-    state = next(state, pos)
-    state.print_color()
-    print_state_attr(state)
 
     m, s = get_best_move(state, 5, True)
     print(m, s)
