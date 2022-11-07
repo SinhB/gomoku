@@ -1,6 +1,6 @@
 """Run a Gomoku Ninuki game
-    BLACK_VALUE = 1
-    WHITE_VALUE = -1
+    BLACK_VALUE = -1
+    WHITE_VALUE = 1
 """
 
 import sys
@@ -8,7 +8,7 @@ import numpy as np
 import timeit, functools
 
 from src.board import BoardState
-from src.gamestate import GameState, get_numpy_available_pos, get_numba_available_pos, get_best_move
+from src.gamestate import GameState, get_numpy_available_pos, get_numba_available_pos, get_best_move, next
 from src.numba_utils import display
 from src.heuristic import get_diagonals, numba_search_sequence, remove_blank_line
 from src.utils import Color
@@ -17,81 +17,63 @@ from src.utils import Color
 import colorama
 colorama.init()
 
+def print_state_attr(state):
+    print(f"size: {state.size}")
+    print(f"color: {state.color}")
+    print(f"board:")
+    display(state)
+    print(f"seqs: {state.sequence_frequences}")
+    print(f"last_move: {state.last_move}")
+
 if __name__ =="__main__":
     board = BoardState(Color.BLACK, size=19)
 
     state = GameState()
-    state.evaluate()
-    print(f"shape: {state.board.shape}")
-    print(f"moves: {state.prev_moves}")
+    state.print_color()
+    print_state_attr(state)
+    # state.evaluate()
+    
+    # print(f"moves: {state.prev_moves}")
 
     pos = np.array([0, 1], dtype=np.int64)
-    state.next(pos)
+    state = next(state, pos)
     state.print_color()
-    board.next(pos)
+    print_state_attr(state)
+    m, s = get_best_move(state, 5, True)
+    print(m, s)
 
     pos = np.array([3, 3], dtype=np.int64)
-    state.next(pos)
+    state = next(state, pos)
     state.print_color()
-    board.next(pos)
-    move, score = get_best_move(state, 2, False)
+    print_state_attr(state)
 
-    pos = np.array([1, 2], dtype=np.int64)
-    state.next(pos)
+    pos = np.array([4, 6], dtype=np.int64)
+    state = next(state, pos)
     state.print_color()
-    board.next(pos)
+    print_state_attr(state)
 
     pos = np.array([5, 5], dtype=np.int64)
-    state.next(pos)
+    state = next(state, pos)
     state.print_color()
-    display(state)
-    board.next(pos)
+    print_state_attr(state)
 
-    pos = np.array([1, 3], dtype=np.int64)
-    state.next(pos)
+    pos = np.array([3, 2], dtype=np.int64)
+    state = next(state, pos)
     state.print_color()
-    board.next(pos)
+    print_state_attr(state)
 
-    #TEST EVALUATE
+    pos = np.array([4, 2], dtype=np.int64)
+    state = next(state, pos)
     state.print_color()
-    score = state.evaluate()    
-    print(f"SCORE: {score}")
+    print_state_attr(state)
 
-    pos = np.array([6, 6], dtype=np.int64)
-    state.next(pos)
+    pos = np.array([1, 2], dtype=np.int64)
+    state = next(state, pos)
     state.print_color()
-    display(state)
-    board.next(pos)
+    print_state_attr(state)
 
-    #TEST EVALUATE
-    state.print_color()
-    score = state.evaluate()    
-    print(f"SCORE: {score}")
-
-    #TEST GET MOVES
-    state.print_color()
-    move, score = get_best_move(state, 3, True)
-    print(move, score)
-    state.next(move)
-    display(state)
-
-    state.print_color()
-    move, score = get_best_move(state, 3, True)
-    print(move, score)
-    state.next(move)
-    display(state)
-
-    state.print_color()
-    move, score = get_best_move(state, 3, True)
-    print(move, score)
-    state.next(move)
-    display(state)
-
-    state.print_color()
-    move, score = get_best_move(state, 3, True)
-    print(move, score)
-    state.next(move)
-    display(state)
+    m, s = get_best_move(state, 5, True)
+    print(m, s)
 
     # # poses = state.get_available_pos()
     # np_poses = get_numpy_available_pos(state.board)
@@ -101,19 +83,19 @@ if __name__ =="__main__":
     # nb_poses = get_numba_available_pos(state.board)
     # # print(nb_poses, len(nb_poses))
 
-    print("First call")
-    nb_poses = state.get_available_pos()
-    # print(nb_poses, len(nb_poses))
+    # print("First call")
+    # nb_poses = state.get_available_pos()
+    # # print(nb_poses, len(nb_poses))
 
 
-    print(f"Available pos numpy: {timeit.timeit(functools.partial(get_numpy_available_pos, state.board), number=10000)}")
-    print(f"Available pos numba: {timeit.timeit(functools.partial(get_numba_available_pos, state.board), number=10000)}")
-    print(f"Available pos class numba: {timeit.timeit(functools.partial(state.get_available_pos), number=10000)}")
+    # print(f"Available pos numpy: {timeit.timeit(functools.partial(get_numpy_available_pos, state.board), number=10000)}")
+    # print(f"Available pos numba: {timeit.timeit(functools.partial(get_numba_available_pos, state.board), number=10000)}")
+    # print(f"Available pos class numba: {timeit.timeit(functools.partial(state.get_available_pos), number=10000)}")
 
 
-    pos = np.array([5, 5], dtype=np.int64)
-    print(f"Next class numpy: {timeit.timeit(functools.partial(board.next, pos), number=10000)}")
-    print(f"Next class numba: {timeit.timeit(functools.partial(state.next, pos), number=10000)}")
+    # pos = np.array([5, 5], dtype=np.int64)
+    # print(f"Next class numpy: {timeit.timeit(functools.partial(board.next, pos), number=10000)}")
+    # print(f"Next class numba: {timeit.timeit(functools.partial(state.next, pos), number=10000)}")
 
 
 

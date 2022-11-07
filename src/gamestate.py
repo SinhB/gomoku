@@ -22,17 +22,18 @@ spec = [
     ("board", int64[:,:]),
     ("sequence_frequences", int64[:,:]),
     ("last_move", int64[:]),
-    ("prev_moves", typeof([np.zeros(2, dtype=np.int64)]))
+    # ("prev_moves", typeof([np.zeros(2, dtype=np.int64)]))
 ]
 
 @jitclass(spec=spec)
 class GameState:
-    def __init__(self, size=19, color=-1, board=None, seqs=None) -> None:
+    def __init__(self, size=19, color=-1, board=None, sequ=None, last_move=None) -> None:
         self.size = size
         self.color = color
-        self.board = board if board is not None else np.zeros((size, size), dtype=np.int64)
-        self.sequence_frequences = seqs if seqs is not None else np.zeros((2, 9), dtype=np.int64)
-        self.prev_moves = [np.zeros(x, dtype=np.int64) for x in range(0)]
+        self.board = np.copy(board) if board is not None else np.zeros((size, size), dtype=np.int64)
+        self.sequence_frequences = np.copy(sequ) if sequ is not None else np.zeros((2, 9), dtype=np.int64)
+        # self.prev_moves = [np.zeros(x, dtype=np.int64) for x in range(0)]
+        self.last_move = np.copy(last_move) if last_move is not None else np.zeros((2), dtype=np.int64)
 
     def __hash__(self) -> int:
         return hash(str(self.color))
@@ -52,25 +53,31 @@ class GameState:
     def is_finished(self):
         return False
 
-    def next(self, position):
-        self.color = -self.color
-        self.add_stone(position)
-        self.add_move(position)
-        return self
+    # def prev(self):
+    #     self.remove_stone(self.prev_moves[-1])
+    #     self.remove_move()
+    #     self.color = -self.color
+    #     return self
 
-    def prev(self):
-        self.remove_stone(self.prev_moves[-1])
-        self.remove_move()
-        self.color = -self.color
-        return self
+    def update_sequence_frequences(self, position):
+        self.board[position[0], position[1]] = 0
+        seq_counter_before = get_numba_sequence_frequences(self.board, position)
+        self.board[position[0], position[1]] = self.color
+        seq_counter_after = get_numba_sequence_frequences(self.board, position)
+        diff = np.subtract(seq_counter_after, seq_counter_before)
+        self.sequence_frequences = np.add(self.sequence_frequences, diff[:-1, :])
+        return self.sequence_frequences
+
 
     def evaluate(self):
-        current_threats = get_numba_sequence_frequences(self.board)
+        # current_threats = get_numba_sequence_frequences(self.board)
         # print(self.prev_moves)
         # print(self.color)
         # print(current_threats)
-        black_score = get_score(current_threats, 0)
-        white_score = get_score(current_threats, 1)
+        # black_score = get_score(current_threats, 0)
+        # white_score = get_score(current_threats, 1)
+        black_score = get_score(self.sequence_frequences, 0)
+        white_score = get_score(self.sequence_frequences, 1)
         # print(black_score)
         # print(white_score)
         if self.color == -1:
@@ -155,6 +162,25 @@ class GameState:
         else:
             print("WHITE")
 
+def next(state, position):
+        new_state = GameState(
+            size=19,
+            color=-state.color,
+            board=state.board,
+            sequ=state.sequence_frequences,
+            last_move=position
+        )
+        # new_state.color = -state.color
+        # new_state.board = state.board
+        # new_state.sequence_frequences = state.sequence_frequences
+        # new_state.last_move = position
+        new_state.add_stone(position)
+        new_state.update_sequence_frequences(position)
+        # self.color = -self.color
+        # self.add_stone(position)
+        # self.add_move(position)
+        return new_state
+
 # @njit
 @timeit
 def get_best_move(state, depth, is_maximiser):
@@ -164,13 +190,13 @@ def get_best_move(state, depth, is_maximiser):
     # return best_move, 1
     for i in range(len(sorted_moves)):
         score = numba_minimax(
-            state.next(sorted_moves[i]),
+            next(state, sorted_moves[i]),
             np.iinfo(np.int32).min,
             np.iinfo(np.int32).max,
             depth - 1,
             not is_maximiser,
         )
-        state.prev()
+        # state.prev()
         if (is_maximiser and score > best_score) or (
             not is_maximiser and score < best_score
         ):
