@@ -5,6 +5,7 @@ import numpy as np
 cimport numpy as np
 
 import get_lines
+import get_threats
 
 ctypedef np.int_t DTYPE_t
 @cython.boundscheck(False)
@@ -31,26 +32,23 @@ def get_next_move(
     diags = get_lines.get_diagonals(board, size)
     rows = get_lines.get_rows(board, size)
     columns = get_lines.get_rows(board.T, size)
-    current_threats = get_sequences(diags, rows, columns)
+    current_threats = get_threats.get_sequences(diags, rows, columns)
 
-    for position in available_pos:
+    best_position = filter_pos(board, available_pos, maximizing_player)
+    for position, new_threats in best_position:
         print(position)
+
         board[position[0]][position[1]] = 1
-        # print(get_lines.get_new_threats(board, position))
-        next_move = minimax(board, depth, alpha, beta, maximizing_player, size, current_threats)
-        # print("Next move:")
+
+        next_move = minimax(board, depth, alpha, beta, maximizing_player, size, new_threats)
+        print("Next move:")
         print(next_move)
         board[position[0]][position[1]] = 0
     return 5
 
-def evaluate(np.ndarray[np.int_t, ndim=2] board, int size, current_threats, str color):
-    print("Evaluate")
-    print(current_threats)
-    
-    diags = get_lines.get_diagonals(board, size)
-    rows = get_lines.get_rows(board, size)
-    columns = get_lines.get_rows(board.T, size)
-    current_threats = get_sequences(diags, rows, columns)
+def evaluate(current_threats, str color):
+    # print("Evaluate")
+    # print(current_threats)
 
     priority_keys = (
         "five",
@@ -75,6 +73,22 @@ def evaluate(np.ndarray[np.int_t, ndim=2] board, int size, current_threats, str 
             score += 9 - i * current_threats[color][key]
     return score
 
+def filter_pos(np.ndarray[np.int_t, ndim=2] board, available_pos, maximizing_player):
+    eval_to_pos = []
+    for position in available_pos:
+        board[position[0]][position[1]] = 1
+        new_threats = get_threats.get_new_threats(board, position[0], position[1])
+        board[position[0]][position[1]] = 0
+        eval_to_pos.append((evaluate(new_threats, "BLACK"), (position, new_threats)))
+    if maximizing_player:
+        eval_to_pos.sort(key=lambda tup: tup[0], reverse=True)
+    else:
+        eval_to_pos.sort(key=lambda tup: tup[0])
+    new_list = []
+    for i in range(0, 5):
+        new_list.append(eval_to_pos[i][1])
+    # print(f"---{len(new_list)}")
+    return new_list
 
 def minimax(
     np.ndarray[np.int_t, ndim=2] board,
@@ -88,165 +102,40 @@ def minimax(
     # if depth == 0 or is_finished():
     if depth == 0:
         # return evaluate(board, size, current_threats, "WHITE")
-        return evaluate(board, size, current_threats, "BLACK")
+        x = evaluate(current_threats, "BLACK")
+        # print(x)
+        return x
     available_pos = get_lines.get_available_positions(board, size)
-    # print(available_pos)
+    best_position = filter_pos(board, available_pos, maximizing_player)
     if maximizing_player:
         maxEval = -10000000
-        for position in available_pos:
+        # for position in best_position:
+        for position, new_threats in best_position:
             board[position[0]][position[1]] = 1
-            eval = minimax(board, depth - 1, alpha, beta, not maximizing_player, size, current_threats)
+
+            eval = minimax(board, depth - 1, alpha, beta, not maximizing_player, size, new_threats)
             board[position[0]][position[1]] = 0
 
             maxEval = max(alpha, eval)
             alpha = max(alpha, eval)
+            # print(f"alpha : {alpha}")
             if beta <= alpha:
+                # print("BREAK")
                 break
         return maxEval
     else:
         minEval = 10000000
-        for position in available_pos:
+        # for position in best_position:
+        for position, new_threats in best_position:
             board[position[0]][position[1]] = -1
-            eval = minimax(board, depth - 1, alpha, beta, not maximizing_player, size, current_threats)
+            eval = minimax(board, depth - 1, alpha, beta, not maximizing_player, size, new_threats)
             board[position[0]][position[1]] = 0
 
             minEval - min(beta, eval)
             beta = min(beta, eval)
+            # print(f"beta : {beta}")
             if beta <= alpha:
+                # print("BREAK")
                 break
         return minEval
 
-def is_array_equal(arr, seq):
-    for arri, seqi in zip(arr, seq):
-        if arri != seqi:
-            return False
-    return True
-
-def numba_search_sequence(arr, seq):
-    black_seq = seq * 1
-    white_seq = seq * -1
-
-    # Check for sequence in the flatten board
-    black_seq_count = 0
-    white_seq_count = 0
-    seq_len = len(seq)
-    upper_bound = len(arr) - len(seq) + 1
-    for i in range(upper_bound):
-        if is_array_equal(arr[i : i + seq_len], black_seq):
-            black_seq_count += 1
-        if is_array_equal(arr[i : i + seq_len], white_seq):
-            white_seq_count += 1
-
-    return black_seq_count, white_seq_count
-
-def _get_sequence_key_from_index(index):
-    max_index = (0, 3, 6, 9, 13, 19, 22, 33, 45)
-    keys = (
-        "five",
-        "open_four",
-        "simple_four",
-        "open_three",
-        "broken_three",
-        "simple_three",
-        "open_two",
-        "broken_two",
-        "simple_two",
-    )
-    for i, value in enumerate(max_index):
-        if index <= value:
-            return keys[i]
-    return "none"
-
-def get_sequences(np.ndarray[np.int_t, ndim=1] diags, np.ndarray[np.int_t, ndim=1] rows, np.ndarray[np.int_t, ndim=1] columns):
-    THREAT_PATTERNS = [
-        # Five
-        np.array((1, 1, 1, 1, 1)),
-        # Open four
-        np.array((0, 1, 1, 1, 1, 0)),
-        np.array((-1, 1, 1, 0, 1, 1, 0, 1, 1, -1)),
-        np.array((-1, 1, 1, 1, 0, 1, 0, 1, 1, 1, -1)),
-        # Simple four
-        np.array((-1, 1, 1, 1, 1, 0)),
-        np.array((0, 1, 1, 1, 1, -1)),
-        np.array((0, 1, 1, 0, 1, 1, 0)),
-        # Open three
-        np.array((0, 0, 1, 1, 1, 0, 0)),
-        np.array((0, 1, 0, 1, 1, 0, 1, 0)),
-        np.array((1, 0, 1, 0, 1, 0, 1, 0, 1)),
-        # Broken three
-        np.array((0, 1, 0, 1, 1, 0)),
-        np.array((0, 1, 1, 0, 1, 0)),
-        np.array((-1, 0, 1, 1, 1, 0, 0)),
-        np.array((0, 0, 1, 1, 1, 0, -1)),
-        # Simple three
-        np.array((-1, 1, 1, 1, 0, 0)),
-        np.array((0, 0, 1, 1, 1, -1)),
-        np.array((-1, 1, 1, 0, 1, 0)),
-        np.array((0, 1, 0, 1, 1, -1)),
-        np.array((-1, 1, 0, 1, 1, 0)),
-        np.array((0, 1, 1, 0, 1, -1)),
-        # Open two
-        np.array((0, 0, 1, 1, 0, 0, 0)),
-        np.array((0, 0, 1, 0, 1, 0, 0)),
-        np.array((0, 0, 0, 1, 1, 0, 0)),
-        # Broken two
-        np.array((0, 1, 0, 0, 1, 0)),
-        np.array((0, 0, 0, 1, 1, 0)),
-        np.array((0, 1, 1, 0, 0, 0)),
-        np.array((0, 1, 0, 1, 0, 0)),
-        np.array((0, 0, 1, 0, 1, 0)),
-        np.array((-1, 0, 0, 1, 1, 0, 0)),
-        np.array((-1, 0, 1, 0, 1, 0, 0)),
-        np.array((-1, 0, 1, 1, 0, 0, 0)),
-        np.array((0, 0, 1, 1, 0, 0, -1)),
-        np.array((0, 0, 1, 0, 1, 0, -1)),
-        np.array((0, 0, 0, 1, 1, 0, -1)),
-        # Simple two
-        np.array((-1, 0, 1, 1, 0, 0)),
-        np.array((-1, 1, 0, 1, 0, 0)),
-        np.array((-1, 1, 1, 0, 0, 0)),
-        np.array((-1, 1, 0, 0, 1, 0)),
-        np.array((-1, 0, 1, 0, 1, 0)),
-        np.array((-1, 0, 0, 1, 1, 0)),
-        np.array((0, 0, 1, 1, 0, -1)),
-        np.array((0, 0, 1, 0, 1, -1)),
-        np.array((0, 0, 0, 1, 1, -1)),
-        np.array((0, 1, 0, 1, 0, -1)),
-        np.array((0, 1, 0, 0, 1, -1)),
-        np.array((0, 1, 1, 0, 0, -1)),
-    ]
-
-    d = {
-        "BLACK": {
-            "five": 0,
-            "open_four": 0,
-            "simple_four": 0,
-            "open_three": 0,
-            "broken_three": 0,
-            "simple_three": 0,
-            "open_two": 0,
-            "broken_two": 0,
-            "simple_two": 0,
-        },
-        "WHITE": {
-            "five": 0,
-            "open_four": 0,
-            "simple_four": 0,
-            "open_three": 0,
-            "broken_three": 0,
-            "simple_three": 0,
-            "open_two": 0,
-            "broken_two": 0,
-            "simple_two": 0,
-        },
-    }
-
-    for i, seq in enumerate(THREAT_PATTERNS):
-        key = _get_sequence_key_from_index(i)
-        bd, wd = numba_search_sequence(diags, seq)
-        br, wr = numba_search_sequence(rows, seq)
-        bc, wc = numba_search_sequence(columns, seq)
-        d["BLACK"][key] += bd + br + bc
-        d["WHITE"][key] += wd + wr + wc
-
-    return d
