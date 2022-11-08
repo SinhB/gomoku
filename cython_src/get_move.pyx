@@ -76,18 +76,25 @@ def evaluate(current_threats, str color):
 def filter_pos(np.ndarray[np.int_t, ndim=2] board, available_pos, maximizing_player):
     eval_to_pos = []
     for position in available_pos:
-        board[position[0]][position[1]] = 1
+        if maximizing_player:
+            board[position[0]][position[1]] = 1
+        else:
+            board[position[0]][position[1]] = -1
         new_threats = get_threats.get_new_threats(board, position[0], position[1])
         board[position[0]][position[1]] = 0
-        eval_to_pos.append((evaluate(new_threats, "BLACK"), (position, new_threats)))
+
+        if not maximizing_player:
+            eval_to_pos.append((evaluate(new_threats, "WHITE"), (position, new_threats)))
+        else:
+            eval_to_pos.append((evaluate(new_threats, "BLACK"), (position, new_threats)))
+
     if maximizing_player:
-        eval_to_pos.sort(key=lambda tup: tup[0], reverse=True)
-    else:
         eval_to_pos.sort(key=lambda tup: tup[0])
+    else:
+        eval_to_pos.sort(key=lambda tup: tup[0], reverse=True)
     new_list = []
     for i in range(0, 5):
         new_list.append(eval_to_pos[i][1])
-    # print(f"---{len(new_list)}")
     return new_list
 
 def minimax(
@@ -103,6 +110,7 @@ def minimax(
     if depth == 0:
         # return evaluate(board, size, current_threats, "WHITE")
         x = evaluate(current_threats, "BLACK")
+        # x = evaluate(current_threats, "BLACK")
         # print(x)
         return x
     available_pos = get_lines.get_available_positions(board, size)
