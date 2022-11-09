@@ -40,6 +40,12 @@ class SQLiteGameRepository(GameRepository):
         if not game_start_request.players:
             raise MissingParameterError
 
+        db_game = ORMGame(
+            board_dimensions=game_start_request.board_dimensions,
+            start_time=game_start_request.start_time,
+        )
+        self.database_session.add(db_game)
+
         player_one = player_entity_orm_adapter(
             PlayerRegistration(name=game_start_request.players[0].name, color=game_start_request.players[0].color)
         )
@@ -47,12 +53,6 @@ class SQLiteGameRepository(GameRepository):
             PlayerRegistration(name=game_start_request.players[1].name, color=game_start_request.players[1].color)
         )
         self.database_session.add(player_one)
-
-        db_game = ORMGame(
-            board_dimensions=game_start_request.board_dimensions,
-            start_time=game_start_request.start_time,
-        )
-        self.database_session.add(db_game)
 
         participant_one = ORMParticipant(player=player_one, game=db_game)
         self.database_session.add(participant_one)

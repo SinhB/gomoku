@@ -102,9 +102,7 @@ class TestSQLiteGameRepository:
 
     @freeze_time("2042-05-24")
     @pytest.mark.asyncio
-    async def test_sqlite_game_repo_do_not_find_game_with_non_existing_id(
-        self, testing_data_set_session, player_one, player_two
-    ):
+    async def test_sqlite_game_repo_do_not_find_game_with_non_existing_id(self, testing_data_set_session):
         """
         Test that we can find an existing game by id in db.
         """
