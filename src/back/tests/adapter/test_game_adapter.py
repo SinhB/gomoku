@@ -2,9 +2,11 @@ from datetime import datetime
 
 import pytest
 from freezegun import freeze_time
+from sqlalchemy import select
 from src.back.domain.entities.game import Game as GameEntity
 from src.back.domain.entities.game import GameCreationRequest
-from src.back.implementation.game import SQLiteGameRepository
+from src.back.implementation.sqlite.game import SQLiteGameRepository
+from src.back.implementation.sqlite.models.player import Participant as ORMParticipant
 
 
 class TestSQLiteGameRepository:
@@ -53,9 +55,13 @@ class TestSQLiteGameRepository:
             )
         )
 
+        stmt = select(ORMParticipant).where(ORMParticipant.player_id.in_([player_one.id, player_two.id]))
+        result = await testing_data_set_session.execute(stmt)
+        participants = result.scalars()
+
         assert created_game == GameEntity(
             id=created_game.id,
-            players=[],
+            players=[participant for participant in participants],
             start_time=datetime.now(),
             max_number_of_players=2,
             number_of_turns=0,

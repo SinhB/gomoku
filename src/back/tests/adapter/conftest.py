@@ -1,8 +1,8 @@
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from src.back.implementation.models.game import Game as ORMGame
-from src.back.implementation.models.player import Player as ORMPlayer
+from src.back.implementation.sqlite.models.game import Game as ORMGame
+from src.back.implementation.sqlite.models.player import Player as ORMPlayer
 
 
 @pytest_asyncio.fixture
