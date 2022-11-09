@@ -5,3 +5,9 @@ class UnavailableRepositoryError(Exception):
     """
 
     pass
+
+
+class MissingParameterError(Exception):
+    """This exception is raised when parameters are incorrect."""
+
+    pass
