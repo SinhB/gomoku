@@ -1,5 +1,5 @@
-from fastapi import Depends, FastAPI, status
-from starlette.responses import JSONResponse
+from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.back.api.dependencies import get_game_repository
 from src.back.core.constants import PlayerTypeEnum
@@ -8,6 +8,18 @@ from src.back.domain.repositories.game import GameRepository
 from src.back.domain.schemas.game import GameBase, GameCreation
 
 app = FastAPI()
+
+origins = [
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 def game_to_api_adapter(game: Game) -> GameBase:

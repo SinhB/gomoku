@@ -45,3 +45,10 @@ export interface IGameState {
   legal: boolean;
   gameStatus: IGameStatus;
 }
+
+export interface IGameCreation {
+  max_number_of_players: number;
+  number_of_turns: number;
+  board_dimensions: string;
+  start_time: Date;
+}

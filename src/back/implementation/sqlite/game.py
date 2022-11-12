@@ -66,7 +66,6 @@ class SQLiteGameRepository(GameRepository):
             raise UnavailableRepositoryError()
 
         await self.database_session.refresh(db_game)
-        print(db_game.__dict__)
 
         # convert ORM data to domain entity
         return orm_game_adapter(db_game)

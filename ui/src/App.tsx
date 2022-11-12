@@ -1,5 +1,14 @@
+import { startGame } from "./api/game";
 import Board from "./components/Board";
+import Button from "./components/Button";
 import Stone from "./components/Stone";
+
+const gameCreationDefault = {
+  players: [{ color: "black" }, { color: "white" }],
+  max_number_of_players: 2,
+  number_of_turns: 0,
+  board_dimensions: "19x19",
+};
 
 function App() {
   return (
@@ -11,6 +20,11 @@ function App() {
         </header>
       </section>
       <div>
+        <section className="center mb-5">
+          <Button onclick={startGame} params={gameCreationDefault}>
+            Start
+          </Button>
+        </section>
         <section className="board-section">
           <Board />
         </section>
