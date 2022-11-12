@@ -2,6 +2,7 @@ import socket
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+
 from src.back.domain.entities.game import Game as GameEntity
 from src.back.domain.entities.game import GameCreationRequest
 from src.back.domain.entities.player import PlayerRegistration
@@ -46,11 +47,13 @@ class SQLiteGameRepository(GameRepository):
         )
         self.database_session.add(db_game)
 
+        print(game_start_request)
+
         player_one = player_entity_orm_adapter(
-            PlayerRegistration(name=game_start_request.players[0].name, color=game_start_request.players[0].color)
+            PlayerRegistration(name=game_start_request.players[0]["name"], color=game_start_request.players[0]["color"])
         )
         player_two = player_entity_orm_adapter(
-            PlayerRegistration(name=game_start_request.players[1].name, color=game_start_request.players[1].color)
+            PlayerRegistration(name=game_start_request.players[1]["name"], color=game_start_request.players[1]["color"])
         )
         self.database_session.add(player_one)
 

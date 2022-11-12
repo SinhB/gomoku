@@ -9,7 +9,7 @@ from src.back.domain.entities.player import Participant, Player
 class Game:
     id: int
     players: Tuple[Participant, Participant]
-    start_time: datetime = datetime.now()
+    start_time: datetime
     max_number_of_players: int = 2
     number_of_turns: int = 0
     board_dimensions: str = "19x19"
@@ -17,8 +17,8 @@ class Game:
 
 @dataclass(frozen=True, slots=True)
 class GameCreationRequest:
-    start_time: datetime
     players: Tuple[Player, Player]
+    start_time: datetime = datetime.now()
     max_number_of_players: int = 2
     number_of_turns: int = 0
     board_dimensions: str = "19x19"

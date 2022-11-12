@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 
 @dataclass
@@ -6,6 +6,9 @@ class Player:
     id: int
     name: str
     color: str
+
+    def dict(self):
+        return {k: str(v) for k, v in asdict(self).items()}
 
 
 @dataclass

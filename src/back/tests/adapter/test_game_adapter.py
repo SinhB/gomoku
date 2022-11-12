@@ -2,10 +2,12 @@ from datetime import datetime
 
 import pytest
 from freezegun import freeze_time
+from pydantic.error_wrappers import ValidationError
 from sqlalchemy import select
+
 from src.back.domain.entities.game import Game as GameEntity
 from src.back.domain.entities.game import GameCreationRequest
-from src.back.domain.exceptions import MissingParameterError
+from src.back.domain.schemas.game import GameCreation
 from src.back.implementation.sqlite.game import SQLiteGameRepository
 from src.back.implementation.sqlite.models.player import Participant as ORMParticipant
 
@@ -25,16 +27,16 @@ class TestSQLiteGameRepository:
         """
         sqlite_game_repo = SQLiteGameRepository(database_session=testing_data_set_session)
 
-        with pytest.raises(MissingParameterError):
-            await sqlite_game_repo.start_game(
-                GameCreationRequest(
-                    players=[],
-                    start_time=datetime.now(),
-                    max_number_of_players=2,
-                    number_of_turns=0,
-                    board_dimensions="19x19",
-                )
+        with pytest.raises(ValidationError):
+            game_data = GameCreation(
+                players=[],
+                start_time=datetime.now(),
+                max_number_of_players=2,
+                number_of_turns=0,
+                board_dimensions="19x19",
             )
+            print(game_data.dict())
+            await sqlite_game_repo.start_game(GameCreationRequest(**game_data.dict()))
 
     @freeze_time("2042-05-24")
     @pytest.mark.asyncio
@@ -44,15 +46,15 @@ class TestSQLiteGameRepository:
         """
         sqlite_game_repo = SQLiteGameRepository(database_session=testing_data_set_session)
 
-        created_game = await sqlite_game_repo.start_game(
-            GameCreationRequest(
-                players=[player_one, player_two],
-                start_time=datetime.now(),
-                max_number_of_players=2,
-                number_of_turns=0,
-                board_dimensions="19x19",
-            )
+        game_data = GameCreation(
+            players=[player_one.dict(), player_two.dict()],
+            start_time=datetime.now(),
+            max_number_of_players=2,
+            number_of_turns=0,
+            board_dimensions="19x19",
         )
+
+        created_game = await sqlite_game_repo.start_game(GameCreationRequest(**game_data.dict()))
 
         stmt = select(ORMParticipant).where(ORMParticipant.player_id.in_([player_one.id, player_two.id]))
         result = await testing_data_set_session.execute(stmt)
@@ -75,15 +77,15 @@ class TestSQLiteGameRepository:
         """
         sqlite_game_repo = SQLiteGameRepository(database_session=testing_data_set_session)
 
-        created_game = await sqlite_game_repo.start_game(
-            GameCreationRequest(
-                players=[player_one, player_two],
-                start_time=datetime.now(),
-                max_number_of_players=2,
-                number_of_turns=0,
-                board_dimensions="19x19",
-            )
+        game_data = GameCreation(
+            players=[player_one.dict(), player_two.dict()],
+            start_time=datetime.now(),
+            max_number_of_players=2,
+            number_of_turns=0,
+            board_dimensions="19x19",
         )
+
+        created_game = await sqlite_game_repo.start_game(GameCreationRequest(**game_data.dict()))
 
         stmt = select(ORMParticipant).where(ORMParticipant.player_id.in_([player_one.id, player_two.id]))
         result = await testing_data_set_session.execute(stmt)
