@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Tuple
+from typing import Optional, Tuple
 
 from pydantic import BaseModel, PositiveInt
 
@@ -10,10 +10,10 @@ from src.back.domain.schemas.player import PlayerRegistration
 class GameBase(BaseModel):
     id: PositiveInt
     max_number_of_players: PositiveInt = 2
-    number_of_turns: PositiveInt = 0
+    number_of_turns: int = 0
     board_dimensions: str
     start_time: datetime
-    end_time: datetime
+    end_time: Optional[datetime]
 
 
 class GameCreation(BaseModel):

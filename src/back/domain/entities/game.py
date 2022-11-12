@@ -2,13 +2,12 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Tuple
 
-from src.back.domain.entities.player import Participant, Player
+from src.back.domain.entities.player import Player
 
 
 @dataclass(frozen=True, slots=True)
 class Game:
     id: int
-    players: Tuple[Participant, Participant]
     start_time: datetime
     max_number_of_players: int = 2
     number_of_turns: int = 0

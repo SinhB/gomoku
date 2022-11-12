@@ -19,7 +19,6 @@ def orm_game_adapter(database_game_model: ORMGame) -> GameEntity:
 
     return GameEntity(
         id=database_game_model.id,
-        players=database_game_model.players,
         start_time=database_game_model.start_time,
         max_number_of_players=database_game_model.max_number_of_players,
         number_of_turns=database_game_model.number_of_turns,
@@ -47,8 +46,6 @@ class SQLiteGameRepository(GameRepository):
         )
         self.database_session.add(db_game)
 
-        print(game_start_request)
-
         player_one = player_entity_orm_adapter(
             PlayerRegistration(name=game_start_request.players[0]["name"], color=game_start_request.players[0]["color"])
         )
@@ -68,11 +65,15 @@ class SQLiteGameRepository(GameRepository):
         except socket.gaierror:
             raise UnavailableRepositoryError()
 
+        await self.database_session.refresh(db_game)
+        print(db_game.__dict__)
+
         # convert ORM data to domain entity
         return orm_game_adapter(db_game)
 
     async def find_game_by_id(self, game_id: int) -> GameEntity:
         lookup = select(ORMGame).filter(ORMGame.id == game_id)
         result = await self._fetch_data(lookup)
-        db_user = result.scalars().first()
-        return orm_game_adapter(db_user)
+        db_game = result.scalars().first()
+
+        return orm_game_adapter(db_game)

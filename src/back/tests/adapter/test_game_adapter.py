@@ -3,13 +3,11 @@ from datetime import datetime
 import pytest
 from freezegun import freeze_time
 from pydantic.error_wrappers import ValidationError
-from sqlalchemy import select
 
 from src.back.domain.entities.game import Game as GameEntity
 from src.back.domain.entities.game import GameCreationRequest
 from src.back.domain.schemas.game import GameCreation
 from src.back.implementation.sqlite.game import SQLiteGameRepository
-from src.back.implementation.sqlite.models.player import Participant as ORMParticipant
 
 
 class TestSQLiteGameRepository:
@@ -35,7 +33,6 @@ class TestSQLiteGameRepository:
                 number_of_turns=0,
                 board_dimensions="19x19",
             )
-            print(game_data.dict())
             await sqlite_game_repo.start_game(GameCreationRequest(**game_data.dict()))
 
     @freeze_time("2042-05-24")
@@ -56,13 +53,8 @@ class TestSQLiteGameRepository:
 
         created_game = await sqlite_game_repo.start_game(GameCreationRequest(**game_data.dict()))
 
-        stmt = select(ORMParticipant).where(ORMParticipant.player_id.in_([player_one.id, player_two.id]))
-        result = await testing_data_set_session.execute(stmt)
-        participants = result.scalars()
-
         assert created_game == GameEntity(
             id=created_game.id,
-            players=[participant for participant in participants],
             start_time=datetime.now(),
             max_number_of_players=2,
             number_of_turns=0,
@@ -87,15 +79,10 @@ class TestSQLiteGameRepository:
 
         created_game = await sqlite_game_repo.start_game(GameCreationRequest(**game_data.dict()))
 
-        stmt = select(ORMParticipant).where(ORMParticipant.player_id.in_([player_one.id, player_two.id]))
-        result = await testing_data_set_session.execute(stmt)
-        participants = result.scalars()
-
         retrieved_game = await sqlite_game_repo.find_game_by_id(created_game.id)
 
         assert retrieved_game == GameEntity(
             id=retrieved_game.id,
-            players=[participant for participant in participants],
             start_time=datetime.now(),
             max_number_of_players=2,
             number_of_turns=0,

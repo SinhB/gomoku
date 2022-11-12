@@ -11,6 +11,7 @@ app = FastAPI()
 
 
 def game_to_api_adapter(game: Game) -> GameBase:
+    print(game)
     return GameBase(
         id=game.id,
         max_number_of_players=game.max_number_of_players,
@@ -25,14 +26,20 @@ async def game_start(
     game_data: GameCreation,
     game_repository: GameRepository = Depends(get_game_repository),
 ):
-
     game_request = GameCreationRequest(**game_data.dict())
     created_game = await game_repository.start_game(game_request)
 
-    return JSONResponse(
-        status_code=status.HTTP_201_CREATED,
-        content=game_to_api_adapter(created_game).dict(),
-    )
+    return created_game
+
+
+@app.get("/game/find/{game_id}")
+async def game_find_by_id(
+    game_id: int,
+    game_repository: GameRepository = Depends(get_game_repository),
+):
+    found_game = await game_repository.find_game_by_id(game_id)
+
+    return found_game
 
 
 @app.get("/board/turn/")
