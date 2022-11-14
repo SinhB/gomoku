@@ -6,6 +6,7 @@ from src.back.core.constants import PlayerTypeEnum
 from src.back.domain.entities.game import Game, GameCreationRequest
 from src.back.domain.repositories.game import GameRepository
 from src.back.domain.schemas.game import GameBase, GameCreation
+from src.back.use_cases import StartGameUseCase
 
 app = FastAPI()
 
@@ -39,7 +40,8 @@ async def game_start(
     game_repository: GameRepository = Depends(get_game_repository),
 ):
     game_request = GameCreationRequest(**game_data.dict())
-    created_game = await game_repository.start_game(game_request)
+    use_case = StartGameUseCase(game_repository)
+    created_game = await use_case(game_request)
 
     return created_game
 

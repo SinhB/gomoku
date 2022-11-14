@@ -2,26 +2,22 @@
 Defines all use cases for our system.
 
 """
-from typing import Tuple
+from dataclasses import dataclass
 
+from src.back.domain.entities.game import GameCreationRequest
 from src.back.domain.repositories.game import GameRepository
-from src.back.domain.schemas.game import Game, Stone
-from src.back.domain.schemas.player import Player
+from src.back.domain.schemas.game import GameBase, Stone
 
 
+@dataclass
 class StartGameUseCase:
     repository: GameRepository
 
-    def __call__(self, players: Tuple[Player]) -> None:
-        ...
-
-    def start_game(self):
-        self.repository.start_game()
+    async def __call__(self, game_creation_request: GameCreationRequest) -> GameBase:
+        return await self.repository.start_game(game_creation_request)
 
 
+@dataclass
 class PlacingStoneUseCase:
-    def __call__(self, game: Game, stone: Stone) -> None:
+    def __call__(self, game: GameBase, stone: Stone) -> None:
         ...
-
-
-StartGameUseCase(repository=GameRepository()).start_game()
