@@ -8,7 +8,7 @@ import numpy as np
 import timeit, functools
 
 from src.board import BoardState
-from numba_src.numba_gamestate import GameState, get_best_moves, make_2d
+from numba_src.numba_gamestate import GameState, get_best_move, make_2d
 # from src.gamestate import GameState, get_numpy_available_pos, get_numba_available_pos, get_best_move, next
 from numba_src.numba_utils import display
 from src.heuristic import get_diagonals, numba_search_sequence, remove_blank_line
@@ -87,8 +87,40 @@ if __name__ =="__main__":
     # print_state_attr(state)
     # state.evaluate()
 
-    poses = get_best_moves(state, True)
-    # print(poses)
+    # poses = get_best_moves(state, True)
+    pos = get_best_move(state, 5, True)
+    print(pos)
+    state = state.next(pos[0])
+    state.print_color()
+    print_state_attr(state)
+
+    pos = get_best_move(state, 5, True)
+    print(pos)
+    print_state_attr(state)
+    state = state.next(pos[0])
+    state.print_color()
+    print_state_attr(state)
+
+    pos = get_best_move(state, 5, True)
+    print(pos)
+    print_state_attr(state)
+    state = state.next(pos[0])
+    state.print_color()
+    print_state_attr(state)
+
+    pos = get_best_move(state, 5, True)
+    print(pos)
+    print_state_attr(state)
+    state = state.next(pos[0])
+    state.print_color()
+    print_state_attr(state)
+
+    pos = get_best_move(state, 5, True)
+    print(pos)
+    print_state_attr(state)
+    state = state.next(pos[0])
+    state.print_color()
+    print_state_attr(state)
 
     # print(get_best_moves.inspect_types())
     # print(f"Evaluate: {timeit.timeit(functools.partial(state.evaluate), number=10000)}")

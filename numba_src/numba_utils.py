@@ -190,7 +190,8 @@ def get_sequence_index(index):
     Output    : name (string)
     """
     # max_index = (0, 3, 6, 9, 13, 19, 22, 33, 45)
-    max_index = (0, 1, 8, 10, 13, 15)
+    # max_index = (0, 1, 8, 10, 13, 15)
+    max_index = (0, 1, 4, 5, 7, 10, 12)
     for i, value in enumerate(max_index):
         if index <= value:
             return i
@@ -267,26 +268,48 @@ def get_numba_sequence_frequences(board, position):
     #     np.array((0, 1, 1, 0, 0, -1), dtype=np.int64),  # SimpleTwo (2,1)
     # ]
 
+    # THREAT_PATTERNS = [
+    #     np.array((1, 1, 1, 1, 1), dtype=np.int64), #100000
+
+    #     np.array((0, 1, 1, 1, 1, 0), dtype=np.int64), #50000
+
+    #     np.array((0, 1, 1, 1, 0, 0), dtype=np.int64), #5000
+    #     np.array((0, 0, 1, 1, 1, 0), dtype=np.int64), #5000
+    #     np.array((1, 1, 1, 1, 0), dtype=np.int64), #5000
+    #     np.array((0, 1, 1, 1, 1), dtype=np.int64), #5000
+    #     np.array((1, 1, 0, 1, 1), dtype=np.int64), #5000
+    #     np.array((1, 0, 1, 1, 1), dtype=np.int64), #5000
+    #     np.array((1, 1, 1, 0, 1), dtype=np.int64), #5000
+
+    #     np.array((0, 1, 1, 0, 1, 0), dtype=np.int64), #500
+    #     np.array((0, 1, 0, 1, 1, 0), dtype=np.int64), #500
+    #     np.array((0, 0, 1, 1, 0, 0), dtype=np.int64), #100
+    #     np.array((0, 0, 1, 0, 1, 0), dtype=np.int64), #100
+    #     np.array((0, 1, 0, 1, 0, 0), dtype=np.int64), #100
+    #     np.array((0, 0, 1, 0, 0, 0), dtype=np.int64), #10
+    #     np.array((0, 0, 0, 1, 0, 0), dtype=np.int64), #10
+    # ]
+
     THREAT_PATTERNS = [
-        np.array((1, 1, 1, 1, 1), dtype=np.int64), #100000
+        np.array((1, 1, 1, 1, 1), dtype=np.int64), # WT Five 0
 
-        np.array((0, 1, 1, 1, 1, 0), dtype=np.int64), #50000
-        np.array((0, 1, 1, 1, 0, 0), dtype=np.int64), #5000
-        np.array((0, 0, 1, 1, 1, 0), dtype=np.int64), #5000
+        np.array((0, 1, 1, 1, 1, 0), dtype=np.int64), #NRT Open-Four 1
 
-        np.array((1, 1, 1, 1, 0), dtype=np.int64), #5000
-        np.array((0, 1, 1, 1, 1), dtype=np.int64), #5000
-        np.array((1, 1, 0, 1, 1), dtype=np.int64), #5000
-        np.array((1, 0, 1, 1, 1), dtype=np.int64), #5000
-        np.array((1, 1, 1, 0, 1), dtype=np.int64), #5000
+        np.array((-1, 1, 1, 1, 1, 0), dtype=np.int64), #RT Simple-Four 1
+        np.array((0, 1, 1, 1, 1, -1), dtype=np.int64), #RT Simple-Four 1
+        np.array((0, 1, 1, 0, 1, 1, 0), dtype=np.int64), #RT Simple-Four 1
 
-        np.array((0, 1, 1, 0, 1, 0), dtype=np.int64), #500
-        np.array((0, 1, 0, 1, 1, 0), dtype=np.int64), #500
-        np.array((0, 0, 1, 1, 0, 0), dtype=np.int64), #100
-        np.array((0, 0, 1, 0, 1, 0), dtype=np.int64), #100
-        np.array((0, 1, 0, 1, 0, 0), dtype=np.int64), #100
-        np.array((0, 0, 1, 0, 0, 0), dtype=np.int64), #10
-        np.array((0, 0, 0, 1, 0, 0), dtype=np.int64), #10
+        np.array((0, 1, 1, 1, 0), dtype=np.int64), #RT Open-Three 2
+        
+        np.array((0, 1, 0, 1, 1, 0), dtype=np.int64), #RT BrokenThree 2
+        np.array((0, 1, 1, 0, 1, 0), dtype=np.int64),  #RT BrokenThree 2
+
+        np.array((0, 0, 1, 1, 0, 0), dtype=np.int64), #Nothing Open-Two 3
+        np.array((0, 0, 1, 0, 1, 0), dtype=np.int64), #Nothing Open-Two 3
+        np.array((0, 1, 0, 1, 0, 0), dtype=np.int64), #Nothing Open-Two 3
+
+        np.array((0, 0, 1, 0, 0, 0), dtype=np.int64), #Nothing SingleStone 4
+        np.array((0, 0, 0, 1, 0, 0), dtype=np.int64), #Nothing SingleStone 4
     ]
 
     row_idx, column_idx = position
@@ -311,10 +334,11 @@ def get_numba_sequence_frequences(board, position):
 
     #First line is BLACK(0), second is WHITE(1) 
     # seq_counter_arr = np.zeros((3, 9), dtype=np.int64)
-    seq_counter_arr = np.zeros((3, 6), dtype=np.int64)
+    seq_counter_arr = np.zeros((3, 7), dtype=np.int64)
     #number of move to get the next step
     # seq_counter_arr[2] = [2, 2, 1, 3, 2, 1, 3, 2, 1]
-    seq_counter_arr[2] = [100000, 50000, 5000, 500, 100, 10]
+    # seq_counter_arr[2] = [100000, 50000, 5000, 500, 100, 10]
+    seq_counter_arr[2] = [100000, 50000, 10000, 5000, 1000, 100, 5]
     
     threat_len = len(THREAT_PATTERNS)
     for i in prange(threat_len):
@@ -332,31 +356,31 @@ def is_capture(board, pos, color):
     x, y = pos[0], pos[1]
     #row
     if (y+3 <= 19) and (board[x,y+1] == -color and board[x,y+2] == -color) and board[x,y+3] == color:
-        print("right row")
+        # print("right row")
         return (x,y+1), (x,y+2)
     if (y-3 >= 0) and (board[x,y-1] == -color and board[x,y-2] == -color) and board[x,y-3] == color:
-        print("left row")
+        # print("left row")
         return (x,y-1), (x,y-2)
     #col
     if (x+3 <= 19) and (board[x+1,y] == -color and board[x+2,y] == -color) and board[x+3,y] == color:
-        print("down col")
+        # print("down col")
         return (x+1,y), (x+2,y)
     if (x-3 >= 0) and (board[x-1,y] == -color and board[x-2,y] == -color) and board[x-3,y] == color:
-        print("up col")
+        # print("up col")
         return (x-1,y), (x-2,y)
     #left to right diag
     if (x+3 <= 19 and y+3 <= 19) and (board[x+1,y+1] == -color and board[x+2,y+2] == -color) and board[x+3,y+3] == color:
-        print("down right diag")
+        # print("down right diag")
         return (x+1,y+1), (x+2,y+2)
     if (x-3 >= 0 and y-3 >= 0) and (board[x-1,y-1] == -color and board[x-2,y-2] == -color) and board[x-3,y-3] == color:
-        print("up left diag")
+        # print("up left diag")
         return (x-1,y-1), (x-2,y-2)
     #right to left diag
     if (x+3 <= 19 and y-3 >= 0) and (board[x+1,y-1] == -color and board[x+2,y-2] == -color) and board[x+3,y-3] == color:
-        print("down left diag")
+        # print("down left diag")
         return (x+1,y-1), (x+2,y-2)
     if (x-3 >= 0 and y+3 <= 19) and (board[x-1,y+1] == -color and board[x-2,y+2] == -color) and board[x-3,y+3] == color:
-        print("up right diag")
+        # print("up right diag")
         return (x-1,y+1), (x-2,y+2)
     return (-1, -1), (-1, -1)
 

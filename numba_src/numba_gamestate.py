@@ -7,6 +7,9 @@ from numba.experimental import jitclass
 
 from src.utils import timeit
 from numba_src.numba_utils import is_capture, get_numba_sequence_frequences, is_array_equal, display
+from numba_src.numba_algorithm import numba_minimax
+
+from copy import deepcopy
 
 @njit("int64[:,:](int64[:,:], int64[:], int64)", fastmath=True)
 def add_value(arr, pos, value):
@@ -28,9 +31,10 @@ def update(board, patterns, position, color):
    
 @njit("int64(int64[:])", fastmath=True)
 def get_score(color_patterns):
-    patterns_values = [100000, 50000, 5000, 500, 100, 10]
+    # patterns_values = [100000, 50000, 5000, 500, 100, 10]
+    patterns_values = [100000, 50000, 10000, 5000, 1000, 100, 10]
     score = 0
-    for i in range(6):
+    for i in range(7):
         if color_patterns[i] != 0:
             score += patterns_values[i] * color_patterns[i]
     return score
@@ -97,35 +101,61 @@ def get_available_pos(board):
     np_possible_pos = remove_double(np_possible_pos)
     return np_possible_pos
 
+# @njit
 def sort_moves(state, moves, n, is_maximiser):
         #add on columns to put score in it
         scored_moves = np.zeros((moves.shape[0], moves.shape[1] + 1), dtype=np.int64)
         scored_moves[:,:-1] = moves
         #for each pos evaluate new state
         for i in prange(len(moves)):
-            # state = state.next(moves[i])
-            add_value(state.board, np.array(moves[i], dtype=np.int64), state.color)
-            print(state.color)
-            display(state)
-            scored_moves[i, 2] = state.evaluate()
-            add_value(state.board, np.array(moves[i], dtype=np.int64), 0)
-            print(f"scored: {scored_moves[i]}")
+            tmp = state.next_dc(moves[i], -state.color)
+            # print(tmp.color)
+            # display(tmp)    
+            # print("patterns:")
+            # print(tmp.patterns)
+            scored_moves[i, 2] = tmp.evaluate()
+            # print(f"scored: {scored_moves[i]}")
 
         ind = np.argsort(scored_moves[:, -1])
         scored_moves = scored_moves[ind] #ascending order
         if is_maximiser:
             scored_moves = scored_moves[::-1] #descending order
-        scored_moves = scored_moves#[:n] #n first move
-        print(f"scored_moves: {scored_moves}")
+        # print("scored_moves:")
+        # print(scored_moves)
+        scored_moves = scored_moves[:n][:, :-1] #n first move
+        # print("updated scored_moves:")
+        # print(scored_moves)
         return scored_moves
 
 # @njit("int64[:,:](int64[:,:], boolean)")
 # @njit
-def get_best_moves(state, is_maximiser):
-    moves = get_available_pos(state.board)
-    sorted_moves = sort_moves(state, moves, 10, is_maximiser)
+# @timeit
+# def get_best_moves(state, is_maximiser):
+#     moves = get_available_pos(state.board)
+#     sorted_moves = sort_moves(state, moves, 10, is_maximiser)
+#     return sorted_moves
 
-    return moves
+@timeit
+def get_best_move(state, depth, is_maximiser):
+    best_moves = state.get_best_moves(is_maximiser)
+    # print(best_moves)
+    best_score = np.iinfo(np.int32).min if is_maximiser else np.iinfo(np.int32).max
+    for i in range(len(best_moves)):
+        score = numba_minimax(
+            state.next_dc(best_moves[i], -state.color),
+            np.iinfo(np.int32).min,
+            np.iinfo(np.int32).max,
+            depth - 1,
+            not is_maximiser,
+        )
+        # state.prev()
+        if (is_maximiser and score > best_score) or (
+            not is_maximiser and score < best_score
+        ):
+            best_score = score
+            best_move = best_moves[i]
+    return best_move, best_score
+
 
 @njit("int64[:,:](int64, optional(int64[:,:]))")
 def init_board(size, board):
@@ -137,8 +167,9 @@ def init_board(size, board):
 def init_patterns(patterns):
     if patterns is not None:
         return np.copy(patterns)
-    init_patterns = np.zeros((3, 6), dtype=np.int64)
-    init_patterns[2] = [100000, 50000, 5000, 500, 100, 10]
+    init_patterns = np.zeros((3, 7), dtype=np.int64)
+    # init_patterns[2] = [100000, 50000, 5000, 500, 100, 10]
+    init_patterns[2] = [100000, 50000, 10000, 5000, 1000, 100, 5]
     return init_patterns
 
 @njit("int64[:](optional(int64[:]))")
@@ -176,6 +207,9 @@ class GameState:
     def __hash__(self) -> int:
         pass
 
+    def is_finished(self):
+        return False
+
     # @timeit
     def next(self, position):
         new_state = GameState(
@@ -188,16 +222,34 @@ class GameState:
         new_state.board, new_state.patterns = update(self.board, self.patterns, position, -self.color)
         return new_state
 
+
+    def next_dc(self, position, color):
+        new_state = GameState(
+            size=19,
+            color=color,
+            board=self.board.copy(),
+            patterns=self.patterns.copy(),
+            last_move=position
+        )
+        new_state.board, new_state.patterns = update(new_state.board, new_state.patterns, position, color)
+        return new_state
+
+    def get_best_moves(self, is_maximiser):
+        moves = get_available_pos(self.board)
+        sorted_moves = sort_moves(self, moves, 5, is_maximiser)
+        return sorted_moves
+
+
     # @timeit
     def evaluate(self):
         black_score = get_score(self.patterns[0])
         white_score = get_score(self.patterns[1])
         # print(f"BLACK SCORE: {black_score}")
         # print(f"WHITE SCORE: {white_score}")
-        # if self.color == -1:
-        #     return black_score
-        # return white_score
-        return white_score + black_score
+        if self.color == -1:
+            return black_score
+        return white_score
+        # return white_score + black_score
 
     def print_color(self):
         if self.color == -1:
