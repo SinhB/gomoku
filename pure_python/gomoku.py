@@ -32,8 +32,8 @@ def complex_board(board):
 if __name__ == "__main__":
     board = board_functions.init_board(19)
 
-    board = simple_board(board)
-    # board = complex_board(board)
+    # board = simple_board(board)
+    board = complex_board(board)
     # board = board_four_in_a_row(board)
 
     print(board)

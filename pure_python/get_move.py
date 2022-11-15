@@ -24,11 +24,6 @@ def get_next_move(board, size, depth):
     best_position = available_pos[0]
     score = -100000000
 
-
-    diags = get_lines.get_diagonals(board, size)
-    rows = get_lines.get_rows(board, size)
-    columns = get_lines.get_rows(board.T, size)
-
     best_position = filter_pos(board, available_pos, maximizing_player)
     for position, new_threats in best_position:
         print(position)
@@ -107,9 +102,9 @@ def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats)
 
             maxEval = max(alpha, eval)
             alpha = max(alpha, eval)
-            print(f"alpha : {alpha}")
+            # print(f"alpha : {alpha}")
             if beta <= alpha:
-                print(bcolors.OKBLUE + "BREAK ALPHA" + bcolors.ENDC)
+                # print(f"{bcolors.OKBLUE} BREAK ALPHA : alpha = {alpha}, beta = {beta} {bcolors.ENDC}")
                 break
         return maxEval
     else:
@@ -120,10 +115,9 @@ def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats)
             eval = minimax(board, depth - 1, alpha, beta, not maximizing_player, size, new_threats)
             board[position[0]][position[1]] = 0
 
-            minEval - min(beta, eval)
+            minEval = min(beta, eval)
             beta = min(beta, eval)
-            print(f"beta : {beta}")
             if beta <= alpha:
-                print(bcolors.OKGREEN + "BREAK BETA" + bcolors.ENDC)
+                # print(f"{bcolors.OKGREEN} BREAK BETA : alpha = {alpha}, beta = {beta} {bcolors.ENDC}")
                 break
         return minEval

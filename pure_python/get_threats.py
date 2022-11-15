@@ -19,7 +19,9 @@ def get_new_threats(board, row_index, col_index, maximizing_player):
     score += check_line(rows, col_index, maximizing_player)
     score += check_line(columns, row_index, maximizing_player)
 
-    return score
+    if maximizing_player:
+        return score
+    return score * -1
 
 def check_side(side, player):
     # Number of consecutive pawn placed directly next to the one played
@@ -47,14 +49,14 @@ def check_side(side, player):
                 is_consecutive = False
 
         if check_eating_enemy or check_open_eating_move:
-            if side[i] == player * -1 and consecutive_enemy < 2:
-                consecutive_enemy += 1
-            elif side[i] == player and consecutive_enemy == 2:
+            if side[i] == player and consecutive_enemy == 2:
                 # Return eating_move
-                return 0, 0, False, True, False
+                return 0, 0, False, True, False, 0
             elif side[i] == 0 and consecutive_enemy == 2:
                 # Return open_eating_move
-                return 0, 0, False, False, True
+                return 0, 0, False, False, True, 0
+            elif side[i] == player * -1:
+                consecutive_enemy += 1
             else:
                 check_eating_enemy = False
                 check_open_eating_move = False
@@ -69,7 +71,7 @@ def check_side(side, player):
             if side[i] == player:
                 additional += 1
         
-    return consecutive, additional, empty_space, eating_enemy, open_eating_move
+    return consecutive, additional, empty_space, eating_enemy, open_eating_move, consecutive_enemy
 
 def check_line(line, starting_index, maximizing_player):
     if maximizing_player:
@@ -78,12 +80,11 @@ def check_line(line, starting_index, maximizing_player):
         player = -1
     
     left = line[0:starting_index][::-1]
-    right = line[starting_index+1:,]
-    l_consecutive, l_additional, l_empty_space, l_eating_enemy, l_open_eating_move = check_side(left, player)
-    r_consecutive, r_additional, r_empty_space, r_eating_enemy, r_open_eating_move = check_side(right, player)
-    # print(check_consecutive(left, player))
-    # print(line)
-    # print(left, right)
+    right = line[starting_index+1:]
+
+    l_consecutive, l_additional, l_empty_space, l_eating_enemy, l_open_eating_move, l_consecutive_enemy = check_side(left, player)
+    r_consecutive, r_additional, r_empty_space, r_eating_enemy, r_open_eating_move, r_consecutive_enemy = check_side(right, player)
+
     # print(l_consecutive, l_additional, l_empty_space, l_eating_enemy, l_open_eating_move)
     # print(r_consecutive, r_additional, r_empty_space, r_eating_enemy, r_open_eating_move)
     # print()
@@ -104,5 +105,14 @@ def check_line(line, starting_index, maximizing_player):
     
     if l_consecutive + r_consecutive == 1:
         score += 10
-
+    
+    if l_eating_enemy and r_eating_enemy:
+        score += 5_000_000
+    elif l_eating_enemy or r_eating_enemy:
+        score += 1_000_000
+    
+    if l_open_eating_move and r_open_eating_move:
+        score += 1_000_000
+    elif l_open_eating_move and r_open_eating_move:
+        score += 500_000
     return score
