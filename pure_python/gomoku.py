@@ -38,5 +38,10 @@ if __name__ == "__main__":
 
     print(board)
     start = time.time()
-    get_move.get_next_move(board, 19, 7)
+    for i in range(0, 10):
+        next_move = get_move.get_next_move(board, 19, 6)
+        print(f"SELECTED MOVE : {next_move}")
+        board = board_functions.place_stone(board, next_move, 1)
+        print(board)
+
     print(f"Total : {time.time() - start}")

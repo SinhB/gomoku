@@ -15,26 +15,27 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 def get_next_move(board, size, depth):
-
-    alpha = -100000000
-    beta = 100000000
+    alpha = -1_000_000_000
+    beta = 1_000_000_000
     maximizing_player = True
     available_pos = get_lines.get_available_positions(board, size)
     # good_pos = sort_moves(available_pos, maximizing_player, 10)
     best_position = available_pos[0]
-    score = -100000000
 
     best_position = filter_pos(board, available_pos, maximizing_player)
+    moves_results = []
     for position, new_threats in best_position:
         print(position)
 
         board[position[0]][position[1]] = 1
 
-        next_move = minimax(board, depth, alpha, beta, maximizing_player, size, new_threats)
+        score = minimax(board, depth, alpha, beta, maximizing_player, size, new_threats)
+        moves_results.append((score, position))
         print("Next move:")
-        print(next_move)
+        print(score)
         board[position[0]][position[1]] = 0
-    return 5
+    moves_results.sort(key=lambda tup: tup[0])
+    return moves_results[0][1]
 
 def evaluate(current_threats, color):
     priority_keys = (
@@ -79,8 +80,9 @@ def filter_pos(board, available_pos, maximizing_player):
         eval_to_pos.sort(key=lambda tup: tup[0])
     else:
         eval_to_pos.sort(key=lambda tup: tup[0], reverse=True)
+
     new_list = []
-    for i in range(0, 5):
+    for i in range(0, min(5, len(eval_to_pos))):
         new_list.append(eval_to_pos[i][1])
     return new_list
 
@@ -92,7 +94,7 @@ def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats)
     available_pos = get_lines.get_available_positions(board, size)
     best_position = filter_pos(board, available_pos, maximizing_player)
     if maximizing_player:
-        maxEval = -100000000
+        maxEval = -100_000_000
         # for position in best_position:
         for position, new_threats in best_position:
             board[position[0]][position[1]] = 1
@@ -108,7 +110,7 @@ def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats)
                 break
         return maxEval
     else:
-        minEval = 100000000
+        minEval = 100_000_000
         # for position in best_position:
         for position, new_threats in best_position:
             board[position[0]][position[1]] = -1
