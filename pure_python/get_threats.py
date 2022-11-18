@@ -1,8 +1,5 @@
-import numpy as np
-import random
 import get_lines
 import functools
-# from numba import jit
 
 def get_new_threats(board, row_index, col_index, maximizing_player):
     lr_diags, rl_diags = get_lines.get_position_diagonals(board, row_index, col_index)
@@ -17,7 +14,6 @@ def get_new_threats(board, row_index, col_index, maximizing_player):
 
     return score
 
-# @jit(nopython=True)
 def check_side(side, player=0):
     # Number of consecutive pawn placed directly next to the one played
     consecutive = 0
@@ -71,9 +67,9 @@ def check_side(side, player=0):
 @functools.cache
 def check_line(line, starting_index, maximizing_player):
     if maximizing_player:
-        player = 1
-    else:
         player = -1
+    else:
+        player = 1
     
     left = line[0:starting_index][::-1]
     right = line[starting_index+1:]
@@ -85,11 +81,19 @@ def check_line(line, starting_index, maximizing_player):
 
     if l_consecutive + r_consecutive == 4:
         # Win
-        return 100_000_000
+        score += 100_000_000
+    
+    if l_consecutive_enemy + r_consecutive_enemy == 4:
+        # Block enemy win
+        score += 90_000_000
     
     if l_consecutive + r_consecutive == 3 and l_empty_space and r_empty_space:
         # 4 in a row with an open room on each side
-        score += 10_000_000
+        score += 80_000_000
+
+    if l_consecutive_enemy + r_consecutive_enemy == 3 and l_empty_space and r_empty_space:
+        # 4 in a row with an open room on each side for the enemy
+        score += 80_000_000
 
     if l_consecutive + r_consecutive == 3:
         score += 100_000
@@ -98,7 +102,7 @@ def check_line(line, starting_index, maximizing_player):
         score += 1_000
     
     if l_consecutive + r_consecutive == 1:
-        score += 10
+        score += 100
     
     if l_eating_enemy and r_eating_enemy:
         score += 5_000_000
@@ -111,6 +115,7 @@ def check_line(line, starting_index, maximizing_player):
         score += 500_000
 
     if l_consecutive_enemy + r_consecutive_enemy == 4:
-        score += 50_000_000
+        score += 90_000_000
 
     return score * player
+    # return score
