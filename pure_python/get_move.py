@@ -26,11 +26,15 @@ def get_next_move(board, size, depth, maximizing_player):
         print(position)
 
         board[position[0]][position[1]] = 1 if maximizing_player else -1
-
         score = minimax(board, depth, alpha, beta, maximizing_player, size, new_threats)
+        board[position[0]][position[1]] = 0
+
+        if maximizing_player:
+            alpha = max(alpha, score)
+        else:
+            beta = min(beta, score)
         moves_results.append((score, position))
         print(f"MOVE SCORE : {score}")
-        board[position[0]][position[1]] = 0
     moves_results.sort(key=lambda tup: tup[0])
     return moves_results[0][1]
 
@@ -55,6 +59,7 @@ def filter_pos(board, available_pos, maximizing_player):
         eval_to_pos.sort(key=lambda tup: tup[0], reverse=True)
 
     new_list = []
+    # for i in range(0, len(eval_to_pos)):
     for i in range(0, min(5, len(eval_to_pos))):
         new_list.append(eval_to_pos[i][1])
 

@@ -42,10 +42,10 @@ def check_side(side, player=0):
         if check_eating_enemy or check_open_eating_move:
             if side[i] == player and consecutive_enemy == 2:
                 # Return eating_move
-                return 0, 0, False, True, False, 0
+                return {'consecutive' : 0, 'additional': 0, 'empty_space': False, 'eating_enemy': True, 'open_eating_move': False, 'consecutive_enemy': 0}
             elif side[i] == 0 and consecutive_enemy == 2:
                 # Return open_eating_move
-                return 0, 0, False, False, True, 0
+                return {'consecutive' : 0, 'additional': 0, 'empty_space': False, 'eating_enemy': False, 'open_eating_move': True, 'consecutive_enemy': 0}
             elif side[i] == player * -1:
                 consecutive_enemy += 1
             else:
@@ -62,60 +62,69 @@ def check_side(side, player=0):
             if side[i] == player:
                 additional += 1
         
-    return consecutive, additional, empty_space, eating_enemy, open_eating_move, consecutive_enemy
+    return {'consecutive' : consecutive,
+            'additional': additional,
+            'empty_space': empty_space,
+            'eating_enemy': eating_enemy,
+            'open_eating_move': open_eating_move,
+            'consecutive_enemy': consecutive_enemy
+    }
 
 @functools.cache
 def check_line(line, starting_index, maximizing_player):
-    if maximizing_player:
-        player = -1
-    else:
-        player = 1
-    
     left = line[0:starting_index][::-1]
     right = line[starting_index+1:]
+    if maximizing_player:
+        player = 1
+    else:
+        player = -1
+    
 
-    l_consecutive, l_additional, l_empty_space, l_eating_enemy, l_open_eating_move, l_consecutive_enemy = check_side(left, player)
-    r_consecutive, r_additional, r_empty_space, r_eating_enemy, r_open_eating_move, r_consecutive_enemy = check_side(right, player)
+    l_analysis = check_side(left, player)
+    r_analysis = check_side(right, player)
+    # l_consecutive, l_additional, l_empty_space, l_eating_enemy, l_open_eating_move, l_consecutive_enemy = check_side(left, player)
+    # r_consecutive, r_additional, r_empty_space, r_eating_enemy, r_open_eating_move, r_consecutive_enemy = check_side(right, player)
 
     score = 0
+    total_consecutive = l_analysis['consecutive'] + r_analysis['consecutive']
+    total_consecutive_enemy = l_analysis['consecutive_enemy'] + r_analysis['consecutive_enemy']
 
-    if l_consecutive + r_consecutive == 4:
+    if total_consecutive == 4:
         # Win
         score += 100_000_000
     
-    if l_consecutive_enemy + r_consecutive_enemy == 4:
+    if total_consecutive_enemy == 4:
         # Block enemy win
         score += 90_000_000
     
-    if l_consecutive + r_consecutive == 3 and l_empty_space and r_empty_space:
+    if total_consecutive == 3 and l_analysis['empty_space'] and r_analysis['empty_space']:
         # 4 in a row with an open room on each side
         score += 80_000_000
 
-    if l_consecutive_enemy + r_consecutive_enemy == 3 and l_empty_space and r_empty_space:
+    if total_consecutive_enemy == 3 and l_analysis['empty_space'] and r_analysis['empty_space']:
         # 4 in a row with an open room on each side for the enemy
         score += 80_000_000
 
-    if l_consecutive + r_consecutive == 3:
+    if total_consecutive == 3:
         score += 100_000
 
-    if l_consecutive + r_consecutive == 2:
+    if total_consecutive == 2:
         score += 1_000
     
-    if l_consecutive + r_consecutive == 1:
+    if total_consecutive == 1:
         score += 100
     
-    if l_eating_enemy and r_eating_enemy:
+    if l_analysis['eating_enemy'] and r_analysis['eating_enemy']:
         score += 5_000_000
-    elif l_eating_enemy or r_eating_enemy:
+    elif l_analysis['eating_enemy'] or r_analysis['eating_enemy']:
         score += 1_000_000
     
-    if l_open_eating_move and r_open_eating_move:
+    if l_analysis['open_eating_move'] and r_analysis['open_eating_move']:
         score += 1_000_000
-    elif l_open_eating_move and r_open_eating_move:
+    elif l_analysis['open_eating_move'] or r_analysis['open_eating_move']:
         score += 500_000
 
-    if l_consecutive_enemy + r_consecutive_enemy == 4:
+    if total_consecutive_enemy == 4:
         score += 90_000_000
 
-    return score * player
-    # return score
+    return score
