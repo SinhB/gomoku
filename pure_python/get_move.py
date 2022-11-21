@@ -64,7 +64,7 @@ def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats,
         for position, new_threats in best_position:
             board[position[0]][position[1]] = 1
 
-            evaluation = minimax(board, depth - 1, alpha, beta, not maximizing_player, size, 0 + new_threats, max_depth)
+            evaluation = minimax(board, depth - 1, alpha, beta, not maximizing_player, size, new_threats, max_depth)
             if depth == max_depth:
                 moves_results.append((evaluation, position))
             board[position[0]][position[1]] = 0
@@ -83,7 +83,7 @@ def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats,
         for position, new_threats in best_position:
             board[position[0]][position[1]] = -1
 
-            evaluation = minimax(board, depth - 1, alpha, beta, not maximizing_player, size, 0 + new_threats, max_depth)
+            evaluation = minimax(board, depth - 1, alpha, beta, not maximizing_player, size, new_threats, max_depth)
             if depth == max_depth:
                 moves_results.append((evaluation, position))
             board[position[0]][position[1]] = 0
