@@ -9,7 +9,9 @@ def board_four_in_a_row(board):
     board = board_functions.place_stone(board, np.array([4, 7]), 1)
     board = board_functions.place_stone(board, np.array([5, 8]), -1)
     board = board_functions.place_stone(board, np.array([4, 8]), 1)
-    # board = board_functions.place_stone(board, np.array([4, 9]), 1)
+    board = board_functions.place_stone(board, np.array([3, 8]), -1)
+    board = board_functions.place_stone(board, np.array([4, 9]), 1)
+    board = board_functions.place_stone(board, np.array([3, 9]), -1)
     return board
 
 def simple_board(board):
@@ -39,16 +41,15 @@ if __name__ == "__main__":
 
     print(board)
     start = time.time()
-    # maximizing_player = True
-    maximizing_player = False
+    player = 1
     for i in range(0, 10):
         one_move_timer = time.time()
-        next_move = get_move.get_next_move(board, 19, 8, maximizing_player)
+        next_move = get_move.get_next_move(board, 19, 10, True, player)
         print(f"Move search time : {time.time() - one_move_timer}")
         print(f"SELECTED MOVE : {next_move}")
-        board = board_functions.place_stone(board, next_move, 1 if maximizing_player else -1)
+        board = board_functions.place_stone(board, next_move, player)
         print(board)
-        maximizing_player = not maximizing_player
+        player = player * -1
 
 
     print(f"Total : {time.time() - start}")

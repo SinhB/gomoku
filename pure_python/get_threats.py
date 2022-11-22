@@ -1,18 +1,18 @@
 import get_lines
 import functools
 
-def get_new_threats(board, row_index, col_index, maximizing_player):
+def get_new_threats(board, row_index, col_index, maximizing_player, player):
     lr_diags, rl_diags = get_lines.get_position_diagonals(board, row_index, col_index)
     rows = get_lines.get_position_rows(board, row_index)
     columns = get_lines.get_position_columns(board, col_index)
 
     score = 0
-    score += check_line(tuple(lr_diags), row_index, maximizing_player)
-    score += check_line(tuple(rl_diags), row_index, maximizing_player)
-    score += check_line(tuple(rows), col_index, maximizing_player)
-    score += check_line(tuple(columns), row_index, maximizing_player)
+    score += check_line(tuple(lr_diags), row_index, maximizing_player, player)
+    score += check_line(tuple(rl_diags), row_index, maximizing_player, player)
+    score += check_line(tuple(rows), col_index, maximizing_player, player)
+    score += check_line(tuple(columns), row_index, maximizing_player, player)
 
-    return score
+    return score if maximizing_player else score * -1
 
 def check_side(side, player=0):
     # Number of consecutive pawn placed directly next to the one played
@@ -32,7 +32,7 @@ def check_side(side, player=0):
     check_eating_enemy = True
     check_open_eating_move = True
     is_after_one_zero = False
-    for i in range(0, min(len(side), 5)):
+    for i in range(0, min(len(side), 6)):
         if is_consecutive:
             if side[i] == player:
                 consecutive += 1
@@ -71,14 +71,9 @@ def check_side(side, player=0):
     }
 
 @functools.cache
-def check_line(line, starting_index, maximizing_player):
+def check_line(line, starting_index, maximizing_player, player):
     left = line[0:starting_index][::-1]
     right = line[starting_index+1:]
-    if maximizing_player:
-        player = 1
-    else:
-        player = -1
-    
 
     l_analysis = check_side(left, player)
     r_analysis = check_side(right, player)
