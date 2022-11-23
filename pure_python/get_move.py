@@ -1,5 +1,6 @@
 import get_lines
 import get_threats
+import random
 
 class bcolors:
     HEADER = '\033[95m'
@@ -23,6 +24,8 @@ def get_next_move(board, size, depth, maximizing_player, player):
 def filter_pos(board, maximizing_player, player, size):
     eval_to_pos = []
     available_pos = get_lines.get_available_positions(board, size)
+    if len(available_pos) == 0:
+        return [([random.randint(6, 12), random.randint(6, 12)], 1)]
     for position in available_pos:
         board[position[0]][position[1]] = player
         new_threats = get_threats.get_new_threats(board, position[0], position[1], maximizing_player, player)
@@ -43,7 +46,6 @@ def filter_pos(board, maximizing_player, player, size):
     for i in range(0, min(5, len(eval_to_pos))):
         new_list.append(eval_to_pos[i][1])
 
-    # print(new_list)
     # input()
     return new_list
 

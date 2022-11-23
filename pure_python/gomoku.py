@@ -1,7 +1,9 @@
-import board_functions
-import get_move
 import numpy as np
 import time
+
+import board_functions
+import get_move
+import get_lines
 
 def board_four_in_a_row(board):
     board = board_functions.place_stone(board, np.array([4, 6]), 1)
@@ -10,8 +12,8 @@ def board_four_in_a_row(board):
     board = board_functions.place_stone(board, np.array([5, 8]), -1)
     board = board_functions.place_stone(board, np.array([4, 8]), 1)
     board = board_functions.place_stone(board, np.array([3, 8]), -1)
-    board = board_functions.place_stone(board, np.array([4, 9]), 1)
-    board = board_functions.place_stone(board, np.array([3, 9]), -1)
+    # board = board_functions.place_stone(board, np.array([4, 9]), 1)
+    # board = board_functions.place_stone(board, np.array([3, 9]), -1)
     return board
 
 def simple_board(board):
@@ -32,23 +34,68 @@ def complex_board(board):
     board = board_functions.place_stone(board, np.array([4, 5]), 1)
     return board
 
+def is_array_equal(arr, seq):
+    for arri, seqi in zip(arr, seq):
+        if arri != seqi:
+            return False
+    return True
+
+def check_line_win(arr, seq):
+    # Check for sequence in the flatten board
+    seq_len = len(seq)
+    upper_bound = len(arr) - seq_len + 1
+    for i in range(upper_bound):
+        
+        if is_array_equal(arr[i : i + seq_len], seq):
+            return True
+
+    return False
+
+
+def check_win(board, position, player):
+    row_index = position[0]
+    col_index = position[1]
+
+    win_array = (player, player, player, player, player)
+    print(f"WIN ARRAY {win_array} ({player})")
+
+    lr_diags, rl_diags = get_lines.get_position_diagonals(board, row_index, col_index)
+    rows = get_lines.get_position_rows(board, row_index)
+    columns = get_lines.get_position_columns(board, col_index)
+
+    if check_line_win(lr_diags, win_array):
+        return True
+    if check_line_win(rl_diags, win_array):
+        return True
+    if check_line_win(rows, win_array):
+        return True
+    if check_line_win(columns, win_array):
+        return True
+    return False
+
+
+
+
 if __name__ == "__main__":
     board = board_functions.init_board(19)
 
     # board = simple_board(board)
     # board = complex_board(board)
-    board = board_four_in_a_row(board)
+    # board = board_four_in_a_row(board)
 
-    print(board)
     start = time.time()
     player = 1
-    for i in range(0, 10):
+    for i in range(0, 100):
+        board_functions.print_board(board)
         one_move_timer = time.time()
-        next_move = get_move.get_next_move(board, 19, 10, True, player)
+        next_move = get_move.get_next_move(board, 19, 8, True, player)
         print(f"Move search time : {time.time() - one_move_timer}")
         print(f"SELECTED MOVE : {next_move}")
         board = board_functions.place_stone(board, next_move, player)
-        print(board)
+        if check_win(board, next_move, player):
+            board_functions.print_board(board)
+            print(f"Player {player} won the game")
+            break
         player = player * -1
 
 
