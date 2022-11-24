@@ -13,23 +13,25 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-def get_next_move(board, size, depth, maximizing_player, player):
+def get_next_move(board, size, depth, maximizing_player, player, total_eat):
     alpha = -1_000_000_000
     beta = 1_000_000_000
-    moves_results = minimax(board, depth, alpha, beta, maximizing_player, size, 0, depth, player)
+    moves_results = minimax(board, depth, alpha, beta, maximizing_player, size, 0, depth, player, total_eat)
     print(moves_results)
     moves_results.sort(key=lambda tup: tup[0], reverse=True)
     return moves_results[0][1]
 
-def filter_pos(board, maximizing_player, player, size):
+def filter_pos(board, maximizing_player, player, size, total_eat):
     eval_to_pos = []
     available_pos = get_lines.get_available_positions(board, size)
+
     if len(available_pos) == 0:
         return [([random.randint(6, 12), random.randint(6, 12)], 1)]
     for position in available_pos:
-        board[position[0]][position[1]] = player
-        new_threats = get_threats.get_new_threats(board, position[0], position[1], maximizing_player, player)
-        board[position[0]][position[1]] = 0
+        # board[position[0]][position[1]] = player
+        new_threats = get_threats.get_new_threats(board, position[0], position[1], maximizing_player, player, total_eat[player])
+        # input()
+        # board[position[0]][position[1]] = 0
 
         if not maximizing_player:
             eval_to_pos.append((new_threats, (position, new_threats)))
@@ -49,14 +51,14 @@ def filter_pos(board, maximizing_player, player, size):
     # input()
     return new_list
 
-def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats, max_depth, player):
+def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats, max_depth, player, total_eat):
     # print(current_threats)
     # if depth == 0 or is_finished():
     # print(f"current_threats : {current_threats} {depth}")
     if depth == 0 or current_threats >= 100_000_000 or current_threats <= -100_000_000:
         return current_threats
 
-    best_position = filter_pos(board, maximizing_player, player, size)
+    best_position = filter_pos(board, maximizing_player, player, size, total_eat)
 
     if depth == max_depth:
         moves_results = []
@@ -66,7 +68,7 @@ def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats,
         for position, new_threats in best_position:
             board[position[0]][position[1]] = 1
 
-            evaluation = minimax(board, depth - 1, alpha, beta, not maximizing_player, size, new_threats, max_depth, player)
+            evaluation = minimax(board, depth - 1, alpha, beta, not maximizing_player, size, new_threats, max_depth, player, total_eat)
             # print(new_threats)
             if depth == max_depth:
                 moves_results.append((evaluation, position))
@@ -87,7 +89,7 @@ def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats,
         for position, new_threats in best_position:
             board[position[0]][position[1]] = -1
 
-            evaluation = minimax(board, depth - 1, alpha, beta, not maximizing_player, size, new_threats, max_depth, player)
+            evaluation = minimax(board, depth - 1, alpha, beta, not maximizing_player, size, new_threats, max_depth, player, total_eat)
             board[position[0]][position[1]] = 0
 
             minEval = min(beta, evaluation)

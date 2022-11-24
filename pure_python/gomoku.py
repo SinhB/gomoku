@@ -34,6 +34,15 @@ def complex_board(board):
     board = board_functions.place_stone(board, np.array([4, 5]), 1)
     return board
 
+def test_eat_row(board):
+    board, total_eat = board_functions.place_stone(board, np.array([4, 6]), 1)
+    board, total_eat = board_functions.place_stone(board, np.array([4, 7]), -1)
+    board, total_eat = board_functions.place_stone(board, np.array([4, 5]), 1)
+    board, total_eat = board_functions.place_stone(board, np.array([4, 4]), -1)
+    board_functions.print_board(board)
+    input()
+    return board, total_eat
+
 def is_array_equal(arr, seq):
     for arri, seqi in zip(arr, seq):
         if arri != seqi:
@@ -51,8 +60,10 @@ def check_line_win(arr, seq):
 
     return False
 
-
-def check_win(board, position, player):
+def check_win(board, position, player, total_eat):
+    if total_eat >= 5:
+        print("Win by eating")
+        return True
     row_index = position[0]
     col_index = position[1]
 
@@ -64,38 +75,47 @@ def check_win(board, position, player):
     columns = get_lines.get_position_columns(board, col_index)
 
     if check_line_win(lr_diags, win_array):
+        print("Win by alignment")
         return True
     if check_line_win(rl_diags, win_array):
+        print("Win by alignment")
         return True
     if check_line_win(rows, win_array):
+        print("Win by alignment")
         return True
     if check_line_win(columns, win_array):
+        print("Win by alignment")
         return True
     return False
-
-
-
 
 if __name__ == "__main__":
     board = board_functions.init_board(19)
 
+    # board, total_eat = test_eat_row(board)
     # board = simple_board(board)
     # board = complex_board(board)
     # board = board_four_in_a_row(board)
 
     start = time.time()
     player = 1
+    total_eat = {-1: 0, 1: 0}
     for i in range(0, 100):
+        eat = 0
         board_functions.print_board(board)
+
         one_move_timer = time.time()
-        next_move = get_move.get_next_move(board, 19, 8, True, player)
+        next_move = get_move.get_next_move(board, 19, 5, True, player, total_eat)
         print(f"Move search time : {time.time() - one_move_timer}")
         print(f"SELECTED MOVE : {next_move}")
-        board = board_functions.place_stone(board, next_move, player)
-        if check_win(board, next_move, player):
+
+        board, eat = board_functions.place_stone(board, next_move, player)
+        total_eat[player] += eat
+
+        if check_win(board, next_move, player, total_eat[player]):
             board_functions.print_board(board)
-            print(f"Player {player} won the game")
+            print(f"Player {player} ({'B' if player == -1 else 'N'}) won the game")
             break
+
         player = player * -1
 
 
