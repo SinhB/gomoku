@@ -101,10 +101,9 @@ if __name__ == "__main__":
     total_eat = {-1: 0, 1: 0}
     for i in range(0, 100):
         eat = 0
-        board_functions.print_board(board)
 
         one_move_timer = time.time()
-        next_move = get_move.get_next_move(board, 19, 5, True, player, total_eat)
+        next_move = get_move.get_next_move(board, 19, 7, True, player, total_eat)
         print(f"Move search time : {time.time() - one_move_timer}")
         print(f"SELECTED MOVE : {next_move}")
 
@@ -112,9 +111,10 @@ if __name__ == "__main__":
         total_eat[player] += eat
 
         if check_win(board, next_move, player, total_eat[player]):
-            board_functions.print_board(board)
+            board_functions.print_board(board, next_move)
             print(f"Player {player} ({'B' if player == -1 else 'N'}) won the game")
             break
+        board_functions.print_board(board, next_move)
 
         player = player * -1
 

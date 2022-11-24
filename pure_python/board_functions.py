@@ -98,15 +98,21 @@ def remove_stone(board, position, color):
     board[position[0]][position[1]] = 0
     return board
 
-def print_board(board):
+def print_board(board, last_move):
     line = ''
     row_len, col_len = board.shape
     for i in range(0, row_len):
         for j in range(0, col_len):
             if board[i][j] == 1:
-                line += f'{bcolors.OKBLUE}N{bcolors.ENDC} '
+                if i == last_move[0] and j == last_move[1]:
+                    line += f'{bcolors.FAIL}N{bcolors.ENDC} '
+                else:
+                    line += f'{bcolors.OKBLUE}N{bcolors.ENDC} '
             elif board[i][j] == -1:
-                line += f'{bcolors.OKGREEN}B{bcolors.ENDC} '
+                if i == last_move[0] and j == last_move[1]:
+                    line += f'{bcolors.FAIL}B{bcolors.ENDC} '
+                else:
+                    line += f'{bcolors.OKGREEN}B{bcolors.ENDC} '
             else:
                 line += '- '
         print(line)

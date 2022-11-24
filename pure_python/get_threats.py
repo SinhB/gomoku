@@ -2,7 +2,10 @@ import get_lines
 import functools
 from operator import add
 
-def get_new_threats(board, row_index, col_index, maximizing_player, player, total_eat):
+def get_new_threats(board, position, maximizing_player, player, total_eat):
+    row_index = position[0]
+    col_index = position[1]
+
     lr_diags, rl_diags = get_lines.get_position_diagonals(board, row_index, col_index)
     rows = get_lines.get_position_rows(board, row_index)
     columns = get_lines.get_position_columns(board, col_index)
@@ -190,9 +193,6 @@ def check_side(side, player=0):
 def check_line(line, starting_index, maximizing_player, player):
     left = line[0:starting_index][::-1]
     right = line[starting_index+1:]
-    # print(f"left : {left}")
-    # print(f"right : {right}")
-    # print()
 
     l_analysis = check_side(left, player)
     r_analysis = check_side(right, player)

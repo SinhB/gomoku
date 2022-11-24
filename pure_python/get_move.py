@@ -1,5 +1,5 @@
 import get_lines
-import get_threats
+from get_threats import get_new_threats 
 import random
 
 class bcolors:
@@ -27,29 +27,14 @@ def filter_pos(board, maximizing_player, player, size, total_eat):
 
     if len(available_pos) == 0:
         return [([random.randint(6, 12), random.randint(6, 12)], 1)]
-    for position in available_pos:
-        # board[position[0]][position[1]] = player
-        new_threats = get_threats.get_new_threats(board, position[0], position[1], maximizing_player, player, total_eat[player])
-        # input()
-        # board[position[0]][position[1]] = 0
-
-        if not maximizing_player:
-            eval_to_pos.append((new_threats, (position, new_threats)))
-        else:
-            eval_to_pos.append((new_threats, (position, new_threats)))
+    
+    eval_to_pos = [(p, get_new_threats(board, p, maximizing_player, player, total_eat[player])) for p in available_pos]
 
     if maximizing_player:
-        eval_to_pos.sort(key=lambda tup: tup[0], reverse=True)
+        eval_to_pos.sort(key=lambda tup: tup[1], reverse=True)
     else:
-        eval_to_pos.sort(key=lambda tup: tup[0])
-
-    new_list = []
-    # for i in range(0, len(eval_to_pos)):
-    for i in range(0, min(5, len(eval_to_pos))):
-        new_list.append(eval_to_pos[i][1])
-
-    # input()
-    return new_list
+        eval_to_pos.sort(key=lambda tup: tup[1])
+    return eval_to_pos[:5]
 
 def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats, max_depth, player, total_eat):
     # print(current_threats)
