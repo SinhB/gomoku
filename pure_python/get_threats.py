@@ -24,21 +24,20 @@ multiplicator_enemy_open_two = 1000
 
 multiplicator_enemy_closed_three = 40
 multiplicator_enemy_semi_closed_three = 2_000
-multiplicator_enemy_open_three = 500_000_000
+multiplicator_enemy_open_three = 400_000
 
 multiplicator_enemy_closed_four = 80
 multiplicator_enemy_semi_closed_four = 1_000_000
-multiplicator_enemy_open_four = 500_000_000
+multiplicator_enemy_open_four = 500_000
 
 enemy_multiplicator_five = 200_000_000
 
 # Eating move
-multiplicator_open_get_eat_move = 200
 multiplicator_open_eat_move = 200
 
 def get_new_threats(board, position, maximizing_player, player, total_eat):
-    # if not maximizing_player:
-    #     player = player * -1
+    if not maximizing_player:
+        player = player * -1
     row_index = position[0]
     col_index = position[1]
 

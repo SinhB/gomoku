@@ -25,17 +25,22 @@ def get_next_move(board, size, depth, maximizing_player, player, total_eat):
 
 def get_positions(board, maximizing_player, player, size, total_eat):
     eval_to_pos = []
+    # import time
 
+    # start = time.time()
     available_pos = get_lines.get_available_positions(board, size)
+    # print(f"Get moves : {time.time() - start}")
 
     if len(available_pos) == 0:
         return [([random.randint(6, 12), random.randint(6, 12)], 1)]
     
+    # start = time.time()
     eval_to_pos = [(p, get_new_threats(board, p, maximizing_player, player, total_eat)) for p in available_pos]
+    # print(f"Eval to p : {time.time() - start}")
 
     eval_to_pos.sort(key=lambda tup: tup[1], reverse=maximizing_player)
 
-    return eval_to_pos[:5]
+    return eval_to_pos[:10]
 
 def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats, max_depth, player, total_eat):
     if depth == 0 or current_threats >= 50_000_000 or current_threats <= -50_000_000:
@@ -51,7 +56,7 @@ def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats,
         for position, new_threats in best_position:
             board[position[0]][position[1]] = player
 
-            evaluation = minimax(board, depth - 1, alpha, beta, not maximizing_player, size, new_threats, max_depth, player, total_eat)
+            evaluation = minimax(board, depth - 1, alpha, beta, False, size, new_threats, max_depth, player, total_eat)
             board[position[0]][position[1]] = 0
 
             if depth == max_depth:
@@ -71,7 +76,7 @@ def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats,
         for position, new_threats in best_position:
             board[position[0]][position[1]] = player * -1
 
-            evaluation = minimax(board, depth - 1, alpha, beta, not maximizing_player, size, new_threats, max_depth, player, total_eat)
+            evaluation = minimax(board, depth - 1, alpha, beta, True, size, new_threats, max_depth, player, total_eat)
             board[position[0]][position[1]] = 0
 
             minEval = min(minEval, evaluation)
