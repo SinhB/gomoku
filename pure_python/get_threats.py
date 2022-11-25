@@ -43,91 +43,44 @@ def get_new_threats(board, position, maximizing_player, player, total_eat):
     ) = total_threat
 
     score = 1
-    i = 0
-    print_score = False
-    if print_score:
-        print(f"Score 1 : {score}")
-
+    
     # Player series
     score += closed_two * 10
-    if print_score:
-        print(f"Score 2 : {score}")
     score += semi_close_two * 50
-    if print_score:
-        print(f"Score 3 : {score}")
     score += open_two * 500
-    if print_score:
-        print(f"Score 4 : {score}")
 
     score += closed_three * 20
-    if print_score:
-        print(f"Score 5 : {score}")
     score += semi_closed_three * 100
-    if print_score:
-        print(f"Score 6 : {score}")
     score += open_three * 1_000
-    if print_score:
-        print(f"Score 7 : {score}")
 
     score += closed_four * 40
-    if print_score:
-        print(f"Score 8 : {score}")
     score += semi_closed_four * 200
-    if print_score:
-        print(f"Score 9 : {score}")
     score += open_four * 2_000
-    if print_score:
-        print(f"Score 10 : {score}")
 
     score += five * 100_000_000
-    if print_score:
-        print(f"Score 11 : {score}")
 
     # Enemy series
     score += enemy_closed_two * 5
-    if print_score:
-        print(f"Score 12 : {score}")
     score += enemy_semi_close_two * 15
-    if print_score:
-        print(f"Score 13 : {score}")
     score += enemy_open_two * 250
-    if print_score:
-        print(f"Score 14 : {score}")
 
     score += enemy_closed_three * 10
-    if print_score:
-        print(f"Score 15 : {score}")
     score += enemy_semi_closed_three * 50
-    if print_score:
-        print(f"Score 16 : {score}")
     score += enemy_open_three * 4_000
-    if print_score:
-        print(f"Score 17 : {score}")
 
     score += enemy_closed_four * 20
-    if print_score:
-        print(f"Score 18 : {score}")
     score += enemy_semi_closed_four * 1_000_000
     # if enemy_semi_closed_four:
     #     print(f"enemy_semi_closed_four : {enemy_semi_closed_four}")
-    if print_score:
-        print(f"Score 19 : {score}")
     score += enemy_open_four * 1_000_000
-    if print_score:
-        print(f"Score 20 : {score}")
 
 
     # Eating move
     score -= open_get_eat_move * 200
-    if print_score:
-        print(f"Score 21 : {score}")
     score += open_eat_move * 200
-    if print_score:
-        print(f"Score 22 : {score}")
     score += (eat_move + total_eat) ** 10
-    if print_score:
-        print(f"Score 23 : {score}")
 
+    # print(f"score : {score if maximizing_player else score * -1}")
     return score if maximizing_player else score * -1
 
 def check_side(side, player=0):
@@ -158,10 +111,10 @@ def check_side(side, player=0):
         if check_eating_enemy or check_open_eating_move and not is_after_one_zero:
             if side[i] == player and consecutive_enemy == 2:
                 # Return eating_move
-                return {'consecutive' : 0, 'additional': 0, 'empty_space': False, 'eating_enemy': True, 'open_eating_move': False, 'consecutive_enemy': 0}
+                return 0, 0, False, True, False, 0
             elif side[i] == 0 and consecutive_enemy == 2:
                 # Return open_eating_move
-                return {'consecutive' : 0, 'additional': 0, 'empty_space': False, 'eating_enemy': False, 'open_eating_move': True, 'consecutive_enemy': 0}
+                return 0, 0, False, False, True, 0
             elif side[i] == player * -1:
                 consecutive_enemy += 1
             else:
@@ -180,29 +133,23 @@ def check_side(side, player=0):
             if side[i] == player:
                 additional += 1
         
-    return {
-        'consecutive' : consecutive,
-        'additional': additional,
-        'empty_space': empty_space,
-        'eating_enemy': eating_enemy,
-        'open_eating_move': open_eating_move,
-        'consecutive_enemy': consecutive_enemy
-    }
+    return consecutive, additional, empty_space, eating_enemy, open_eating_move, consecutive_enemy
 
 @functools.cache
 def check_line(line, starting_index, maximizing_player, player):
     left = line[0:starting_index][::-1]
     right = line[starting_index+1:]
 
-    l_analysis = check_side(left, player)
+    l_consecutive, l_additional, l_empty_space, l_eating_enemy, l_open_eating_move, l_consecutive_enemy = check_side(left, player)
+    r_consecutive, r_additional, r_empty_space, r_eating_enemy, r_open_eating_move, r_consecutive_enemy = check_side(left, player)
     r_analysis = check_side(right, player)
 
-    total_consecutive = l_analysis['consecutive'] + r_analysis['consecutive']
-    total_consecutive_enemy = l_analysis['consecutive_enemy'] + r_analysis['consecutive_enemy']
-    total_empty_space = l_analysis['empty_space'] + r_analysis['empty_space']
+    total_consecutive = l_consecutive + r_consecutive
+    total_consecutive_enemy = l_consecutive_enemy + r_consecutive_enemy
+    total_empty_space = l_empty_space + r_empty_space
 
-    eat_move = l_analysis['eating_enemy'] + r_analysis['eating_enemy']
-    open_eat_move = l_analysis['open_eating_move'] + r_analysis['open_eating_move']
+    eat_move = l_eating_enemy + r_eating_enemy
+    open_eat_move = l_open_eating_move + r_open_eating_move
     open_get_eat_move = 0
 
     # Player serie

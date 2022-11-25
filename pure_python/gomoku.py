@@ -103,7 +103,7 @@ if __name__ == "__main__":
         eat = 0
 
         one_move_timer = time.time()
-        next_move = get_move.get_next_move(board, 19, 7, True, player, total_eat)
+        next_move = get_move.get_next_move(board, 19, 10, True, player, total_eat)
         print(f"Move search time : {time.time() - one_move_timer}")
         print(f"SELECTED MOVE : {next_move}")
 
