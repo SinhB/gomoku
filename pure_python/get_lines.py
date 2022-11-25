@@ -1,8 +1,9 @@
 import numpy as np
 
+moves = np.array([[1, 0], [-1, 0], [0, 1], [0, -1], [1, -1], [-1, 1], [1, 1], [-1, -1]])
+
 def get_available_positions(board, size):
     all_stones = np.argwhere(board != 0)
-    moves = np.array([[1, 0], [-1, 0], [0, 1], [0, -1], [1, -1], [-1, 1], [1, 1], [-1, -1]])
     possible_pos = np.vstack(all_stones + moves[:, None])
     in_board = (
         (possible_pos[:, 0] >= 0)
@@ -17,7 +18,24 @@ def get_available_positions(board, size):
         ],
         axis=0,
     )
-    # return possible_pos
+    return possible_pos
+
+def get_new_positions(board, size, available_pos, new_stone):
+    possible_pos = np.vstack(new_stone + moves[:, None])
+    in_board = (
+        (possible_pos[:, 0] >= 0)
+        & (possible_pos[:, 0] < size)
+        & (possible_pos[:, 1] >= 0)
+        & (possible_pos[:, 1] < size)
+    )
+    possible_pos = possible_pos[in_board, :]
+    possible_pos = np.unique(
+        possible_pos[
+            np.all(np.any((possible_pos - new_stone[:, None]), axis=2), axis=0)
+        ],
+        axis=0,
+    )
+    print(possible_pos)
     return possible_pos
 
 def get_position_diagonals(board, column_idx, row_idx):

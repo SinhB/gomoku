@@ -17,6 +17,7 @@ def init_board(size):
 
 
 def check_eating_enemy(board, position, step_x, step_y, player):
+    # TODO: check if enemy can win by eating or break the serie
     left = [position[0] - step_x, position[1] - step_y]
     right = [position[0] + step_x, position[1] + step_y]
     enemy = player * -1
