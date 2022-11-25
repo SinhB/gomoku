@@ -99,23 +99,25 @@ def remove_stone(board, position, color):
     board[position[0]][position[1]] = 0
     return board
 
-def print_board(board, last_move):
-    line = ''
+def print_board(board, last_move=None):
     row_len, col_len = board.shape
+    index = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
+    
+    print("  0 1 2 3 4 5 6 7 8 9 A B C D E F G H I")
     for i in range(0, row_len):
+        line = f'{index[i]} '
         for j in range(0, col_len):
             if board[i][j] == 1:
-                if i == last_move[0] and j == last_move[1]:
+                if type(last_move) == np.ndarray and i == last_move[0] and j == last_move[1]:
                     line += f'{bcolors.FAIL}N{bcolors.ENDC} '
                 else:
                     line += f'{bcolors.OKBLUE}N{bcolors.ENDC} '
             elif board[i][j] == -1:
-                if i == last_move[0] and j == last_move[1]:
+                if type(last_move) == np.ndarray and i == last_move[0] and j == last_move[1]:
                     line += f'{bcolors.FAIL}B{bcolors.ENDC} '
                 else:
                     line += f'{bcolors.OKGREEN}B{bcolors.ENDC} '
             else:
                 line += '- '
         print(line)
-        line = ''
     print()

@@ -1,7 +1,8 @@
-import get_lines
-from get_threats import get_new_threats 
 import random
-import time
+
+import get_lines
+import board_functions
+from get_threats import get_new_threats 
 
 class bcolors:
     HEADER = '\033[95m'
@@ -19,31 +20,24 @@ def get_next_move(board, size, depth, maximizing_player, player, total_eat):
     beta = 2_000_000_000
     moves_results = minimax(board, depth, alpha, beta, maximizing_player, size, 0, depth, player, total_eat)
     moves_results.sort(key=lambda tup: tup[0], reverse=True)
+    print(moves_results)
     return moves_results[0][1]
 
 def get_positions(board, maximizing_player, player, size, total_eat):
     eval_to_pos = []
-    start1 = time.time()
+
     available_pos = get_lines.get_available_positions(board, size)
-    stop1 = time.time()
-    # print(f"get pos = {stop1 - start1}")
 
     if len(available_pos) == 0:
         return [([random.randint(6, 12), random.randint(6, 12)], 1)]
     
-    start2 = time.time()
-    eval_to_pos = [(p, get_new_threats(board, p, maximizing_player, player, total_eat[player])) for p in available_pos]
-    stop2 = time.time()
-    # print(f"evaluat = {stop2 - start2}")
+    eval_to_pos = [(p, get_new_threats(board, p, maximizing_player, player, total_eat)) for p in available_pos]
 
     eval_to_pos.sort(key=lambda tup: tup[1], reverse=maximizing_player)
 
     return eval_to_pos[:5]
 
 def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats, max_depth, player, total_eat):
-    # print(current_threats)
-    # if depth == 0 or is_finished():
-    # print(f"current_threats : {current_threats} {depth}")
     if depth == 0 or current_threats >= 50_000_000 or current_threats <= -50_000_000:
         return current_threats
 
@@ -53,9 +47,9 @@ def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats,
         moves_results = []
 
     if maximizing_player:
-        maxEval = -1_000_000_000
+        maxEval = -2_000_000_000
         for position, new_threats in best_position:
-            board[position[0]][position[1]] = 1
+            board[position[0]][position[1]] = player
 
             evaluation = minimax(board, depth - 1, alpha, beta, not maximizing_player, size, new_threats, max_depth, player, total_eat)
             board[position[0]][position[1]] = 0
@@ -63,7 +57,7 @@ def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats,
             if depth == max_depth:
                 moves_results.append((evaluation, position))
 
-            maxEval = max(alpha, evaluation)
+            maxEval = max(maxEval, evaluation)
             alpha = max(alpha, evaluation)
             if beta <= alpha:
                 # print(f"{bcolors.OKBLUE} BREAK ALPHA : alpha = {alpha}, beta = {beta} {bcolors.ENDC}")
@@ -73,16 +67,17 @@ def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats,
         return maxEval
 
     else:
-        minEval = 1_000_000_000
+        minEval = 2_000_000_000
         for position, new_threats in best_position:
-            board[position[0]][position[1]] = -1
+            board[position[0]][position[1]] = player * -1
 
             evaluation = minimax(board, depth - 1, alpha, beta, not maximizing_player, size, new_threats, max_depth, player, total_eat)
             board[position[0]][position[1]] = 0
 
-            minEval = min(beta, evaluation)
+            minEval = min(minEval, evaluation)
             beta = min(beta, evaluation)
             if beta <= alpha:
                 # print(f"{bcolors.OKGREEN} BREAK BETA : alpha = {alpha}, beta = {beta} {bcolors.ENDC}")
                 break
+
         return minEval

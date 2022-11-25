@@ -68,7 +68,6 @@ def check_win(board, position, player, total_eat):
     col_index = position[1]
 
     win_array = (player, player, player, player, player)
-    print(f"WIN ARRAY {win_array} ({player})")
 
     lr_diags, rl_diags = get_lines.get_position_diagonals(board, row_index, col_index)
     rows = get_lines.get_position_rows(board, row_index)
@@ -91,32 +90,34 @@ def check_win(board, position, player, total_eat):
 if __name__ == "__main__":
     board = board_functions.init_board(19)
 
-    # board, total_eat = test_eat_row(board)
-    # board = simple_board(board)
-    # board = complex_board(board)
-    # board = board_four_in_a_row(board)
-
     start = time.time()
     player = 1
     total_eat = {-1: 0, 1: 0}
-    for i in range(0, 100):
+    total_time = {-1: 0, 1: 0}
+
+    for i in range(0, 361):
         eat = 0
 
         one_move_timer = time.time()
-        next_move = get_move.get_next_move(board, 19, 10, True, player, total_eat)
-        print(f"Move search time : {time.time() - one_move_timer}")
+        next_move = get_move.get_next_move(board, 19, 5, True, player, total_eat)
+        one_move_timer_stop = time.time()
+        print(f"Move search time : {one_move_timer_stop - one_move_timer}")
         print(f"SELECTED MOVE : {next_move}")
+        total_time[player] += one_move_timer_stop - one_move_timer
 
         board, eat = board_functions.place_stone(board, next_move, player)
         total_eat[player] += eat
 
         if check_win(board, next_move, player, total_eat[player]):
             board_functions.print_board(board, next_move)
-            print(f"Player {player} ({'B' if player == -1 else 'N'}) won the game")
+            print(f"Player {player} ({'B' if player == -1 else 'N'}) won the game with {i} moves played in total during the game")
+            print(f"Average time for N : {total_time[1] / (i / 2)}")
+            print(f"Average time for B : {total_time[-1] / (i / 2)}")
             break
         board_functions.print_board(board, next_move)
 
         player = player * -1
+        print("---------------------------------------------------------------------\n\n\n\n\n\n")
 
 
     print(f"Total : {time.time() - start}")
