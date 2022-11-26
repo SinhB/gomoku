@@ -95,11 +95,13 @@ if __name__ == "__main__":
     total_eat = {-1: 0, 1: 0}
     total_time = {-1: 0, 1: 0}
 
+    empty_board = True
+
     for i in range(0, 361):
         eat = 0
 
         one_move_timer = time.time()
-        next_move = get_move.get_next_move(board, 19, 5, True, player, total_eat)
+        next_move = get_move.get_next_move(board, 19, 5, True, player, total_eat, empty_board)
         one_move_timer_stop = time.time()
         print(f"Move search time : {one_move_timer_stop - one_move_timer}")
         print(f"SELECTED MOVE : {next_move}")
@@ -115,6 +117,7 @@ if __name__ == "__main__":
             print(f"Average time for B : {total_time[-1] / (i / 2)}")
             break
         board_functions.print_board(board, next_move)
+        empty_board = False
 
         player = player * -1
         print("---------------------------------------------------------------------\n\n\n\n\n\n")

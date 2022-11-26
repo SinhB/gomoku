@@ -28,9 +28,9 @@ multiplicator_enemy_open_three = 400_000
 
 multiplicator_enemy_closed_four = 80
 multiplicator_enemy_semi_closed_four = 1_000_000
-multiplicator_enemy_open_four = 500_000
+multiplicator_enemy_open_four = 5_000_000
 
-enemy_multiplicator_five = 200_000_000
+enemy_multiplicator_five = 50_000_000
 
 # Eating move
 multiplicator_open_eat_move = 200
@@ -38,6 +38,7 @@ multiplicator_open_eat_move = 200
 def get_new_threats(board, position, maximizing_player, player, total_eat):
     if not maximizing_player:
         player = player * -1
+
     row_index = position[0]
     col_index = position[1]
 
@@ -76,7 +77,7 @@ def get_new_threats(board, position, maximizing_player, player, total_eat):
         open_get_eat_move
     ) = [sum(x) for x in zip(result_lr, result_rl, result_row, result_col)]
 
-    if open_three > 2 or open_get_eat_move > 0 and total_eat[player * -1] >= 4:
+    if open_three > 2 or (open_get_eat_move > 0 and total_eat[player * -1] >= 4):
         return 0
 
     score = 1
@@ -97,25 +98,27 @@ def get_new_threats(board, position, maximizing_player, player, total_eat):
     score += five * multiplicator_five
 
     # Enemy series
-    score -= enemy_closed_two * multiplicator_enemy_closed_two
-    score -= enemy_semi_close_two * multiplicator_enemy_semi_close_two
-    score -= enemy_open_two * multiplicator_enemy_open_two
+    score += enemy_closed_two * multiplicator_enemy_closed_two
+    score += enemy_semi_close_two * multiplicator_enemy_semi_close_two
+    score += enemy_open_two * multiplicator_enemy_open_two
 
-    score -= enemy_closed_three * multiplicator_enemy_closed_three
-    score -= enemy_semi_closed_three * multiplicator_enemy_semi_closed_three
-    score -= enemy_open_three * multiplicator_enemy_open_three
+    score += enemy_closed_three * multiplicator_enemy_closed_three
+    score += enemy_semi_closed_three * multiplicator_enemy_semi_closed_three
+    score += enemy_open_three * multiplicator_enemy_open_three
 
-    score -= enemy_closed_four * multiplicator_enemy_closed_four
-    score -= enemy_semi_closed_four * multiplicator_enemy_semi_closed_four
-    score -= enemy_open_four * multiplicator_enemy_open_four
+    score += enemy_closed_four * multiplicator_enemy_closed_four
+    score += enemy_semi_closed_four * multiplicator_enemy_semi_closed_four
+    score += enemy_open_four * multiplicator_enemy_open_four
 
-    score -= enemy_five * enemy_multiplicator_five
+    score += enemy_five * enemy_multiplicator_five
 
 
     # Eating move
     if eat_move:
+        score += (eat_move + total_eat[player] + 1) ** 10
+
+    if open_get_eat_move:
         score -= (open_get_eat_move + total_eat[player * -1]) ** 10
-        score += (eat_move + total_eat[player]) ** 10
 
     if open_eat_move:
         score += open_eat_move * multiplicator_open_eat_move
@@ -123,7 +126,6 @@ def get_new_threats(board, position, maximizing_player, player, total_eat):
     # return score
     return score if maximizing_player else score * -1
 
-@functools.cache
 def check_side(side, player):
     # Number of consecutive pawn placed directly next to the one played
     consecutive = 0
@@ -142,6 +144,7 @@ def check_side(side, player):
     check_eating_enemy = True
     check_open_eating_move = True
     is_after_one_zero = False
+
     for i in range(0, min(len(side), 6)):
         if is_consecutive:
             if side[i] == player:
@@ -163,7 +166,7 @@ def check_side(side, player):
                 check_open_eating_move = False
 
         if side[i] == 0:
-            if consecutive > 0 or consecutive_enemy > 0:
+            if i == 0 or consecutive > 0 or consecutive_enemy > 0:
                 empty_space = True
             if is_after_one_zero:
                 break
@@ -176,7 +179,7 @@ def check_side(side, player):
         
     return consecutive, additional, empty_space, eating_enemy, open_eating_move, consecutive_enemy
 
-@functools.cache
+# @functools.cache
 def check_line(line, starting_index, player):
     left = line[0:starting_index][::-1]
     right = line[starting_index+1:]
@@ -255,8 +258,7 @@ def check_line(line, starting_index, player):
 
     enemy_five = 0
 
-
-    if total_consecutive_enemy == 1:
+    if total_consecutive_enemy == 2:
         if total_empty_space == 2:
             enemy_open_two += 1
         elif total_empty_space == 1:
@@ -264,7 +266,7 @@ def check_line(line, starting_index, player):
         else:
             enemy_closed_two += 1
 
-    elif total_consecutive_enemy == 2:
+    elif total_consecutive_enemy == 3:
         if total_empty_space == 2:
             enemy_open_three += 1
         elif total_empty_space == 1:
@@ -272,7 +274,7 @@ def check_line(line, starting_index, player):
         else:
             enemy_closed_three += 1
 
-    elif total_consecutive_enemy == 3:
+    elif total_consecutive_enemy == 4:
         if total_empty_space == 2:
             enemy_open_four += 1
         elif total_empty_space == 1:

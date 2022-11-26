@@ -12,7 +12,7 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 def init_board(size):
-    board = np.zeros([size, size], dtype=np.int)
+    board = np.zeros([size, size], dtype=np.int64)
     return board
 
 
