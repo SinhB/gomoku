@@ -120,14 +120,17 @@ def get_new_positions(board, size, available_pos, new_stone):
     print(possible_pos)
     return possible_pos
 
-def get_position_diagonals(board, column_idx, row_idx):
-    lr_diag = board.diagonal(row_idx - column_idx)
-    w = board.shape[1]
-    rl_diag = np.fliplr(board).diagonal(w - column_idx - 1 - row_idx)
-    return lr_diag.tolist(), rl_diag.tolist()
+# @njit
+# def get_position_diagonals(board, column_idx, row_idx):
+#     lr_diag = board.diagonal(row_idx - column_idx)
+#     w = board.shape[1]
+#     rl_diag = np.fliplr(board).diagonal(w - column_idx - 1 - row_idx)
+#     return lr_diag, rl_diag
 
-def get_position_rows(b, row_idx):
-    return b[row_idx, :].tolist()
+# @njit
+# def get_position_rows(b, row_idx):
+#     return b[row_idx, :]
 
-def get_position_columns(b, column_idx):
-    return b[:, column_idx].tolist()
+# @njit
+# def get_position_columns(b, column_idx):
+#     return b[:, column_idx]

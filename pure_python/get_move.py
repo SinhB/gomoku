@@ -21,7 +21,7 @@ def get_positions(board, maximizing_player, player, size, total_eat):
     available_pos = get_lines.get_available_pos(board)
     # print(f"ave pos  : {[x for x in available_pos]}")
 
-    eval_to_pos = [(p, get_new_threats(board, p, maximizing_player, player, total_eat)) for p in available_pos]
+    eval_to_pos = [(p, get_new_threats(board, p, maximizing_player, player, total_eat[player], total_eat[player * -1])) for p in available_pos]
     # print(eval_to_pos)
     # input()
 
@@ -36,8 +36,8 @@ def get_positions(board, maximizing_player, player, size, total_eat):
     else:
         eval_to_pos = list(filter(lambda tup: tup[1] <= cutoff, eval_to_pos))
     # print(f"Filtered : {[x[0] for x in eval_to_pos]}\n\n\n")
-    return eval_to_pos
-    # return eval_to_pos[:min(3, len(eval_to_pos))]
+    # return eval_to_pos
+    return eval_to_pos[:min(5, len(eval_to_pos))]
 
 def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats, max_depth, player, total_eat):
     if depth == 0 or current_threats >= 50_000_000 or current_threats <= -50_000_000:
@@ -64,8 +64,8 @@ def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats,
 
             maxEval = max(maxEval, evaluation)
             alpha = max(alpha, evaluation)
-            # if beta <= alpha or evaluation >= 50_000_000:
-            if beta <= alpha:
+            if beta <= alpha or evaluation >= 50_000_000:
+            # if beta <= alpha:
                 # print(f"{bcolors.OKBLUE} BREAK ALPHA : alpha = {alpha}, beta = {beta} {bcolors.ENDC}")
                 break
         if depth == max_depth:
@@ -83,8 +83,8 @@ def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats,
 
             minEval = min(minEval, evaluation)
             beta = min(beta, evaluation)
-            # if beta <= alpha or evaluation <= -50_000_000:
-            if beta <= alpha:
+            if beta <= alpha or evaluation <= -50_000_000:
+            # if beta <= alpha:
                 # print(f"{bcolors.OKGREEN} BREAK BETA : alpha = {alpha}, beta = {beta} {bcolors.ENDC}")
                 break
 

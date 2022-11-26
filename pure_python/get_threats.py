@@ -1,6 +1,10 @@
 import get_lines
 import functools
 from operator import add
+import numba as nb
+import numpy as np
+from numba import njit, prange, int64, typeof
+from numba.types import bool_
 
 # Player series multiplicator
 multiplicator_closed_two = 10
@@ -35,97 +39,7 @@ enemy_multiplicator_five = 50_000_000
 # Eating move
 multiplicator_open_eat_move = 200
 
-def get_new_threats(board, position, maximizing_player, player, total_eat):
-    if not maximizing_player:
-        player = player * -1
-
-    row_index = position[0]
-    col_index = position[1]
-
-    lr_diags, rl_diags = get_lines.get_position_diagonals(board, row_index, col_index)
-    rows = get_lines.get_position_rows(board, row_index)
-    columns = get_lines.get_position_columns(board, col_index)
-
-    result_lr = check_line(tuple(lr_diags), row_index, player)
-    result_rl = check_line(tuple(rl_diags), row_index, player)
-    result_row = check_line(tuple(rows), col_index, player)
-    result_col = check_line(tuple(columns), row_index, player)
-
-    (
-        closed_two,
-        semi_close_two,
-        open_two,
-        closed_three,
-        semi_closed_three,
-        open_three,
-        closed_four,
-        semi_closed_four,
-        open_four,
-        five,
-        enemy_closed_two,
-        enemy_semi_close_two,
-        enemy_open_two,
-        enemy_closed_three,
-        enemy_semi_closed_three,
-        enemy_open_three,
-        enemy_closed_four,
-        enemy_semi_closed_four,
-        enemy_open_four,
-        enemy_five,
-        eat_move,
-        open_eat_move,
-        open_get_eat_move
-    ) = [sum(x) for x in zip(result_lr, result_rl, result_row, result_col)]
-
-    if open_three > 2 or (open_get_eat_move > 0 and total_eat[player * -1] >= 4):
-        return 0
-
-    score = 1
-
-    # Player series
-    score += closed_two * multiplicator_closed_two
-    score += semi_close_two * multiplicator_semi_close_two
-    score += open_two * multiplicator_open_two
-
-    score += closed_three * multiplicator_closed_three
-    score += semi_closed_three * multiplicator_semi_closed_three
-    score += open_three * multiplicator_open_three
-
-    score += closed_four * multiplicator_closed_four
-    score += semi_closed_four * multiplicator_semi_closed_four
-    score += open_four * multiplicator_open_four
-
-    score += five * multiplicator_five
-
-    # Enemy series
-    score += enemy_closed_two * multiplicator_enemy_closed_two
-    score += enemy_semi_close_two * multiplicator_enemy_semi_close_two
-    score += enemy_open_two * multiplicator_enemy_open_two
-
-    score += enemy_closed_three * multiplicator_enemy_closed_three
-    score += enemy_semi_closed_three * multiplicator_enemy_semi_closed_three
-    score += enemy_open_three * multiplicator_enemy_open_three
-
-    score += enemy_closed_four * multiplicator_enemy_closed_four
-    score += enemy_semi_closed_four * multiplicator_enemy_semi_closed_four
-    score += enemy_open_four * multiplicator_enemy_open_four
-
-    score += enemy_five * enemy_multiplicator_five
-
-
-    # Eating move
-    if eat_move:
-        score += (eat_move + total_eat[player] + 1) ** 10
-
-    if open_get_eat_move:
-        score -= (open_get_eat_move + total_eat[player * -1]) ** 10
-
-    if open_eat_move:
-        score += open_eat_move * multiplicator_open_eat_move
-
-    # return score
-    return score if maximizing_player else score * -1
-
+@njit("Tuple((int64, int64, boolean, boolean, boolean, int64))(int64[:], int64)")
 def check_side(side, player):
     # Number of consecutive pawn placed directly next to the one played
     consecutive = 0
@@ -180,6 +94,7 @@ def check_side(side, player):
     return consecutive, additional, empty_space, eating_enemy, open_eating_move, consecutive_enemy
 
 # @functools.cache
+@njit("UniTuple(int64, 23)(int64[:], int64, int64)")
 def check_line(line, starting_index, player):
     left = line[0:starting_index][::-1]
     right = line[starting_index+1:]
@@ -195,6 +110,8 @@ def check_line(line, starting_index, player):
     eat_move = l_eating_enemy + r_eating_enemy
     open_eat_move = l_open_eating_move + r_open_eating_move
     open_get_eat_move = 0
+    if total_consecutive_enemy == 100:
+        open_get_eat_move += 1
 
     # Player serie
     closed_two = 0
@@ -310,3 +227,102 @@ def check_line(line, starting_index, player):
         open_eat_move,
         open_get_eat_move
     )
+
+@njit("UniTuple(int64[:], 2)(int64[:,:], int64, int64)")
+def get_diags(board, row_index, col_index):
+    lr_diags = np.diag(board, row_index - col_index)
+    w = board.shape[1]
+    rl_diags = np.diag(np.fliplr(board), w-col_index-1-row_index)
+    return lr_diags, rl_diags
+
+
+@njit("int64(int64[:,:], int64[:], boolean, int64, int64, int64)")
+def get_new_threats(board, position, maximizing_player, player, player_eat, ennemy_eat):
+    if not maximizing_player:
+        player = player * -1
+
+    row_index, col_index = position
+
+    lr_diags, rl_diags = get_diags(board, row_index, col_index)
+    rows = board[row_index, :]
+    columns = board[:, col_index]
+
+    result_lr = check_line(lr_diags, row_index, player)
+    result_rl = check_line(rl_diags, row_index, player)
+    result_row = check_line(rows, col_index, player)
+    result_col = check_line(columns, row_index, player)
+
+    (
+        closed_two,
+        semi_close_two,
+        open_two,
+        closed_three,
+        semi_closed_three,
+        open_three,
+        closed_four,
+        semi_closed_four,
+        open_four,
+        five,
+        enemy_closed_two,
+        enemy_semi_close_two,
+        enemy_open_two,
+        enemy_closed_three,
+        enemy_semi_closed_three,
+        enemy_open_three,
+        enemy_closed_four,
+        enemy_semi_closed_four,
+        enemy_open_four,
+        enemy_five,
+        eat_move,
+        open_eat_move,
+        open_get_eat_move
+    ) = [sum(x) for x in zip(result_lr, result_rl, result_row, result_col)]
+
+    if open_three > 2 or (open_get_eat_move > 0 and ennemy_eat >= 4):
+        return 0
+
+    score = 1
+
+    # Player series
+    score += closed_two * multiplicator_closed_two
+    score += semi_close_two * multiplicator_semi_close_two
+    score += open_two * multiplicator_open_two
+
+    score += closed_three * multiplicator_closed_three
+    score += semi_closed_three * multiplicator_semi_closed_three
+    score += open_three * multiplicator_open_three
+
+    score += closed_four * multiplicator_closed_four
+    score += semi_closed_four * multiplicator_semi_closed_four
+    score += open_four * multiplicator_open_four
+
+    score += five * multiplicator_five
+
+    # Enemy series
+    score += enemy_closed_two * multiplicator_enemy_closed_two
+    score += enemy_semi_close_two * multiplicator_enemy_semi_close_two
+    score += enemy_open_two * multiplicator_enemy_open_two
+
+    score += enemy_closed_three * multiplicator_enemy_closed_three
+    score += enemy_semi_closed_three * multiplicator_enemy_semi_closed_three
+    score += enemy_open_three * multiplicator_enemy_open_three
+
+    score += enemy_closed_four * multiplicator_enemy_closed_four
+    score += enemy_semi_closed_four * multiplicator_enemy_semi_closed_four
+    score += enemy_open_four * multiplicator_enemy_open_four
+
+    score += enemy_five * enemy_multiplicator_five
+
+
+    # Eating move
+    if eat_move:
+        score += (eat_move + player_eat + 1) ** 10
+
+    if open_get_eat_move:
+        score -= (open_get_eat_move + ennemy_eat) ** 10
+
+    if open_eat_move:
+        score += open_eat_move * multiplicator_open_eat_move
+
+    # return score
+    return score if maximizing_player else score * -1

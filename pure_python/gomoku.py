@@ -4,6 +4,7 @@ import time
 import board_functions
 import get_move
 import get_lines
+import get_threats
 
 def board_four_in_a_row(board):
     board = board_functions.place_stone(board, np.array([4, 6]), 1)
@@ -69,9 +70,14 @@ def check_win(board, position, player, total_eat):
 
     win_array = (player, player, player, player, player)
 
-    lr_diags, rl_diags = get_lines.get_position_diagonals(board, row_index, col_index)
-    rows = get_lines.get_position_rows(board, row_index)
-    columns = get_lines.get_position_columns(board, col_index)
+    # lr_diags, rl_diags = get_lines.get_position_diagonals(board, row_index, col_index)
+    # rows = get_lines.get_position_rows(board, row_index)
+    # columns = get_lines.get_position_columns(board, col_index)
+    lr_diags = np.diag(board, row_index - col_index)
+    w = board.shape[1]
+    rl_diags = np.diag(np.fliplr(board), w-col_index-1-row_index)
+    rows = board[row_index, :]
+    columns = board[:, col_index]
 
     if check_line_win(lr_diags, win_array):
         print("Win by alignment")
@@ -101,7 +107,7 @@ if __name__ == "__main__":
         eat = 0
 
         one_move_timer = time.time()
-        next_move = get_move.get_next_move(board, 19, 5, True, player, total_eat, empty_board)
+        next_move = get_move.get_next_move(board, 19, 10, True, player, total_eat, empty_board)
         one_move_timer_stop = time.time()
         print(f"Move search time : {one_move_timer_stop - one_move_timer}")
         print(f"SELECTED MOVE : {next_move}")
@@ -122,5 +128,10 @@ if __name__ == "__main__":
         player = player * -1
         print("---------------------------------------------------------------------\n\n\n\n\n\n")
 
+
+    # print(f"Signature ", get_threats.check_line.nopython_signatures)
+    # print(f"Signature ", get_threats.check_side.nopython_signatures)
+    print(f"Signature ", get_threats.get_new_threats.nopython_signatures)
+    print(f"Signature ", get_threats.get_diags.nopython_signatures)
 
     print(f"Total : {time.time() - start}")
