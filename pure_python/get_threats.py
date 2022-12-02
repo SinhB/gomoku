@@ -6,35 +6,57 @@ import numpy as np
 from numba import njit, prange, int64, typeof
 from numba.types import bool_
 
-# Player series multiplicator
-multiplicator_closed_two = 10
-multiplicator_semi_close_two = 50
+
+multiplicator_five = 50_000_000
+multiplicator_enemy_five = 25_000_000
+multiplicator_enemy_semi_closed_four = 20_000_000
+multiplicator_enemy_open_three = 10_000_000
+multiplicator_open_four = 15_000_000
+multiplicator_open_three = 1_000_000
+multiplicator_semi_closed_four = 200_000
+multiplicator_enemy_semi_closed_three = 100_000
+multiplicator_semi_closed_three = 50_000
 multiplicator_open_two = 500
-
-multiplicator_closed_three = 20
-multiplicator_semi_closed_three = 1_000
-multiplicator_open_three = 10_000
-
-multiplicator_closed_four = 40
-multiplicator_semi_closed_four = 20_000
-multiplicator_open_four = 100_000
-
-multiplicator_five = 100_000_000
-
-# Block enemy series multiplicator
-multiplicator_enemy_closed_two = 20
+multiplicator_semi_close_two = 50
 multiplicator_enemy_semi_close_two = 100
 multiplicator_enemy_open_two = 1000
+multiplicator_enemy_closed_two = 00
+multiplicator_closed_two = 0
+multiplicator_enemy_closed_four = 0
+multiplicator_enemy_open_four = 0
+multiplicator_enemy_closed_three = 0
+multiplicator_closed_four = 0
+multiplicator_closed_three = 0
 
-multiplicator_enemy_closed_three = 40
-multiplicator_enemy_semi_closed_three = 2_000
-multiplicator_enemy_open_three = 400_000
+# # Player series multiplicator
+# multiplicator_closed_two = 10
+# multiplicator_semi_close_two = 50
+# multiplicator_open_two = 500
 
-multiplicator_enemy_closed_four = 80
-multiplicator_enemy_semi_closed_four = 1_000_000
-multiplicator_enemy_open_four = 5_000_000
+# multiplicator_closed_three = 20
+# multiplicator_semi_closed_three = 1_000
+# multiplicator_open_three = 10_000
 
-enemy_multiplicator_five = 50_000_000
+# multiplicator_closed_four = 40
+# multiplicator_semi_closed_four = 20_000
+# multiplicator_open_four = 100_000
+
+# multiplicator_five = 100_000_000
+
+# # Block enemy series multiplicator
+# multiplicator_enemy_closed_two = 20
+# multiplicator_enemy_semi_close_two = 100
+# multiplicator_enemy_open_two = 1000
+
+# multiplicator_enemy_closed_three = 40
+# multiplicator_enemy_semi_closed_three = 2_000
+# multiplicator_enemy_open_three = 400_000
+
+# multiplicator_enemy_closed_four = 80
+# multiplicator_enemy_semi_closed_four = 1_000_000
+# multiplicator_enemy_open_four = 5_000_000
+
+# multiplicator_enemy_five = 50_000_000
 
 # Eating move
 multiplicator_open_eat_move = 200
@@ -86,10 +108,14 @@ def check_side(side, player):
                 break
             else:
                 is_after_one_zero = True
+            # check_eating_enemy = False
+            # check_open_eating_move = False
         
         if is_after_one_zero:
             if side[i] == player:
                 additional += 1
+            # else:
+            #     break
         
     return consecutive, additional, empty_space, eating_enemy, open_eating_move, consecutive_enemy
 
@@ -110,7 +136,9 @@ def check_line(line, starting_index, player):
     eat_move = l_eating_enemy + r_eating_enemy
     open_eat_move = l_open_eating_move + r_open_eating_move
     open_get_eat_move = 0
-    if total_consecutive_enemy == 100:
+    if l_consecutive == 2 and l_empty_space == False:
+        open_get_eat_move += 1
+    if r_consecutive == 2 and r_empty_space == False:
         open_get_eat_move += 1
 
     # Player serie
@@ -143,19 +171,19 @@ def check_line(line, starting_index, player):
 
     elif total_consecutive == 2:
         if total_empty_space == 2:
-            closed_three += 1
+            open_three += 1
         elif total_empty_space == 1:
             semi_closed_three += 1
         else:
-            open_three += 1
+            closed_three += 1
 
     elif total_consecutive == 3:
         if total_empty_space == 2:
-            closed_four += 1
+            open_four += 1
         elif total_empty_space == 1:
             semi_closed_four += 1
         else:
-            open_four += 1
+            closed_four += 1
 
     elif total_consecutive >= 4:
         five += 1
@@ -175,7 +203,7 @@ def check_line(line, starting_index, player):
 
     enemy_five = 0
 
-    if total_consecutive_enemy == 2:
+    if total_consecutive_enemy == 1:
         if total_empty_space == 2:
             enemy_open_two += 1
         elif total_empty_space == 1:
@@ -183,15 +211,15 @@ def check_line(line, starting_index, player):
         else:
             enemy_closed_two += 1
 
-    elif total_consecutive_enemy == 3:
-        if total_empty_space == 2:
+    elif total_consecutive_enemy == 2:
+        if total_empty_space == 1:
             enemy_open_three += 1
-        elif total_empty_space == 1:
+        elif total_empty_space == 0:
             enemy_semi_closed_three += 1
         else:
             enemy_closed_three += 1
 
-    elif total_consecutive_enemy == 4:
+    elif total_consecutive_enemy == 3:
         if total_empty_space == 2:
             enemy_open_four += 1
         elif total_empty_space == 1:
@@ -199,7 +227,7 @@ def check_line(line, starting_index, player):
         else:
             enemy_closed_four += 1
 
-    elif total_consecutive >= 4:
+    elif total_consecutive_enemy >= 4:
         enemy_five += 1
 
     return (
@@ -311,7 +339,7 @@ def get_new_threats(board, position, maximizing_player, player, player_eat, enne
     score += enemy_semi_closed_four * multiplicator_enemy_semi_closed_four
     score += enemy_open_four * multiplicator_enemy_open_four
 
-    score += enemy_five * enemy_multiplicator_five
+    score += enemy_five * multiplicator_enemy_five
 
 
     # Eating move
@@ -324,5 +352,4 @@ def get_new_threats(board, position, maximizing_player, player, player_eat, enne
     if open_eat_move:
         score += open_eat_move * multiplicator_open_eat_move
 
-    # return score
     return score if maximizing_player else score * -1

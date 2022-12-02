@@ -37,7 +37,7 @@ def get_positions(board, maximizing_player, player, size, total_eat):
         eval_to_pos = list(filter(lambda tup: tup[1] <= cutoff, eval_to_pos))
     # print(f"Filtered : {[x[0] for x in eval_to_pos]}\n\n\n")
     # return eval_to_pos
-    return eval_to_pos[:min(5, len(eval_to_pos))]
+    return eval_to_pos[:min(4, len(eval_to_pos))]
 
 def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats, max_depth, player, total_eat):
     if depth == 0 or current_threats >= 50_000_000 or current_threats <= -50_000_000:
