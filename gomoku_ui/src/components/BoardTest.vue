@@ -1,6 +1,8 @@
 <script setup>
 /* eslint-disable */
 import axios from 'axios'
+import PlayerInfos from './PlayerInfos.vue'
+
 import { useBoardStore } from '../plugins/store/board.ts'
 
 const boardStore = useBoardStore()
@@ -13,8 +15,6 @@ async function getNextMove () {
     bestMove = result.data.best_move
     boardStore.timer = result.data.timer
   }
-  console.log(bestMove)
-  console.log(boardStore.board)
   await performMove(bestMove)
 }
 
@@ -23,39 +23,28 @@ async function performMove(move) {
   if (result.status === 200) {
     const eatenPos = JSON.parse(result.data.eaten_pos)
     for (const pos in eatenPos['eaten_pos']) {
-      console.log(`POS ${pos}`)
       boardStore.removeStone(eatenPos['eaten_pos'][pos][0], eatenPos['eaten_pos'][pos][1])
-
     }
 
-    if (result.data.win === true) {
-      boardStore.win()
-    }
-
+    
     boardStore.placeStone(move[0], move[1])
 
     boardStore.updateTotalEat(result.data.total_eat)
-  }
 
-  console.log(boardStore.player)
+    if (result.data.win === true) {
+      boardStore.win()
+    } else {
+      boardStore.swapPlayer()
+      if (boardStore.autoplay && boardStore.isAI[boardStore.playerString]) {
+        await getNextMove()
+      }
+    }
+  }
 }
 
 async function init () {
-  const result = await axios.get(`http://127.0.0.1:5000/init`)
+  await axios.get(`http://127.0.0.1:5000/init`)
   boardStore.$reset()
-}
-
-function getTile(value) {
-  console.log(`value : ${value}`)
-  if (value === 1) {
-    return '../assets/black_stone.png'
-  }
-  else if (value === -1) {
-    return '../assets/white_stone.png'
-  }
-  else if (value === 0) {
-    return '../assets/logo.png'
-  }
 }
 
 init()
@@ -66,26 +55,48 @@ init()
   <v-container mt-5>
     <v-btn class="bg-brown" @click="getNextMove()">Get next move</v-btn>
     <v-btn class="bg-brown" @click="init()">Restart</v-btn>
+    <v-switch
+        v-model="boardStore.autoplay"
+        :label="boardStore.autoplay === true ? 'Autoplay enabled': 'Autoplay disabled'"
+        @click="(boardStore.autoplay =  !boardStore.autoplay)"
+        color="red"
+        class="switch-center"
+    ></v-switch>
     <p>Last timer : {{boardStore.timer}}</p>
-    <p v-if="(boardStore.winner !== 0)">Winner : {{boardStore.winner}}</p>
-    <p>Total eat : {{boardStore.totalEat}}</p>
     <br/>
     <br/>
-    <div class="board">
-      <v-row v-for="(row, rowIndex) in boardStore.board" :key="row, rowIndex">
-        <v-col class="tile" v-for="(col, colIndex) in row" :key="col, colIndex">
-          <img v-if="col === 1" class='stone' src="../assets/black_stone.png">
-          <img v-if="col === -1" class='stone' src="../assets/white_stone.png">
-          <div v-if="col === 0" class="clickableTile" @click="performMove([rowIndex, colIndex])">
-            <img class='emptyTile' src="../assets/black_stone.png">
-          </div>
-        </v-col>
-      </v-row>
-    </div>
+    
+    <v-row>
+      <v-col>
+        <PlayerInfos color="BLACK"/>
+      </v-col>
+
+      <v-col>
+        <div class="board">
+          <v-row v-for="(row, rowIndex) in boardStore.board" :key="row, rowIndex">
+            <v-col class="tile" v-for="(col, colIndex) in row" :key="col, colIndex">
+              <img v-if="col === 1" class='stone' src="../assets/black_stone.png">
+              <img v-if="col === -1" class='stone' src="../assets/white_stone.png">
+              <div v-if="col === 0" class="clickableTile" @click="performMove([rowIndex, colIndex])">
+                <img class='emptyTile' src="../assets/black_stone.png">
+              </div>
+            </v-col>
+          </v-row>
+        </div>
+      </v-col>
+
+      <v-col>
+        <PlayerInfos color="WHITE"/>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
 <style scoped>
+.switch-center {
+  display: flex;
+  justify-content: center;
+}
 .board {
   height: 660px;
   width: 760px;
