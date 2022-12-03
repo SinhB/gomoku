@@ -8,25 +8,19 @@ from numba.types import bool_
 
 
 multiplicator_five = 50_000_000
-multiplicator_enemy_five = 25_000_000
+multiplicator_enemy_five = 45_000_000
+multiplicator_enemy_open_four = 25_000_000
 multiplicator_enemy_semi_closed_four = 20_000_000
-multiplicator_enemy_open_three = 10_000_000
-multiplicator_open_four = 15_000_000
-multiplicator_open_three = 1_000_000
-multiplicator_semi_closed_four = 200_000
-multiplicator_enemy_semi_closed_three = 100_000
-multiplicator_semi_closed_three = 50_000
-multiplicator_open_two = 500
-multiplicator_semi_close_two = 50
-multiplicator_enemy_semi_close_two = 100
-multiplicator_enemy_open_two = 1000
-multiplicator_enemy_closed_two = 00
-multiplicator_closed_two = 0
-multiplicator_enemy_closed_four = 0
-multiplicator_enemy_open_four = 0
-multiplicator_enemy_closed_three = 0
-multiplicator_closed_four = 0
-multiplicator_closed_three = 0
+multiplicator_enemy_open_three = 1_000_000
+multiplicator_open_four = 1_500_000
+multiplicator_open_three = 100_000
+multiplicator_semi_closed_four = 20_000
+multiplicator_enemy_semi_closed_three = 10_000
+multiplicator_semi_closed_three = 5_000
+multiplicator_open_two = 50
+multiplicator_semi_close_two = 5
+multiplicator_enemy_semi_close_two = 10
+multiplicator_enemy_open_two = 100
 
 # # Player series multiplicator
 # multiplicator_closed_two = 10
@@ -91,10 +85,10 @@ def check_side(side, player):
         if check_eating_enemy or check_open_eating_move and not is_after_one_zero:
             if side[i] == player and consecutive_enemy == 2:
                 # Return eating_move
-                return 0, 0, False, True, False, 0
-            # elif side[i] == 0 and consecutive_enemy == 2:
-            #     # Return open_eating_move
-            #     return 0, 0, False, False, True, 0
+                return 0, 0, False, True, False, consecutive_enemy
+            elif side[i] == 0 and consecutive_enemy == 2:
+                # Return open_eating_move
+                return 0, 0, True, False, True, consecutive_enemy
             elif side[i] == player * -1:
                 consecutive_enemy += 1
             else:
@@ -108,7 +102,7 @@ def check_side(side, player):
                 break
             else:
                 is_after_one_zero = True
-            # check_eating_enemy = False
+            check_eating_enemy = False
             # check_open_eating_move = False
         
         if is_after_one_zero:
@@ -121,8 +115,8 @@ def check_side(side, player):
 
 # @functools.cache
 # @njit("UniTuple(int64, 23)(int64[:], int64, int64)", fastmath=True)
-@njit("Tuple((int64, boolean, boolean))(int64[:], int64, int64, int64)", fastmath=True)
-def check_line(line, starting_index, player, player_eat):
+@njit("Tuple((int64, boolean, boolean))(int64[:], int64, int64, int64, int64)", fastmath=True)
+def check_line(line, starting_index, player, player_eat, enemy_eat):
     left = line[0:starting_index][::-1]
     right = line[starting_index+1:]
 
@@ -233,30 +227,24 @@ def check_line(line, starting_index, player, player_eat):
 
     score = 1
     # Player series
-    score += closed_two * multiplicator_closed_two
     score += semi_close_two * multiplicator_semi_close_two
     score += open_two * multiplicator_open_two
 
-    score += closed_three * multiplicator_closed_three
     score += semi_closed_three * multiplicator_semi_closed_three
     score += open_three * multiplicator_open_three
 
-    score += closed_four * multiplicator_closed_four
     score += semi_closed_four * multiplicator_semi_closed_four
     score += open_four * multiplicator_open_four
 
     score += five * multiplicator_five
 
     # Enemy series
-    score += enemy_closed_two * multiplicator_enemy_closed_two
     score += enemy_semi_close_two * multiplicator_enemy_semi_close_two
     score += enemy_open_two * multiplicator_enemy_open_two
 
-    score += enemy_closed_three * multiplicator_enemy_closed_three
     score += enemy_semi_closed_three * multiplicator_enemy_semi_closed_three
     score += enemy_open_three * multiplicator_enemy_open_three
 
-    score += enemy_closed_four * multiplicator_enemy_closed_four
     score += enemy_semi_closed_four * multiplicator_enemy_semi_closed_four
     score += enemy_open_four * multiplicator_enemy_open_four
 
@@ -264,6 +252,12 @@ def check_line(line, starting_index, player, player_eat):
 
     if eat_move:
         score += (eat_move + player_eat + 1) ** 10
+
+    if open_eat_move:
+        score += (open_eat_move + player_eat + 1) ** 7
+
+    if open_get_eat_move:
+        score += (open_get_eat_move + enemy_eat + 1) ** 7
 
     return score, l_eating_enemy, r_eating_enemy
 
@@ -277,7 +271,7 @@ def get_diags(board, row_index, col_index):
 
 @njit
 # @njit("Tuple((int64, List(int64[:])))(int64[:,:], int64[:], boolean, int64, int64, int64)", fastmath=True)
-def get_new_threats(board, position, maximizing_player, player, player_eat, enemy_eat):
+def get_new_threats(board, position, maximizing_player, player, player_eat, enemy_eat, depth):
     if not maximizing_player:
         player = player * -1
 
@@ -289,10 +283,10 @@ def get_new_threats(board, position, maximizing_player, player, player_eat, enem
     
     captured_stones = []
 
-    result_lr, capture_left_lr, capture_right_lr = check_line(lr_diags, row_index, player, player_eat)
-    result_rl, capture_left_rl, capture_right_rl = check_line(rl_diags, row_index, player, player_eat)
-    result_row, capture_left_row, capture_right_row = check_line(rows, col_index, player, player_eat)
-    result_col, capture_left_col, capture_right_col = check_line(columns, row_index, player, player_eat)
+    result_lr, capture_left_lr, capture_right_lr = check_line(lr_diags, row_index, player, player_eat, enemy_eat)
+    result_rl, capture_left_rl, capture_right_rl = check_line(rl_diags, row_index, player, player_eat, enemy_eat)
+    result_row, capture_left_row, capture_right_row = check_line(rows, col_index, player, player_eat, enemy_eat)
+    result_col, capture_left_col, capture_right_col = check_line(columns, row_index, player, player_eat, enemy_eat)
 
     score = result_lr + result_rl + result_row + result_col
 
@@ -335,4 +329,5 @@ def get_new_threats(board, position, maximizing_player, player, player_eat, enem
     if not maximizing_player:
         score *= -1
 
-    return score, captured_stones
+    return score / depth, captured_stones
+    # return score, captured_stones, is_win, line_axis

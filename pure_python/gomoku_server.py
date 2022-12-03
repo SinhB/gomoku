@@ -92,7 +92,8 @@ def init():
 @app.get("/get_best_move")
 def get_best_move(player: int):
     one_move_timer = time.time()
-    next_move = get_move.get_next_move(env.board, 19, 10, True, player, env.total_eat, env.empty_board)
+    initial_board = np.copy(env.board)
+    next_move = get_move.get_next_move(initial_board, 19, 10, True, player, env.total_eat, env.empty_board)
     one_move_timer_stop = time.time()
     if type(next_move) != list:
         next_move = next_move.tolist()
@@ -105,18 +106,20 @@ def apply_move(player: int, move: str):
     print(move)
     env.empty_board = False
 
-    env.board, eat = board_functions.place_stone(env.board, move, player)
+    env.board, eat, eaten_pos = board_functions.place_stone(env.board, move, player)
     env.total_eat[player] += eat
+
+    ret_total_eat = {'BLACK': env.total_eat[1], 'WHITE': env.total_eat[-1]}
 
     board_functions.print_board(env.board, move)
 
     if check_win(env.board, move, player, env.total_eat[player]):
         board_functions.print_board(env.board, move)
         print(f"Player {player} ({'B' if player == -1 else 'N'}) won the game")
-        return {"win": True, "total_eat": env.total_eat}
+        return {"win": True, "total_eat": ret_total_eat, "eaten_pos": json.dumps({"eaten_pos": eaten_pos})}
         # return True, env.total_eat
     else:
-        return {"win": False, "total_eat": env.total_eat}
+        return {"win": False, "total_eat": ret_total_eat, "eaten_pos": json.dumps({"eaten_pos": eaten_pos})}
 
 @app.get("/get_board")
 def get_board():

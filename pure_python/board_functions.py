@@ -17,7 +17,7 @@ def init_board(size):
     board = np.zeros((size, size), dtype=np.int64)
     return board
 
-@njit("UniTuple(boolean, 2)(int64[:,:], int64[:], int64, int64, int64)", fastmath=True)
+# @njit("UniTuple(boolean, 2)(int64[:,:], int64[:], int64, int64, int64)", fastmath=True)
 def check_eating_enemy(board, position, step_x, step_y, player):
     # TODO: check if enemy can win by eating or break the serie
     left = [position[0] - step_x, position[1] - step_y]
@@ -58,44 +58,48 @@ def check_eating_enemy(board, position, step_x, step_y, player):
         right[1] += step_y
     return eating_left, eating_right
 
-def update_board(board, eating_left, eating_right, position, step_x, step_y):
+def update_board(board, eating_left, eating_right, position, step_x, step_y, eaten_pos):
     if eating_left:
         board[position[0] - step_x][position[1] - step_y] = 0
         board[position[0] - 2 * step_x][position[1] - 2 * step_y] = 0
-    
+        eaten_pos.append([position[0] - step_x, position[1] - step_y])
+        eaten_pos.append([position[0] - 2 * step_x, position[1] - 2 * step_y])
     if eating_right:
         board[position[0] + step_x][position[1] + step_y] = 0
         board[position[0] + 2 * step_x][position[1] + 2 * step_y] = 0
+        eaten_pos.append([position[0] + step_x, position[1] + step_y])
+        eaten_pos.append([position[0] + 2 * step_x, position[1] + 2 * step_y])
     
-    return board
+    return board, eaten_pos
 
 def place_stone(board, position, player):
+    eaten_pos = []
     board[position[0]][position[1]] = player
     total_eat = 0
     # Check lr diag
     eating_left, eating_right = check_eating_enemy(board, position, -1, -1, player)
     total_eat += eating_left + eating_right
-    board = update_board(board, eating_left, eating_right, position, -1, -1)
+    board, eaten_pos = update_board(board, eating_left, eating_right, position, -1, -1, eaten_pos)
     
     # Check rl diag
-    eating_left, eating_right = check_eating_enemy(board, position, 1, 1, player)
+    eating_left, eating_right = check_eating_enemy(board, position, -1, 1, player)
     total_eat += eating_left + eating_right
-    board = update_board(board, eating_left, eating_right, position, 1, 1)
+    board, eaten_pos = update_board(board, eating_left, eating_right, position, -1, 1, eaten_pos)
     
     # Check row diag
     print("\n\nCHECK ROW")
     print(position)
     eating_left, eating_right = check_eating_enemy(board, position, 0, 1, player)
     total_eat += eating_left + eating_right
-    board = update_board(board, eating_left, eating_right, position, 0, 1)
+    board, eaten_pos = update_board(board, eating_left, eating_right, position, 0, 1, eaten_pos)
     print("END CHECK ROW\n\n")
     
     # Check col diag
     eating_left, eating_right = check_eating_enemy(board, position, 1, 0, player)
     total_eat += eating_left + eating_right
-    board = update_board(board, eating_left, eating_right, position, 1, 0)
+    board, eaten_pos = update_board(board, eating_left, eating_right, position, 1, 0, eaten_pos)
 
-    return board, total_eat
+    return board, total_eat, eaten_pos
 
 def add_stone(board, player, position, captured_stones):
     board[position[0]][position[1]] = player
