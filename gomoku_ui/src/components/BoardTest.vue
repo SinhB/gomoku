@@ -20,9 +20,23 @@ async function getNextMove () {
 
 async function performMove(move) {
   const result = await axios.get(`http://127.0.0.1:5000/apply_move?player=${boardStore.player.toString()}&move=${move}`)
-  console.log(result)
+  if (result.status === 200) {
+    const eatenPos = JSON.parse(result.data.eaten_pos)
+    for (const pos in eatenPos['eaten_pos']) {
+      console.log(`POS ${pos}`)
+      boardStore.removeStone(eatenPos['eaten_pos'][pos][0], eatenPos['eaten_pos'][pos][1])
 
-  boardStore.placeStone(move[0], move[1])
+    }
+
+    if (result.data.win === true) {
+      boardStore.win()
+    }
+
+    boardStore.placeStone(move[0], move[1])
+
+    boardStore.updateTotalEat(result.data.total_eat)
+  }
+
   console.log(boardStore.player)
 }
 
@@ -53,6 +67,8 @@ init()
     <v-btn class="bg-brown" @click="getNextMove()">Get next move</v-btn>
     <v-btn class="bg-brown" @click="init()">Restart</v-btn>
     <p>Last timer : {{boardStore.timer}}</p>
+    <p v-if="(boardStore.winner !== 0)">Winner : {{boardStore.winner}}</p>
+    <p>Total eat : {{boardStore.totalEat}}</p>
     <br/>
     <br/>
     <div class="board">

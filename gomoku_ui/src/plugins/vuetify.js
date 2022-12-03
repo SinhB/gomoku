@@ -9,5 +9,6 @@ export default createVuetify({
   components,
   directives,
   theme: false,
+  ssr: true
   // theme: { dark: true },
 })
