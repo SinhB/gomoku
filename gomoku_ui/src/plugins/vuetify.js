@@ -1,6 +1,13 @@
-import '@mdi/font/css/materialdesignicons.css'
+/* eslint-disable */
 import 'vuetify/styles'
 
-const vuetify = createVuetify({
-  ssr: true,
+import { createVuetify } from 'vuetify'
+import * as components from 'vuetify/components'
+import * as directives from 'vuetify/directives'
+
+export default createVuetify({
+  components,
+  directives,
+  theme: false,
+  // theme: { dark: true },
 })
