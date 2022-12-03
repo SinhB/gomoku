@@ -61,15 +61,15 @@ multiplicator_closed_three = 0
 # Eating move
 multiplicator_open_eat_move = 200
 
-@njit("Tuple((int64, int64, boolean, boolean, boolean, int64))(int64[:], int64)")
+@njit("Tuple((int64, int64, boolean, boolean, boolean, int64))(int64[:], int64)", fastmath=True)
 def check_side(side, player):
-    # Number of consecutive pawn placed directly next to the one played
+    # Number of consecutive stone placed directly next to the one played
     consecutive = 0
-    # Number of enemy consecutive pawn placed directly next to the one played
+    # Number of enemy consecutive stone placed directly next to the one played
     consecutive_enemy = 0
-    # Number of consecutive pawn separated by one zero from the consecutive ones
+    # Number of consecutive stone separated by one zero from the consecutive ones
     additional = 0
-    # Is there an empty space at the end of the last serie of pawn
+    # Is there an empty space at the end of the last serie of stone
     empty_space = False
     # Eating enemy
     eating_enemy = False
@@ -92,9 +92,9 @@ def check_side(side, player):
             if side[i] == player and consecutive_enemy == 2:
                 # Return eating_move
                 return 0, 0, False, True, False, 0
-            elif side[i] == 0 and consecutive_enemy == 2:
-                # Return open_eating_move
-                return 0, 0, False, False, True, 0
+            # elif side[i] == 0 and consecutive_enemy == 2:
+            #     # Return open_eating_move
+            #     return 0, 0, False, False, True, 0
             elif side[i] == player * -1:
                 consecutive_enemy += 1
             else:
@@ -120,8 +120,9 @@ def check_side(side, player):
     return consecutive, additional, empty_space, eating_enemy, open_eating_move, consecutive_enemy
 
 # @functools.cache
-@njit("UniTuple(int64, 23)(int64[:], int64, int64)")
-def check_line(line, starting_index, player):
+# @njit("UniTuple(int64, 23)(int64[:], int64, int64)", fastmath=True)
+@njit("Tuple((int64, boolean, boolean))(int64[:], int64, int64, int64)", fastmath=True)
+def check_line(line, starting_index, player, player_eat):
     left = line[0:starting_index][::-1]
     right = line[starting_index+1:]
 
@@ -156,9 +157,9 @@ def check_line(line, starting_index, player):
 
     five = 0
 
-    if l_consecutive + l_additional:
+    if l_consecutive + l_additional == 3:
         open_three += 1
-    if r_consecutive + r_additional:
+    if r_consecutive + r_additional == 3:
         open_three += 1
 
     if total_consecutive == 1:
@@ -230,87 +231,7 @@ def check_line(line, starting_index, player):
     elif total_consecutive_enemy >= 4:
         enemy_five += 1
 
-    return (
-        closed_two,
-        semi_close_two,
-        open_two,
-        closed_three,
-        semi_closed_three,
-        open_three,
-        closed_four,
-        semi_closed_four,
-        open_four,
-        five,
-        enemy_closed_two,
-        enemy_semi_close_two,
-        enemy_open_two,
-        enemy_closed_three,
-        enemy_semi_closed_three,
-        enemy_open_three,
-        enemy_closed_four,
-        enemy_semi_closed_four,
-        enemy_open_four,
-        enemy_five,
-        eat_move,
-        open_eat_move,
-        open_get_eat_move
-    )
-
-@njit("UniTuple(int64[:], 2)(int64[:,:], int64, int64)")
-def get_diags(board, row_index, col_index):
-    lr_diags = np.diag(board, row_index - col_index)
-    w = board.shape[1]
-    rl_diags = np.diag(np.fliplr(board), w-col_index-1-row_index)
-    return lr_diags, rl_diags
-
-
-@njit("int64(int64[:,:], int64[:], boolean, int64, int64, int64)")
-def get_new_threats(board, position, maximizing_player, player, player_eat, ennemy_eat):
-    if not maximizing_player:
-        player = player * -1
-
-    row_index, col_index = position
-
-    lr_diags, rl_diags = get_diags(board, row_index, col_index)
-    rows = board[row_index, :]
-    columns = board[:, col_index]
-
-    result_lr = check_line(lr_diags, row_index, player)
-    result_rl = check_line(rl_diags, row_index, player)
-    result_row = check_line(rows, col_index, player)
-    result_col = check_line(columns, row_index, player)
-
-    (
-        closed_two,
-        semi_close_two,
-        open_two,
-        closed_three,
-        semi_closed_three,
-        open_three,
-        closed_four,
-        semi_closed_four,
-        open_four,
-        five,
-        enemy_closed_two,
-        enemy_semi_close_two,
-        enemy_open_two,
-        enemy_closed_three,
-        enemy_semi_closed_three,
-        enemy_open_three,
-        enemy_closed_four,
-        enemy_semi_closed_four,
-        enemy_open_four,
-        enemy_five,
-        eat_move,
-        open_eat_move,
-        open_get_eat_move
-    ) = [sum(x) for x in zip(result_lr, result_rl, result_row, result_col)]
-
-    if open_three > 2 or (open_get_eat_move > 0 and ennemy_eat >= 4):
-        return 0
-
     score = 1
-
     # Player series
     score += closed_two * multiplicator_closed_two
     score += semi_close_two * multiplicator_semi_close_two
@@ -341,15 +262,77 @@ def get_new_threats(board, position, maximizing_player, player, player_eat, enne
 
     score += enemy_five * multiplicator_enemy_five
 
-
-    # Eating move
     if eat_move:
         score += (eat_move + player_eat + 1) ** 10
 
-    if open_get_eat_move:
-        score -= (open_get_eat_move + ennemy_eat) ** 10
+    return score, l_eating_enemy, r_eating_enemy
 
-    if open_eat_move:
-        score += open_eat_move * multiplicator_open_eat_move
 
-    return score if maximizing_player else score * -1
+@njit("UniTuple(int64[:], 2)(int64[:,:], int64, int64)", fastmath=True)
+def get_diags(board, row_index, col_index):
+    lr_diags = np.diag(board, row_index - col_index)
+    w = board.shape[1]
+    rl_diags = np.diag(np.fliplr(board), w-col_index-1-row_index)
+    return lr_diags, rl_diags
+
+@njit
+# @njit("Tuple((int64, List(int64[:])))(int64[:,:], int64[:], boolean, int64, int64, int64)", fastmath=True)
+def get_new_threats(board, position, maximizing_player, player, player_eat, enemy_eat):
+    if not maximizing_player:
+        player = player * -1
+
+    row_index, col_index = position
+
+    lr_diags, rl_diags = get_diags(board, row_index, col_index)
+    rows = board[row_index, :]
+    columns = board[:, col_index]
+    
+    captured_stones = []
+
+    result_lr, capture_left_lr, capture_right_lr = check_line(lr_diags, row_index, player, player_eat)
+    result_rl, capture_left_rl, capture_right_rl = check_line(rl_diags, row_index, player, player_eat)
+    result_row, capture_left_row, capture_right_row = check_line(rows, col_index, player, player_eat)
+    result_col, capture_left_col, capture_right_col = check_line(columns, row_index, player, player_eat)
+
+    score = result_lr + result_rl + result_row + result_col
+
+    if capture_left_lr:
+        captured_left_lr_one = np.array((row_index-1, col_index-1), dtype=int64)
+        captured_left_lr_two = np.array((row_index-2, col_index-2), dtype=int64)
+        captured_stones.extend([captured_left_lr_one, captured_left_lr_two])
+    if capture_right_lr:
+        captured_right_lr_one = np.array((row_index+1, col_index+1), dtype=int64)
+        captured_right_lr_two = np.array((row_index+2, col_index+2), dtype=int64)
+        captured_stones.extend([captured_right_lr_one, captured_right_lr_two])
+
+    if capture_left_rl:
+        captured_left_rl_one = np.array((row_index-1, col_index+1), dtype=int64)
+        captured_left_rl_two = np.array((row_index-2, col_index+2), dtype=int64)
+        captured_stones.extend([captured_left_rl_one, captured_left_rl_two])
+    if capture_right_rl:
+        captured_right_rl_one = np.array((row_index+1, col_index-1), dtype=int64)
+        captured_right_rl_two = np.array((row_index+2, col_index-2), dtype=int64)
+        captured_stones.extend([captured_right_rl_one, captured_right_rl_two])
+
+    if capture_left_row:
+        captured_left_row_one = np.array((row_index, col_index-1), dtype=int64)
+        captured_left_row_two = np.array((row_index, col_index-2), dtype=int64)
+        captured_stones.extend([captured_left_row_one, captured_left_row_two])
+    if capture_right_row:
+        captured_right_row_one = np.array((row_index, col_index+1), dtype=int64)
+        captured_right_row_two = np.array((row_index, col_index+2), dtype=int64)
+        captured_stones.extend([captured_right_row_one, captured_right_row_two])
+
+    if capture_left_col:
+        captured_left_col_one = np.array((row_index-1, col_index), dtype=int64)
+        captured_left_col_two = np.array((row_index-2, col_index), dtype=int64)
+        captured_stones.extend([captured_left_col_one, captured_left_col_two])
+    if capture_right_col:
+        captured_right_col_one = np.array((row_index+1, col_index), dtype=int64)
+        captured_right_col_two = np.array((row_index+2, col_index), dtype=int64)
+        captured_stones.extend([captured_right_col_one, captured_right_col_two])
+
+    if not maximizing_player:
+        score *= -1
+
+    return score, captured_stones

@@ -7,39 +7,52 @@ import get_lines
 import get_threats
 
 def board_four_in_a_row(board):
-    board = board_functions.place_stone(board, np.array([4, 6]), 1)
-    board = board_functions.place_stone(board, np.array([5, 6]), -1)
-    board = board_functions.place_stone(board, np.array([4, 7]), 1)
-    board = board_functions.place_stone(board, np.array([5, 8]), -1)
-    board = board_functions.place_stone(board, np.array([4, 8]), 1)
-    board = board_functions.place_stone(board, np.array([3, 8]), -1)
-    # board = board_functions.place_stone(board, np.array([4, 9]), 1)
-    # board = board_functions.place_stone(board, np.array([3, 9]), -1)
+    board , _ = board_functions.place_stone(board, np.array((4, 6), dtype=np.int64), 1)
+    board , _ = board_functions.place_stone(board, np.array((5, 6), dtype=np.int64), -1)
+    board , _ = board_functions.place_stone(board, np.array((4, 7), dtype=np.int64), 1)
+    board , _ = board_functions.place_stone(board, np.array((5, 8), dtype=np.int64), -1)
+    board , _ = board_functions.place_stone(board, np.array((4, 8), dtype=np.int64), 1)
+    board , _ = board_functions.place_stone(board, np.array((3, 8), dtype=np.int64), -1)
+    # board , _ = board_functions.place_stone(board, np.array((4, 9), dtype=np.int64), 1)
+    # board , _ = board_functions.place_stone(board, np.array((3, 9), dtype=np.int64), -1)
     return board
 
 def simple_board(board):
-    board = board_functions.place_stone(board, np.array([4, 6]), 1)
-    board = board_functions.place_stone(board, np.array([5, 6]), -1)
-    board = board_functions.place_stone(board, np.array([4, 7]), 1)
+    board , _ = board_functions.place_stone(board, np.array((4, 6), dtype=np.int64), 1)
+    board , _ = board_functions.place_stone(board, np.array((5, 6), dtype=np.int64), -1)
+    board , _ = board_functions.place_stone(board, np.array((4, 7), dtype=np.int64), 1)
     return board
 
 def complex_board(board):
-    board = board_functions.place_stone(board, np.array([4, 6]), 1)
-    board = board_functions.place_stone(board, np.array([5, 6]), -1)
-    board = board_functions.place_stone(board, np.array([4, 4]), 1)
-    board = board_functions.place_stone(board, np.array([0, 0]), -1)
-    board = board_functions.place_stone(board, np.array([1, 1]), 1)
-    board = board_functions.place_stone(board, np.array([4, 3]), -1)
-    board = board_functions.place_stone(board, np.array([5, 2]), 1)
-    board = board_functions.place_stone(board, np.array([7, 7]), -1)
-    board = board_functions.place_stone(board, np.array([4, 5]), 1)
+    board , _ = board_functions.place_stone(board, np.array((4, 6), dtype=np.int64), 1)
+    board , _ = board_functions.place_stone(board, np.array((5, 6), dtype=np.int64), -1)
+    board , _ = board_functions.place_stone(board, np.array((4, 4), dtype=np.int64), 1)
+    board , _ = board_functions.place_stone(board, np.array((0, 0), dtype=np.int64), -1)
+    board , _ = board_functions.place_stone(board, np.array((1, 1), dtype=np.int64), 1)
+    board , _ = board_functions.place_stone(board, np.array((4, 3), dtype=np.int64), -1)
+    board , _ = board_functions.place_stone(board, np.array((5, 2), dtype=np.int64), 1)
+    board , _ = board_functions.place_stone(board, np.array((7, 7), dtype=np.int64), -1)
+    board , _ = board_functions.place_stone(board, np.array((4, 5), dtype=np.int64), 1)
+    return board
+
+def real_board(board):
+    board , _ = board_functions.place_stone(board, np.array((6, 6), dtype=np.int64), -1)
+    board , _ = board_functions.place_stone(board, np.array((7, 7), dtype=np.int64), 1)
+    board , _ = board_functions.place_stone(board, np.array((7, 9), dtype=np.int64), -1)
+    board , _ = board_functions.place_stone(board, np.array((7, 8), dtype=np.int64), 1)
+    board , _ = board_functions.place_stone(board, np.array((9, 7), dtype=np.int64), -1)
+    board , _ = board_functions.place_stone(board, np.array((9, 6), dtype=np.int64), 1)
+    board , _ = board_functions.place_stone(board, np.array((9, 9), dtype=np.int64), -1)
+    board , _ = board_functions.place_stone(board, np.array((8, 7), dtype=np.int64), 1)
+    board , _ = board_functions.place_stone(board, np.array((6, 9), dtype=np.int64), -1)
+    board , _ = board_functions.place_stone(board, np.array((8, 9), dtype=np.int64), 1)
     return board
 
 def test_eat_row(board):
-    board, total_eat = board_functions.place_stone(board, np.array([4, 6]), 1)
-    board, total_eat = board_functions.place_stone(board, np.array([4, 7]), -1)
-    board, total_eat = board_functions.place_stone(board, np.array([4, 5]), 1)
-    board, total_eat = board_functions.place_stone(board, np.array([4, 4]), -1)
+    board, total_eat = board_functions.place_stone(board, np.array((4, 6), dtype=np.int64), 1)
+    board, total_eat = board_functions.place_stone(board, np.array((4, 7), dtype=np.int64), -1)
+    board, total_eat = board_functions.place_stone(board, np.array((4, 5), dtype=np.int64), 1)
+    board, total_eat = board_functions.place_stone(board, np.array((4, 4), dtype=np.int64), -1)
     board_functions.print_board(board)
     input()
     return board, total_eat
@@ -94,6 +107,11 @@ def check_win(board, position, player, total_eat):
     return False
 
 if __name__ == "__main__":
+
+    """Only for windows"""
+    from colorama import init
+    init()
+
     board = board_functions.init_board(19)
 
     start = time.time()
@@ -102,6 +120,18 @@ if __name__ == "__main__":
     total_time = {-1: 0, 1: 0}
 
     empty_board = True
+
+
+    # one_move_timer = time.time()
+    # board = real_board(board)
+    # player = -1
+    # next_move = get_move.get_next_move(board, 19, 10, True, player, total_eat, empty_board=False)
+    # one_move_timer_stop = time.time()
+    # print(f"SELECTED MOVE : {next_move}")
+    # print(f"Move search time : {one_move_timer_stop - one_move_timer}")
+    # board, eat = board_functions.place_stone(board, next_move, player)
+    # board_functions.print_board(board, next_move)
+
 
     for i in range(0, 361):
         eat = 0
@@ -128,10 +158,6 @@ if __name__ == "__main__":
         player = player * -1
         print("---------------------------------------------------------------------\n\n\n\n\n\n")
 
-
-    # print(f"Signature ", get_threats.check_line.nopython_signatures)
-    # print(f"Signature ", get_threats.check_side.nopython_signatures)
-    print(f"Signature ", get_threats.get_new_threats.nopython_signatures)
-    print(f"Signature ", get_threats.get_diags.nopython_signatures)
-
     print(f"Total : {time.time() - start}")
+
+    print(f"Signature ", get_threats.get_new_threats.nopython_signatures)

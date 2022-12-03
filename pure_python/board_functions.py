@@ -1,4 +1,6 @@
 import numpy as np
+import numba as nb
+from numba import njit
 
 class bcolors:
     HEADER = '\033[95m'
@@ -12,10 +14,10 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 def init_board(size):
-    board = np.zeros([size, size], dtype=np.int64)
+    board = np.zeros((size, size), dtype=np.int64)
     return board
 
-
+@njit("UniTuple(boolean, 2)(int64[:,:], int64[:], int64, int64, int64)", fastmath=True)
 def check_eating_enemy(board, position, step_x, step_y, player):
     # TODO: check if enemy can win by eating or break the serie
     left = [position[0] - step_x, position[1] - step_y]
@@ -95,8 +97,16 @@ def place_stone(board, position, player):
 
     return board, total_eat
 
-def remove_stone(board, position, color):
+def add_stone(board, player, position, captured_stones):
+    board[position[0]][position[1]] = player
+    for stone in captured_stones:
+        board[stone[0]][stone[1]] = 0
+    return board
+
+def remove_stone(board, player, position, captured_stones):
     board[position[0]][position[1]] = 0
+    for stone in captured_stones:
+        board[stone[0]][stone[1]] = -player
     return board
 
 def print_board(board, last_move=None):
