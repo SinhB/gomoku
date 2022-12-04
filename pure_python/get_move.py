@@ -50,7 +50,7 @@ def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats,
     if depth == 0 or current_threats >= 50_000_000 or current_threats <= -50_000_000:
         return current_threats
 
-    best_position = get_positions(board, maximizing_player, player, size, total_eat, depth)
+    best_position = get_positions(board, maximizing_player, player, size, total_eat, max_depth - depth + 1)
 
     if depth == max_depth:
         moves_results = []

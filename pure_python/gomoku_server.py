@@ -90,10 +90,10 @@ def init():
     return
 
 @app.get("/get_best_move")
-def get_best_move(player: int):
+def get_best_move(player: int, depth: int):
     one_move_timer = time.time()
     initial_board = np.copy(env.board)
-    next_move = get_move.get_next_move(initial_board, 19, 10, True, player, env.total_eat, env.empty_board)
+    next_move = get_move.get_next_move(initial_board, 19, depth, True, player, env.total_eat, env.empty_board)
     one_move_timer_stop = time.time()
     if type(next_move) != list:
         next_move = next_move.tolist()
@@ -101,15 +101,14 @@ def get_best_move(player: int):
 
 @app.get("/apply_move")
 def apply_move(player: int, move: str):
-    print(move)
     move = [int(x) for x in move.split(',')]
-    print(move)
+
     env.empty_board = False
 
     env.board, eat, eaten_pos = board_functions.place_stone(env.board, move, player)
     env.total_eat[player] += eat
 
-    ret_total_eat = {'BLACK': env.total_eat[1], 'WHITE': env.total_eat[-1]}
+    ret_total_eat = {'black': env.total_eat[1], 'white': env.total_eat[-1]}
 
     board_functions.print_board(env.board, move)
 
