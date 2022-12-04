@@ -10,10 +10,10 @@ const boardStore = useBoardStore()
 let bestMove = []
 
 async function getNextMove () {
-  const result = await axios.get(`http://127.0.0.1:5000/get_best_move?player=${boardStore.player.toString()}`)
+  const result = await axios.get(`http://127.0.0.1:5000/get_best_move?player=${boardStore.player.toString()}&depth=${boardStore.getDepth()}`)
   if (result.status == '200') {
     bestMove = result.data.best_move
-    boardStore.timer = result.data.timer
+    boardStore.timer = result.data.timer.toFixed(5)
   }
   await performMove(bestMove)
 }
@@ -33,6 +33,7 @@ async function performMove(move) {
 
     if (result.data.win === true) {
       boardStore.win()
+      print("WIN")
     } else {
       boardStore.swapPlayer()
       if (boardStore.autoplay && boardStore.isAI[boardStore.playerString]) {
@@ -52,23 +53,28 @@ init()
 </script>
 
 <template>
-  <v-container mt-5>
-    <v-btn class="bg-brown" @click="getNextMove()">Get next move</v-btn>
-    <v-btn class="bg-brown" @click="init()">Restart</v-btn>
-    <v-switch
-        v-model="boardStore.autoplay"
-        :label="boardStore.autoplay === true ? 'Autoplay enabled': 'Autoplay disabled'"
-        @click="(boardStore.autoplay =  !boardStore.autoplay)"
-        color="red"
-        class="switch-center"
-    ></v-switch>
-    <p>Last timer : {{boardStore.timer}}</p>
-    <br/>
-    <br/>
-    
+  <v-container>
+    <v-row justify="center">
+      <v-card class="general-card" flat tile elevation="24">
+        <v-card-actions>
+          <h3 class="autoplay-switch">Last timer : {{boardStore.timer}}</h3>
+          <v-switch
+            v-model="boardStore.autoplay"
+            :label="boardStore.autoplay === true ? 'Autoplay enabled': 'Autoplay disabled'"
+            @click="(boardStore.autoplay =  !boardStore.autoplay)"
+            color="red"
+            class="autoplay-switch"
+          ></v-switch>
+          <v-btn class="bg-black" @click="getNextMove()">Get next move</v-btn>
+          <v-btn class="bg-black" @click="init()">Restart</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-row>
+    <br />
+
     <v-row>
       <v-col>
-        <PlayerInfos color="BLACK"/>
+        <PlayerInfos color="black"/>
       </v-col>
 
       <v-col>
@@ -86,24 +92,28 @@ init()
       </v-col>
 
       <v-col>
-        <PlayerInfos color="WHITE"/>
+        <PlayerInfos color="white"/>
       </v-col>
     </v-row>
   </v-container>
 </template>
 
 <style scoped>
-.switch-center {
+.autoplay-switch {
   display: flex;
   justify-content: center;
 }
+.general-card {
+  border: solid 2px black;
+  width: 900px;
+}
 .board {
-  height: 660px;
-  width: 760px;
-  background-color: bisque;
+  height: 663px;
+  width: 663px;
+  background-color: rgb(228, 163, 133);
   margin-left: auto;
   margin-right: auto;
-  border: 1px black solid;
+  border: 3px black solid;
 }
 .tile {
   height: 48px;
@@ -114,7 +124,7 @@ init()
 .stone {
   height: 20px;
   width: 20px;
-  margin-top: auto;
+  margin-top: 6px;
   margin-bottom: auto;
   margin-left: auto;
   margin-right: auto;

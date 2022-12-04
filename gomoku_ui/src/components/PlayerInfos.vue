@@ -6,26 +6,41 @@ const boardStore = useBoardStore()
 
 const props = defineProps(['color'])
 
-function lowerCase (word) {
-  return word.charAt(0) + word.substring(1).toLowerCase()
+function upperCase (word) {
+  return word.charAt(0).toUpperCase() + word.substring(1)
 }
 </script>
 
 <template>
-  <h1>{{lowerCase(props.color)}} player {{(boardStore.winner === props.color ? 'WIN' : '')}}</h1>
-  Total eat : {{boardStore.totalEat[props.color]}}
-  <v-switch
-    v-model="boardStore.isAI[props.color]"
-    :label="boardStore.isAI[props.color] === true ? 'AI': 'PLAYER'"
-    @click="(boardStore.isAI[props.color] =  !boardStore.isAI[props.color])"
-    color="red"
-    class="switch-center"
-  ></v-switch>
+  <v-card class="player-card" :color="props.color" elevation="24">
+    <h1>{{upperCase(props.color)}} player {{(boardStore.winner === props.color ? 'WIN' : '')}}</h1>
+    
+    <h2>Total eat : {{boardStore.totalEat[props.color]}}</h2>
+
+    <v-card-actions>
+      <v-switch
+        v-model="boardStore.isAI[props.color]"
+        label="AI"
+        @click="(boardStore.isAI[props.color] =  !boardStore.isAI[props.color])"
+        color="red"
+      ></v-switch>
+      <v-slider
+        v-model="boardStore.aiDepth[props.color]"
+        color="red"
+        :thumb-color="props.color === 'black' ? 'white' : 'black'"
+        :label="`AI depth (${boardStore.aiDepth[props.color]})`"
+        show-ticks="always"
+        :max="20"
+        :min="1"
+        :step="1"
+      ></v-slider>
+    </v-card-actions>
+
+  </v-card>
 </template>
 
-<style scoper>
-.switch-center {
-  display: flex;
-  justify-content: center;
+<style scoped>
+.player-card {
+  border: solid 10px gold;
 }
 </style>
