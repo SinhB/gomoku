@@ -33,7 +33,6 @@ async function performMove(move) {
 
     if (result.data.win === true) {
       boardStore.win()
-      print("WIN")
     } else {
       boardStore.swapPlayer()
       if (boardStore.autoplay && boardStore.isAI[boardStore.playerString]) {
