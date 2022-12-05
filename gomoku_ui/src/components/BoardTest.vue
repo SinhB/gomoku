@@ -1,9 +1,10 @@
 <script setup>
 /* eslint-disable */
-import axios from 'axios'
-import PlayerInfos from './PlayerInfos.vue'
+import axios from 'axios';
+import GoStone from './GoStone.vue';
+import PlayerInfos from './PlayerInfos.vue';
 
-import { useBoardStore } from '../plugins/store/board.ts'
+import { useBoardStore } from '../plugins/store/board.ts';
 
 const boardStore = useBoardStore()
 
@@ -80,9 +81,8 @@ init()
         <div class="board">
           <v-row v-for="(row, rowIndex) in boardStore.board" :key="row, rowIndex">
             <v-col class="tile" v-for="(col, colIndex) in row" :key="col, colIndex">
-              <img v-if="col === 1" class='stone' src="../assets/black_stone.png">
-              <img v-if="col === -1" class='stone' src="../assets/white_stone.png">
-              <div v-if="col === 0" class="clickableTile" @click="performMove([rowIndex, colIndex])">
+              <GoStone :player="col.player" :position="{rowIndex: rowIndex, colIndex: colIndex}" />
+              <div v-if="col.player === 0" class="clickableTile" @click="performMove([rowIndex, colIndex])">
                 <img class='emptyTile' src="../assets/black_stone.png">
               </div>
             </v-col>
@@ -97,7 +97,7 @@ init()
   </v-container>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .autoplay-switch {
   display: flex;
   justify-content: center;
@@ -109,7 +109,7 @@ init()
 .board {
   height: 663px;
   width: 663px;
-  background-color: rgb(228, 163, 133);
+  background-color: #fcf6ec;
   margin-left: auto;
   margin-right: auto;
   border: 3px black solid;
@@ -120,14 +120,7 @@ init()
   margin: 0;
   padding: 0;
 }
-.stone {
-  height: 20px;
-  width: 20px;
-  margin-top: 6px;
-  margin-bottom: auto;
-  margin-left: auto;
-  margin-right: auto;
-}
+
 .clickableTile {
   cursor: pointer;
   margin-top: auto;

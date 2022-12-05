@@ -1,6 +1,6 @@
 <script setup>
 /* eslint-disable */
-import { useBoardStore } from '../plugins/store/board.ts'
+import { useBoardStore } from '../plugins/store/board.ts';
 
 const boardStore = useBoardStore()
 
@@ -41,6 +41,6 @@ function upperCase (word) {
 
 <style scoped>
 .player-card {
-  border: solid 10px gold;
+  border: solid 10px #7C90DB;
 }
 </style>
