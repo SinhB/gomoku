@@ -55,7 +55,7 @@ init()
 <template>
   <v-container>
     <v-row justify="center">
-      <v-card class="general-card" flat tile elevation="24">
+      <v-card class="general-card" flat>
         <v-card-actions>
           <h3 class="autoplay-switch">Last timer : {{boardStore.timer}}</h3>
           <v-switch
@@ -79,14 +79,15 @@ init()
 
       <v-col>
         <div class="board">
-          <v-row v-for="(row, rowIndex) in boardStore.board" :key="row, rowIndex">
-            <v-col class="tile" v-for="(col, colIndex) in row" :key="col, colIndex">
-              <GoStone :player="col.player" :position="{rowIndex: rowIndex, colIndex: colIndex}" />
-              <div v-if="col.player === 0" class="clickableTile" @click="performMove([rowIndex, colIndex])">
-                <img class='emptyTile' src="../assets/black_stone.png">
-              </div>
-            </v-col>
-          </v-row>
+          <div class="container">
+            <v-row class="row-content" v-for="(row, rowIndex) in boardStore.board" :key="row, rowIndex">
+              <v-col class="square" v-for="(col, colIndex) in row" :key="col, colIndex" @click="performMove([rowIndex, colIndex])">
+                <div class="square-content">
+                  <GoStone :player="col.player" :position="{rowIndex: rowIndex, colIndex: colIndex}" />
+                </div>
+              </v-col>
+            </v-row>
+          </div>
         </div>
       </v-col>
 
@@ -103,22 +104,63 @@ init()
   justify-content: center;
 }
 .general-card {
-  border: solid 2px black;
   width: 900px;
+  margin: 40px 0;
+  background-color: #35393C;
 }
-.board {
-  height: 663px;
-  width: 663px;
-  background-color: #fcf6ec;
-  margin-left: auto;
-  margin-right: auto;
-  border: 3px black solid;
-}
+
 .tile {
   height: 48px;
   width: 48px;
   margin: 0;
   padding: 0;
+}
+
+.board {
+  margin: auto;
+  height: 600px;
+  width: 600px;
+  overflow: hidden;
+  border: 4px solid #000;
+  background-color: #fcf6ec;
+}
+
+.container .square {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  aspect-ratio: 1 / 1;
+  align-items: center;
+  background: linear-gradient(
+      to left,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0) calc(50% - 0.8px),
+      rgba(0, 0, 0, 1) 50%,
+      rgba(0, 0, 0, 0) calc(50% + 0.8px),
+      rgba(0, 0, 0, 0) 100%
+    ),
+    linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0) calc(50% - 0.8px),
+      rgba(0, 0, 0, 1) 50%,
+      rgba(0, 0, 0, 0) calc(50% + 0.8px),
+      rgba(0, 0, 0, 0) 100%
+    );
+}
+
+.square-content {
+  position: absolute;
+}
+
+.row-content {
+  margin: 0;
+}
+
+.container .square:hover {
+  cursor: pointer;
+  background-color: #6b665c;
+  border-radius: 100%;
 }
 
 .clickableTile {
