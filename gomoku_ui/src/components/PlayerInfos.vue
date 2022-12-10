@@ -26,11 +26,11 @@ function play () {
     </div>
     <div class="player-card-ai">
       <hr/>
-      <v-card-actions>
+      <v-card-actions v-if="boardStore.isAI[props.color]">
         <v-switch
           v-model="boardStore.isAI[props.color]"
           label="AI"
-          @click="(boardStore.isAI[props.color] =  !boardStore.isAI[props.color])"
+          @click="(boardStore.isAI[props.color] = !boardStore.isAI[props.color])"
           color="green lighten-1"
         ></v-switch>
         <v-slider

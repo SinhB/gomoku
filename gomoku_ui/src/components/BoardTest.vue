@@ -10,11 +10,15 @@ import GoStone from './GoStone.vue'
 
 import { useBoardStore } from '../plugins/store/board.ts'
 
+// const address = "127.0.0.1"
+const address = "10.12.10.7"
+
 const boardStore = useBoardStore()
 const route = useRoute()
 
 // SOCKET MANAGEMENT
-const socket = io("http://localhost:3000")
+const socket = io(`http://${address}:3000`)
+// const socket = io("http://localhost:3000")
 
 // PLAYER CONNECTION AND COLOR
 const env = reactive({
@@ -25,6 +29,7 @@ const env = reactive({
 
 
 function updatePlayer (data, color) {
+  console.log("Update player")
   if (env.mySocketId === data) {
       env.myColor = color
     }
@@ -44,11 +49,13 @@ onMounted(() => {
 
   socket.on("getAvailableColors", data => {
     env.availableColor = data
-    if (env.availableColor.contains('white')) {
-      boardStore.isAI['white'] = false
+    if (env.availableColor.includes('white')) {
+    // if (env.availableColor.contains('white')) {
+      boardStore.isAI['white'] = true
     }
-    if (env.availableColor.contains('black')) {
-      boardStore.isAI['black'] = false
+    if (env.availableColor.includes('black')) {
+    // if (env.availableColor.contains('black')) {
+      boardStore.isAI['black'] = true
     }
   })
   socket.on("whitePlayer", data => {
@@ -75,7 +82,14 @@ onMounted(() => {
 // BOARD MANAGEMENT
 
 async function getNextMove () {
-  const result = await axios.get(`http://127.0.0.1:5000/get_best_move?player=${boardStore.player.toString()}&depth=${boardStore.getDepth()}`)
+  const myParams = {
+    player: boardStore.player.toString(),
+    depth: boardStore.getDepth(),
+    board: boardStore.board,
+    turn: boardStore.turnsCounter
+  }
+  const result = await axios.get(`http://${address}:5000/get_best_move?player=${boardStore.player.toString()}&depth=${boardStore.getDepth()}&room=${route.params.roomName}`)
+  // const result = await axios.get(`http://${address}:5000/get_best_move?params=${JSON.stringify(myParams)}`)
   if (result.status == 200) {
     boardStore.timer = result.data.timer.toFixed(5)
     await performMove(result.data.best_move)
@@ -89,7 +103,7 @@ async function selectMove(move) {
 }
 
 async function performMove(move) {
-  const result = await axios.get(`http://127.0.0.1:5000/apply_move?player=${boardStore.player.toString()}&move=${move}`)
+  const result = await axios.get(`http://${address}:5000/apply_move?player=${boardStore.player.toString()}&move=${move}&room=${route.params.roomName}`)
   if (result.status === 200) {
     const eatenPos = JSON.parse(result.data.eaten_pos)
     for (const pos in eatenPos['eaten_pos']) {
@@ -103,6 +117,7 @@ async function performMove(move) {
       socket.emit('updateBoard', {roomName: route.params.roomName, board: boardStore.board})
     }
 
+    console.log(boardStore.autoplay, boardStore.isAI[boardStore.playerString])
     if (result.data.win === true) {
       boardStore.win()
     } else {
@@ -115,7 +130,7 @@ async function performMove(move) {
 }
 
 async function reset () {
-  await axios.get(`http://127.0.0.1:5000/init`)
+  await axios.get(`http://${address}:5000/init?room=${route.params.roomName}`)
   socket.emit('reset', route.params.roomName)
 }
 
@@ -160,7 +175,7 @@ init()
         <div class="board">
           <div class="container">
             <v-row class="row-content" v-for="(row, rowIndex) in boardStore.board" :key="row, rowIndex">
-              <v-col class="square" v-for="(col, colIndex) in row" :key="col, colIndex" @click="performMove([rowIndex, colIndex])">
+              <v-col class="square" v-for="(col, colIndex) in row" :key="col, colIndex" @click="selectMove([rowIndex, colIndex])">
                 <div class="square-content">
                   <GoStone :player="col.player" :position="{rowIndex: rowIndex, colIndex: colIndex}" />
                 </div>

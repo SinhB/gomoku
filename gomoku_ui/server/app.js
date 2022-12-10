@@ -71,7 +71,7 @@ SocketIo.on("connect", socket => {
     })
 })
 
-// Http.listen(3000, '172.23.163.242', () => {
-Http.listen(3000, () => {
+Http.listen(3000, '10.12.10.7', () => {
+// Http.listen(3000, () => {
     console.log("Listening on port 3000")
 })

@@ -82,47 +82,43 @@ class Env:
         self.total_eat = {-1: 0, 1: 0}
         self.empty_board = True
 
-env = Env()
+# env = Env()
+rooms = {}
 
 @app.get("/init")
-def init():
-    env.reset()
-    return
+def init(room: str):
+    rooms[room] = Env()
 
 @app.get("/get_best_move")
-def get_best_move(player: int, depth: int):
+def get_best_move(player: int, depth: int, room: str):
     one_move_timer = time.time()
-    initial_board = np.copy(env.board)
-    next_move = get_move.get_next_move(initial_board, 19, depth, True, player, env.total_eat, env.empty_board)
+    initial_board = np.copy(rooms[room].board)
+    next_move = get_move.get_next_move(initial_board, 19, depth, True, player, rooms[room].total_eat, rooms[room].empty_board)
     one_move_timer_stop = time.time()
     if type(next_move) != list:
         next_move = next_move.tolist()
     return {"best_move": next_move, "timer": one_move_timer_stop - one_move_timer}
 
 @app.get("/apply_move")
-def apply_move(player: int, move: str):
+def apply_move(player: int, move: str, room: str):
     move = [int(x) for x in move.split(',')]
 
-    env.empty_board = False
+    rooms[room].empty_board = False
 
-    env.board, eat, eaten_pos = board_functions.place_stone(env.board, move, player)
-    env.total_eat[player] += eat
+    rooms[room].board, eat, eaten_pos = board_functions.place_stone(rooms[room].board, move, player)
+    rooms[room].total_eat[player] += eat
 
-    ret_total_eat = {'black': env.total_eat[1], 'white': env.total_eat[-1]}
+    ret_total_eat = {'black': rooms[room].total_eat[1], 'white': rooms[room].total_eat[-1]}
 
-    board_functions.print_board(env.board, move)
+    board_functions.print_board(rooms[room].board, move)
 
-    if check_win(env.board, move, player, env.total_eat[player]):
-        board_functions.print_board(env.board, move)
+    if check_win(rooms[room].board, move, player, rooms[room].total_eat[player]):
+        board_functions.print_board(rooms[room].board, move)
         print(f"Player {player} ({'B' if player == -1 else 'N'}) won the game")
         return {"win": True, "total_eat": ret_total_eat, "eaten_pos": json.dumps({"eaten_pos": eaten_pos})}
-        # return True, env.total_eat
     else:
         return {"win": False, "total_eat": ret_total_eat, "eaten_pos": json.dumps({"eaten_pos": eaten_pos})}
 
-@app.get("/get_board")
-def get_board():
-    return {"board": env.board.tolist()}
-
 if __name__ == "__main__":
-    uvicorn.run("gomoku_server:app", port=5000, log_level="info", reload=True)
+    uvicorn.run("gomoku_server:app", host="10.12.10.7", port=5000, log_level="info", reload=True)
+    # uvicorn.run("gomoku_server:app", port=5000, log_level="info", reload=True)

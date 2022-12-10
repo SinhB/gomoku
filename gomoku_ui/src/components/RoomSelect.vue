@@ -2,8 +2,12 @@
 /* eslint-disable */
 import io from "socket.io-client"
 import { ref, reactive } from 'vue'
+import axios from 'axios'
 
-const socket = io("http://localhost:3000")
+
+const address = "10.12.10.7"
+
+const socket = io(`http://${address}:3000`)
 // const socket = io("http://172.23.163.242:3000")
 
 let rooms = ref([])
@@ -15,6 +19,7 @@ socket.on("getRooms", data => {
 function createNewRoom () {
     console.log("Creating new room")
     socket.emit('createNewRoom', newRoomName.value)
+    axios.get(`http://${address}:5000/init?room=${newRoomName.value}`)
 }
 </script>
 
@@ -27,7 +32,7 @@ function createNewRoom () {
                 label="New room name"
                 required
             ></v-text-field>
-            <v-btn @click="createNewRoom()" :to="`/game/${newRoomName}`">
+            <v-btn :disabled="newRoomName.length === 0" @click="createNewRoom()">
                 Create a new room
             </v-btn>
         </form>
