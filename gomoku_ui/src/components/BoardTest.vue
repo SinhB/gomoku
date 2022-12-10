@@ -1,22 +1,91 @@
 <script setup>
 /* eslint-disable */
-import axios from 'axios';
-import GoStone from './GoStone.vue';
-import PlayerInfos from './PlayerInfos.vue';
+import axios from 'axios'
+import io from "socket.io-client"
+import { reactive, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 
-import { useBoardStore } from '../plugins/store/board.ts';
+import PlayerInfos from './PlayerInfos.vue'
+import GoStone from './GoStone.vue'
+
+import { useBoardStore } from '../plugins/store/board.ts'
 
 const boardStore = useBoardStore()
+const route = useRoute()
 
-let bestMove = []
+// SOCKET MANAGEMENT
+const socket = io("http://localhost:3000")
+
+// PLAYER CONNECTION AND COLOR
+const env = reactive({
+  myColor: 'spectator',
+  availableColor: [],
+  mySocketId: ''
+})
+
+
+function updatePlayer (data, color) {
+  if (env.mySocketId === data) {
+      env.myColor = color
+    }
+    boardStore.isAI[color] = false
+    env.availableColor = env.availableColor.filter(function(ele){ 
+      return ele != color
+    })
+}
+onMounted(() => {
+  socket.on("connect", () => {
+    env.mySocketId = socket.id
+  })
+
+  socket.on("getBoard", (data) => {
+    boardStore.board = data
+  })
+
+  socket.on("getAvailableColors", data => {
+    env.availableColor = data
+    if (env.availableColor.contains('white')) {
+      boardStore.isAI['white'] = false
+    }
+    if (env.availableColor.contains('black')) {
+      boardStore.isAI['black'] = false
+    }
+  })
+  socket.on("whitePlayer", data => {
+    updatePlayer(data, 'white')
+  })
+  socket.on("blackPlayer", data => {
+    updatePlayer(data, 'black')
+  })
+
+  // BOARD ACTION
+  socket.on("receivePlaceStone", data => {
+    performMove(data)
+  })
+  socket.on("receiveRemoveStone", eatenPos => {
+    boardStore.removeStone(eatenPos[0], eatenPos[1])
+  })
+  socket.on('reset', () => {
+    init()
+  })
+
+  socket.emit("joinedRoom", route.params.roomName)
+})
+
+// BOARD MANAGEMENT
 
 async function getNextMove () {
   const result = await axios.get(`http://127.0.0.1:5000/get_best_move?player=${boardStore.player.toString()}&depth=${boardStore.getDepth()}`)
-  if (result.status == '200') {
-    bestMove = result.data.best_move
+  if (result.status == 200) {
     boardStore.timer = result.data.timer.toFixed(5)
+    await performMove(result.data.best_move)
   }
-  await performMove(bestMove)
+}
+
+async function selectMove(move) {
+  if (boardStore.playerString === env.myColor) {
+    socket.emit("placeStone", {room: route.params.roomName, move: move, player: boardStore.player})
+  }
 }
 
 async function performMove(move) {
@@ -24,13 +93,15 @@ async function performMove(move) {
   if (result.status === 200) {
     const eatenPos = JSON.parse(result.data.eaten_pos)
     for (const pos in eatenPos['eaten_pos']) {
-      boardStore.removeStone(eatenPos['eaten_pos'][pos][0], eatenPos['eaten_pos'][pos][1])
+      socket.emit("removeStone", {room: route.params.roomName, move: eatenPos['eaten_pos'][pos]})
     }
 
-    
     boardStore.placeStone(move[0], move[1])
-
     boardStore.updateTotalEat(result.data.total_eat)
+
+    if (boardStore.playerString === env.myColor) {
+      socket.emit('updateBoard', {roomName: route.params.roomName, board: boardStore.board})
+    }
 
     if (result.data.win === true) {
       boardStore.win()
@@ -43,8 +114,12 @@ async function performMove(move) {
   }
 }
 
-async function init () {
+async function reset () {
   await axios.get(`http://127.0.0.1:5000/init`)
+  socket.emit('reset', route.params.roomName)
+}
+
+async function init () {
   boardStore.$reset()
 }
 
@@ -54,6 +129,10 @@ init()
 
 <template>
   <v-container>
+    {{env.availableColor}}
+    <h3 :class="`autoplay-switch ${env.myColor}--text`">You are playing {{env.myColor}} -- {{boardStore.playerString}}</h3>
+
+    <br />
     <v-row justify="center">
       <v-card class="general-card" flat>
         <v-card-actions>
@@ -66,7 +145,7 @@ init()
             class="autoplay-switch"
           ></v-switch>
           <v-btn class="bg-black" @click="getNextMove()">Get next move</v-btn>
-          <v-btn class="bg-black" @click="init()">Restart</v-btn>
+          <v-btn class="bg-black" @click="reset()">Restart</v-btn>
         </v-card-actions>
       </v-card>
     </v-row>
@@ -74,7 +153,7 @@ init()
 
     <v-row>
       <v-col>
-        <PlayerInfos color="black"/>
+        <PlayerInfos color="black" :socket="socket" :availableColor="env.availableColor"/>
       </v-col>
 
       <v-col>
@@ -92,7 +171,7 @@ init()
       </v-col>
 
       <v-col>
-        <PlayerInfos color="white"/>
+        <PlayerInfos color="white" :socket="socket" :availableColor="env.availableColor"/>
       </v-col>
     </v-row>
   </v-container>
@@ -108,14 +187,27 @@ init()
   margin: 40px 0;
   background-color: #35393C;
 }
-
 .tile {
   height: 48px;
   width: 48px;
   margin: 0;
   padding: 0;
 }
-
+.clickableTile {
+  cursor: pointer;
+  margin-top: auto;
+  padding-bottom: 10px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.emptyTile {
+  cursor: pointer;
+  height: 2px;
+  width: 2px;
+  max-height: 100%;
+  max-width: 100%;
+  border: 1px black solid;
+}
 .board {
   margin: auto;
   height: 600px;
@@ -124,7 +216,6 @@ init()
   border: 4px solid #000;
   background-color: #fcf6ec;
 }
-
 .container .square {
   display: flex;
   justify-content: center;
@@ -148,34 +239,16 @@ init()
       rgba(0, 0, 0, 0) 100%
     );
 }
-
 .square-content {
   position: absolute;
 }
-
 .row-content {
   margin: 0;
 }
-
 .container .square:hover {
   cursor: pointer;
   background-color: #6b665c;
   border-radius: 100%;
 }
 
-.clickableTile {
-  cursor: pointer;
-  margin-top: auto;
-  padding-bottom: 10px;
-  margin-left: auto;
-  margin-right: auto;
-}
-.emptyTile {
-  cursor: pointer;
-  height: 2px;
-  width: 2px;
-  max-height: 100%;
-  max-width: 100%;
-  border: 1px black solid;
-}
 </style>

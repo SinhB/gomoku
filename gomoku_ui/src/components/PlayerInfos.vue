@@ -1,13 +1,20 @@
 <script setup>
 /* eslint-disable */
-import { useBoardStore } from '../plugins/store/board.ts';
+import { useBoardStore } from '../plugins/store/board.ts'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
 
 const boardStore = useBoardStore()
 
-const props = defineProps(['color'])
+const props = defineProps(['color', 'socket', 'availableColor'])
 
 function upperCase (word) {
   return word.charAt(0).toUpperCase() + word.substring(1)
+}
+
+function play () {
+  props.socket.emit('selectColor', {roomName: route.params.roomName, color: props.color})
 }
 </script>
 
@@ -37,6 +44,10 @@ function upperCase (word) {
           :step="1"
         ></v-slider>
       </v-card-actions>
+
+      <v-btn v-if="props.availableColor.length !== 0 && props.availableColor.includes(props.color)" @click="play()">
+          Play
+      </v-btn>
     </div>
   </v-card>
 </template>

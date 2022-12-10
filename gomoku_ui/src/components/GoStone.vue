@@ -1,10 +1,7 @@
-
 <script setup>
 /* eslint-disable */
 import { useBoardStore } from '../plugins/store/board.ts';
-
 const boardStore = useBoardStore()
-
 const props = defineProps({
   "player": Number,
   "position": Object

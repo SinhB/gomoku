@@ -1,12 +1,15 @@
 <script setup>
-import BoardTest from './components/BoardTest.vue'
+// import BoardTest from './components/BoardTest.vue'
+// import RoomSelect from './components/RoomSelect.vue'
 import appHeader from './components/AppHeader.vue'
 </script>
 
 <template>
   <v-app class="app">
     <appHeader></appHeader>
-    <BoardTest />
+    <!-- <RoomSelect /> -->
+    <!-- <BoardTest /> -->
+    <router-view />
   </v-app>
 </template>
 
