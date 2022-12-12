@@ -2,7 +2,7 @@
 /* eslint-disable */
 import axios from 'axios'
 import io from "socket.io-client"
-import { reactive, onMounted } from 'vue'
+import { reactive, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 
 import PlayerInfos from './PlayerInfos.vue'
@@ -11,7 +11,8 @@ import GoStone from './GoStone.vue'
 import { useBoardStore } from '../plugins/store/board.ts'
 
 // const address = "127.0.0.1"
-const address = "10.12.10.7"
+const address = require('../../../network.json').address
+// const address = "10.12.10.7"
 
 const boardStore = useBoardStore()
 const route = useRoute()
@@ -49,17 +50,15 @@ onMounted(() => {
   })
 
   socket.on("getAvailableColors", data => {
-    console.log("get av")
-
     env.availableColor = data
-    boardStore.isAI['white'] = env.availableColor.includes('white') ? true : false
-    boardStore.isAI['black'] = env.availableColor.includes('black') ? true : false
-    // if (env.availableColor.includes('white')) {
-    //   boardStore.isAI['white'] = true
-    // }
-    // if (env.availableColor.includes('black')) {
-    //   boardStore.isAI['black'] = true
-    // }
+    // boardStore.isAI['white'] = env.availableColor.includes('white') ? true : false
+    // boardStore.isAI['black'] = env.availableColor.includes('black') ? true : false
+    if (env.availableColor.includes('white')) {
+      boardStore.isAI['white'] = true
+    }
+    if (env.availableColor.includes('black')) {
+      boardStore.isAI['black'] = true
+    }
   })
   socket.on("whitePlayer", data => {
     updatePlayer(data, 'white')
@@ -84,7 +83,10 @@ onMounted(() => {
 
   socket.emit("joinedRoom", route.params.roomName)
 })
-
+const currentRoom = route.params.roomName
+onBeforeUnmount(() => {
+  socket.emit('quit', {room: currentRoom, color: env.myColor, disconnect: true} )
+})
 // BOARD MANAGEMENT
 
 async function getNextMove () {
@@ -144,15 +146,6 @@ async function init () {
 }
 
 init()
-
-window.addEventListener('beforeunmount', () => {
-  props.socket.emit('quit', {roomName: route.params.room, color: props.myColor, disconnect: true} )
-})
-
-window.addEventListener('beforeunload', () => {
-  props.socket.emit('quit', {roomName: route.params.room, color: props.myColor, disconnect: true} )
-})
-
 </script>
 
 <template>

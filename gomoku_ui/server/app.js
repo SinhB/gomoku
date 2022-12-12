@@ -14,7 +14,6 @@ var rooms = {}
 function getAvailableColors(roomName) {
     let availableColors = []
     for (const key in rooms[roomName]) {
-        console.log(key)
         if (rooms[roomName][key] === null) {
             availableColors.push(key)
         }
@@ -74,6 +73,7 @@ SocketIo.on("connect", socket => {
     })
 
     socket.on("disconnect", () => {
+        console.log("Disconnect")
         if (socket.id in Object.keys(players)) {
             SocketIo.to(players[socket.id].roomName).emit('getAvailableColors', getAvailableColors(players[socket.id].roomName))
             rooms[players[socket.id].roomName][players[socket.id].color] = null
@@ -82,7 +82,8 @@ SocketIo.on("connect", socket => {
     })
 })
 
-Http.listen(3000, '10.12.10.7', () => {
+const address = require('../../network.json').address
+Http.listen(3000, address, () => {
 // Http.listen(3000, () => {
     console.log("Listening on port 3000")
 })

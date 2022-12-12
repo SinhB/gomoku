@@ -5,7 +5,8 @@ import { ref, reactive } from 'vue'
 import axios from 'axios'
 
 
-const address = "10.12.10.7"
+const address = require('../../../network.json').address
+// const address = "10.12.10.7"
 
 const socket = io(`http://${address}:3000`)
 // const socket = io("http://172.23.163.242:3000")

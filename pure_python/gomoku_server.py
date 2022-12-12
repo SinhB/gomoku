@@ -120,5 +120,8 @@ def apply_move(player: int, move: str, room: str):
         return {"win": False, "total_eat": ret_total_eat, "eaten_pos": json.dumps({"eaten_pos": eaten_pos})}
 
 if __name__ == "__main__":
-    uvicorn.run("gomoku_server:app", host="10.12.10.7", port=5000, log_level="info", reload=True)
+    with open('../network.json', 'r') as f:
+        data = json.load(f)
+    address = data['address']
+    uvicorn.run("gomoku_server:app", host=address, port=5000, log_level="info", reload=True)
     # uvicorn.run("gomoku_server:app", port=5000, log_level="info", reload=True)
