@@ -7,7 +7,7 @@ const route = useRoute()
 
 const boardStore = useBoardStore()
 
-const props = defineProps(['color', 'socket', 'availableColor'])
+const props = defineProps(['color', 'socket', 'availableColor', 'myColor'])
 
 function upperCase (word) {
   return word.charAt(0).toUpperCase() + word.substring(1)
@@ -15,6 +15,10 @@ function upperCase (word) {
 
 function play () {
   props.socket.emit('selectColor', {roomName: route.params.roomName, color: props.color})
+}
+
+function quit () {
+  props.socket.emit('quit', {room: route.params.roomName, color: props.myColor, disconnect: false} )
 }
 </script>
 
@@ -45,8 +49,12 @@ function play () {
         ></v-slider>
       </v-card-actions>
 
-      <v-btn v-if="props.availableColor.length !== 0 && props.availableColor.includes(props.color)" @click="play()">
+      <v-btn v-if="props.availableColor.length !== 0 && props.availableColor.includes(props.color)" @click="play()" class="play-button">
           Play
+      </v-btn>
+      
+      <v-btn v-if="props.myColor === props.color" @click="quit()" class="play-button">
+          Quit
       </v-btn>
     </div>
   </v-card>
@@ -58,5 +66,12 @@ function play () {
 }
 .player-card-general {
   margin-bottom: 10px;
+}
+.play-button {
+  border-style: solid;
+  border-color: green;
+  border-width: 3px;
+  margin-top: 5px;
+  margin-bottom: 5px;
 }
 </style>

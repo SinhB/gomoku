@@ -33,6 +33,17 @@ SocketIo.on("connect", socket => {
         SocketIo.to(data.roomName).emit(`${data.color}Player`, socket.id)
     })
 
+    socket.on('quit', data => {
+        rooms[data.room][data.color] = null
+        if (data.disconnect === true) {
+            socket.leave(data.room)
+        } else {
+            socket.emit("spectate")
+        }
+        delete players[socket.id]
+        SocketIo.to(data.room).emit('getAvailableColors', getAvailableColors(data.room))
+    })
+
     socket.on('joinedRoom', roomName => {
         socket.join(roomName)
         socket.emit('color', 'spectator')
@@ -62,7 +73,7 @@ SocketIo.on("connect", socket => {
         SocketIo.to(roomName).emit("reset")
     })
 
-    socket.on("disconnect", data => {
+    socket.on("disconnect", () => {
         if (socket.id in Object.keys(players)) {
             SocketIo.to(players[socket.id].roomName).emit('getAvailableColors', getAvailableColors(players[socket.id].roomName))
             rooms[players[socket.id].roomName][players[socket.id].color] = null

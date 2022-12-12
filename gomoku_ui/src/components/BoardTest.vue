@@ -31,13 +31,14 @@ const env = reactive({
 function updatePlayer (data, color) {
   console.log("Update player")
   if (env.mySocketId === data) {
-      env.myColor = color
-    }
-    boardStore.isAI[color] = false
-    env.availableColor = env.availableColor.filter(function(ele){ 
-      return ele != color
-    })
+    env.myColor = color
+  }
+  boardStore.isAI[color] = false
+  env.availableColor = env.availableColor.filter(function(ele){ 
+    return ele != color
+  })
 }
+
 onMounted(() => {
   socket.on("connect", () => {
     env.mySocketId = socket.id
@@ -48,21 +49,26 @@ onMounted(() => {
   })
 
   socket.on("getAvailableColors", data => {
+    console.log("get av")
+
     env.availableColor = data
-    if (env.availableColor.includes('white')) {
-    // if (env.availableColor.contains('white')) {
-      boardStore.isAI['white'] = true
-    }
-    if (env.availableColor.includes('black')) {
-    // if (env.availableColor.contains('black')) {
-      boardStore.isAI['black'] = true
-    }
+    boardStore.isAI['white'] = env.availableColor.includes('white') ? true : false
+    boardStore.isAI['black'] = env.availableColor.includes('black') ? true : false
+    // if (env.availableColor.includes('white')) {
+    //   boardStore.isAI['white'] = true
+    // }
+    // if (env.availableColor.includes('black')) {
+    //   boardStore.isAI['black'] = true
+    // }
   })
   socket.on("whitePlayer", data => {
     updatePlayer(data, 'white')
   })
   socket.on("blackPlayer", data => {
     updatePlayer(data, 'black')
+  })
+  socket.on("spectate", () => {
+    env.myColor = 'spectator'
   })
 
   // BOARD ACTION
@@ -89,7 +95,6 @@ async function getNextMove () {
     turn: boardStore.turnsCounter
   }
   const result = await axios.get(`http://${address}:5000/get_best_move?player=${boardStore.player.toString()}&depth=${boardStore.getDepth()}&room=${route.params.roomName}`)
-  // const result = await axios.get(`http://${address}:5000/get_best_move?params=${JSON.stringify(myParams)}`)
   if (result.status == 200) {
     boardStore.timer = result.data.timer.toFixed(5)
     await performMove(result.data.best_move)
@@ -140,14 +145,20 @@ async function init () {
 
 init()
 
+window.addEventListener('beforeunmount', () => {
+  props.socket.emit('quit', {roomName: route.params.room, color: props.myColor, disconnect: true} )
+})
+
+window.addEventListener('beforeunload', () => {
+  props.socket.emit('quit', {roomName: route.params.room, color: props.myColor, disconnect: true} )
+})
+
 </script>
 
 <template>
   <v-container>
-    {{env.availableColor}}
-    <h3 :class="`autoplay-switch ${env.myColor}--text`">You are playing {{env.myColor}} -- {{boardStore.playerString}}</h3>
+    <h3 :class="`autoplay-switch ${env.myColor}--text`">{{`You are ${env.myColor === 'spectator' ? "spectating" : `playing ${env.myColor}`} -- Wating for player ${boardStore.playerString} to play`}}</h3>
 
-    <br />
     <v-row justify="center">
       <v-card class="general-card" flat>
         <v-card-actions>
@@ -159,8 +170,8 @@ init()
             color="red"
             class="autoplay-switch"
           ></v-switch>
-          <v-btn class="bg-black" @click="getNextMove()">Get next move</v-btn>
-          <v-btn class="bg-black" @click="reset()">Restart</v-btn>
+          <v-btn @click="getNextMove()">Get next move</v-btn>
+          <v-btn @click="reset()">Restart</v-btn>
         </v-card-actions>
       </v-card>
     </v-row>
@@ -168,7 +179,7 @@ init()
 
     <v-row>
       <v-col>
-        <PlayerInfos color="black" :socket="socket" :availableColor="env.availableColor"/>
+        <PlayerInfos color="black" :socket="socket" :availableColor="env.availableColor" :myColor="env.myColor" />
       </v-col>
 
       <v-col>
@@ -186,7 +197,7 @@ init()
       </v-col>
 
       <v-col>
-        <PlayerInfos color="white" :socket="socket" :availableColor="env.availableColor"/>
+        <PlayerInfos color="white" :socket="socket" :availableColor="env.availableColor" :myColor="env.myColor" />
       </v-col>
     </v-row>
   </v-container>

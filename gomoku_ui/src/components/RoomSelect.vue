@@ -26,27 +26,32 @@ function createNewRoom () {
 <template>
     <v-row>
         <v-col>
-        <form>
-            <v-text-field
-                v-model="newRoomName"
-                label="New room name"
-                required
-            ></v-text-field>
-            <v-btn :disabled="newRoomName.length === 0" @click="createNewRoom()">
-                Create a new room
-            </v-btn>
-        </form>
-        </v-col>
-        <v-col>
-            <v-row v-for="(roomData, roomName) in rooms" :key="roomName">
-                <v-btn :to="`/game/${roomName}`">
-                    {{roomName}}
+            <form>
+                <v-text-field
+                    v-model="newRoomName"
+                    label="New room name"
+                    required
+                ></v-text-field>
+                <v-btn :disabled="newRoomName.length === 0" @click="createNewRoom()">
+                    Create a new room
                 </v-btn>
-                <br />
-            </v-row>
+            </form>
+        </v-col>
+        <v-col cols="9" scrollable class="pa-6">
+            <!-- <v-card-actions> -->
+                <v-row>
+                    <v-btn class="spacing" v-for="(roomData, roomName) in rooms" :key="roomName" :to="`/game/${roomName}`">
+                        {{roomName}}
+                    </v-btn>
+                </v-row>
+            <!-- </v-card-actions> -->
         </v-col>
     </v-row>
 </template>
 
 <style scoped>
+.spacing {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
 </style>
