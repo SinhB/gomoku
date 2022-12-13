@@ -8,7 +8,7 @@ from numba.types import bool_
 
 
 multiplicator_five = 500_000_000
-multiplicator_enemy_five = 45_000_000
+multiplicator_enemy_five = 250_000_000
 multiplicator_enemy_open_four = 25_000_000
 multiplicator_enemy_semi_closed_four = 20_000_000
 multiplicator_enemy_open_three = 1_000_000
@@ -82,10 +82,10 @@ def check_side(side, player):
             else:
                 is_consecutive = False
 
-        if check_eating_enemy or check_open_eating_move and not is_after_one_zero:
+        if (check_eating_enemy or check_open_eating_move) and not is_after_one_zero:
             if side[i] == player and consecutive_enemy == 2:
                 # Return eating_move
-                return 0, 0, False, True, False, consecutive_enemy
+                return 0, 0, True, True, False, consecutive_enemy
             elif side[i] == 0 and consecutive_enemy == 2:
                 # Return open_eating_move
                 return 0, 0, True, False, True, consecutive_enemy
@@ -123,10 +123,9 @@ def check_line(line, starting_index, player, player_eat, enemy_eat):
     l_consecutive, l_additional, l_empty_space, l_eating_enemy, l_open_eating_move, l_consecutive_enemy = check_side(left, player)
     r_consecutive, r_additional, r_empty_space, r_eating_enemy, r_open_eating_move, r_consecutive_enemy = check_side(right, player)
 
-    total_consecutive = l_consecutive + r_consecutive
+    total_consecutive = l_consecutive + r_consecutive + 1
     total_consecutive_enemy = l_consecutive_enemy + r_consecutive_enemy
     total_empty_space = l_empty_space + r_empty_space
-    # print(f"? = {total_consecutive_enemy}")
 
     eat_move = l_eating_enemy + r_eating_enemy
     open_eat_move = l_open_eating_move + r_open_eating_move
@@ -151,9 +150,9 @@ def check_line(line, starting_index, player, player_eat, enemy_eat):
 
     five = 0
 
-    if l_consecutive + l_additional == 3:
+    if l_consecutive + l_additional == 2 and ((r_eating_enemy or r_empty_space) or l_empty_space):
         open_three += 1
-    if r_consecutive + r_additional == 3:
+    if r_consecutive + r_additional == 2 and ((l_eating_enemy or l_empty_space) or r_empty_space):
         open_three += 1
 
     if total_consecutive == 1:
