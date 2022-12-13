@@ -13,6 +13,9 @@ export const useBoardStore = defineStore("board", {
         aiDepth: { black: 10, white: 10 },
         turns: [...Array(19)].map((e) => Array(19).fill(0)),
         turnsCounter: 0,
+        alert: false,
+        alertText: '',
+        alertColor: ''
     }),
     actions: {
         swapPlayer() {
@@ -32,6 +35,7 @@ export const useBoardStore = defineStore("board", {
         },
         win(player) {
             this.winner = player;
+            this.fireAlert(`${player.toUpperCase()} PLAYER HAS WON THE GAME`, 'green')
         },
         updateTotalEat(totalEat) {
             this.totalEat["black"] = totalEat["black"];
@@ -39,6 +43,15 @@ export const useBoardStore = defineStore("board", {
         },
         getDepth() {
             return this.aiDepth[this.playerString];
+        },
+        async fireAlert(text, color) {
+            this.alertColor = color
+            this.alertText = text
+            this.alert = true
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            this.alert = false
+            this.alertText = ''
+            this.alertColor = ''
         },
         reset() {
             this.board = [...Array(19)].map((e) => Array(19).fill({ player: 0, turn: 0 }))

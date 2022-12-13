@@ -129,17 +129,21 @@ async function selectMove(move) {
 async function performMove(move) {
   const result = await axios.get(`http://${address}:5000/apply_move?player=${boardStore.player.toString()}&move=${move}&room=${route.params.roomName}`)
   if (result.status === 200) {
-    const eatenPos = JSON.parse(result.data.eaten_pos)
-    for (const pos in eatenPos['eaten_pos']) {
-      socket.emit("removeStone", {room: route.params.roomName, move: eatenPos['eaten_pos'][pos]})
-    }
+    if (result.data.forbidden_move === true) {
+      boardStore.fireAlert('Forbidden move', 'red')
+    } else {
+      const eatenPos = JSON.parse(result.data.eaten_pos)
+      for (const pos in eatenPos['eaten_pos']) {
+        socket.emit("removeStone", {room: route.params.roomName, move: eatenPos['eaten_pos'][pos]})
+      }
 
-    if (result.data.win === true) {
-      socket.emit("win", {room: route.params.roomName, winner: boardStore.playerString})
-    }
-    socket.emit("placeStone", {room: route.params.roomName, move: move, player: boardStore.player})
+      if (result.data.win === true) {
+        socket.emit("win", {room: route.params.roomName, winner: boardStore.playerString})
+      }
+      socket.emit("placeStone", {room: route.params.roomName, move: move, player: boardStore.player})
 
-    socket.emit('eat', {room: route.params.roomName, total_eat: result.data.total_eat})
+      socket.emit('eat', {room: route.params.roomName, total_eat: result.data.total_eat})
+    }
   }
 }
 
@@ -161,6 +165,7 @@ init()
 
 <template>
   <v-container>
+
     <h3 :class="`autoplay-switch ${env.myColor}--text`">{{`You are ${env.myColor === 'spectator' ? "spectating" : `playing ${env.myColor}`} -- Wating for player ${boardStore.playerString} to play`}}</h3>
 
     <v-row justify="center">

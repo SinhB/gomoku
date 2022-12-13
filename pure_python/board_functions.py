@@ -13,9 +13,57 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+class ForbiddenMove(Exception):
+    def __init__(self):
+        self.message = "Double free three is forbidden"
+
 def init_board(size):
     board = np.zeros((size, size), dtype=np.int64)
     return board
+
+# @njit("UniTuple(boolean, 2)(int64[:,:], int64[:], int64, int64, int64)", fastmath=True)
+def check_open_three(board, position, step_x, step_y, player):
+    # TODO: check if enemy can win by eating or break the serie
+    left = [position[0] - step_x, position[1] - step_y]
+    right = [position[0] + step_x, position[1] + step_y]
+
+    consecutive_left = 0
+    empty_space_left = False
+
+    consecutive_right = 0
+    empty_space_right = False
+
+    is_consecutive = True
+
+    for i in range(0, 3):
+        if left[0] >= 0 and left[1] >= 0 and left[0] <= 18 and left[1] <= 18:
+            if board[left[0]][left[1]] == player and is_consecutive:
+                consecutive_left += 1
+            elif board[left[0]][left[1]] == 0:
+                empty_space_left = True
+                break
+            else:
+                break
+        left[0] -= step_x
+        left[1] -= step_y
+
+    is_consecutive = True
+    for i in range(0, 3):
+        if right[0] >= 0 and right[1] >= 0 and right[0] <= 18 and right[1] <= 18:
+            if board[right[0]][right[1]] == player and is_consecutive:
+                consecutive_right += 1
+            elif board[right[0]][right[1]] == 0:
+                empty_space_right = True
+                break
+            else:
+                break
+        right[0] += step_x
+        right[1] += step_y
+
+    if consecutive_left + consecutive_right == 2 and empty_space_left and empty_space_right:
+        return True
+
+    return False
 
 # @njit("UniTuple(boolean, 2)(int64[:,:], int64[:], int64, int64, int64)", fastmath=True)
 def check_eating_enemy(board, position, step_x, step_y, player):
@@ -26,6 +74,12 @@ def check_eating_enemy(board, position, step_x, step_y, player):
 
     eating_left = False
     eating_right = False
+
+    consecutive_left = 0
+    empty_space_left = False
+
+    consecutive_left = 0
+    empty_space_left = False
 
     consecutive_enemy = 0
     for i in range(0, 3):
@@ -56,6 +110,7 @@ def check_eating_enemy(board, position, step_x, step_y, player):
                 break
         right[0] += step_x
         right[1] += step_y
+
     return eating_left, eating_right
 
 def update_board(board, eating_left, eating_right, position, step_x, step_y, eaten_pos):
@@ -74,6 +129,13 @@ def update_board(board, eating_left, eating_right, position, step_x, step_y, eat
 
 def place_stone(board, position, player):
     eaten_pos = []
+    lr_open_three = check_open_three(board, position, -1, -1, player)
+    rl_open_three = check_open_three(board, position, -1, 1, player)
+    row_open_three = check_open_three(board, position, 0, 1, player)
+    col_open_three = check_open_three(board, position, 1, 0, player)
+    if lr_open_three + rl_open_three + row_open_three + col_open_three >= 2:
+        raise ForbiddenMove()
+
     board[position[0]][position[1]] = player
     total_eat = 0
     # Check lr diag
@@ -87,12 +149,9 @@ def place_stone(board, position, player):
     board, eaten_pos = update_board(board, eating_left, eating_right, position, -1, 1, eaten_pos)
     
     # Check row diag
-    print("\n\nCHECK ROW")
-    print(position)
     eating_left, eating_right = check_eating_enemy(board, position, 0, 1, player)
     total_eat += eating_left + eating_right
     board, eaten_pos = update_board(board, eating_left, eating_right, position, 0, 1, eaten_pos)
-    print("END CHECK ROW\n\n")
     
     # Check col diag
     eating_left, eating_right = check_eating_enemy(board, position, 1, 0, player)
@@ -103,6 +162,7 @@ def place_stone(board, position, player):
 
 def add_stone(board, player, position, captured_stones):
     board[position[0]][position[1]] = player
+    print(captured_stones)
     for stone in captured_stones:
         board[stone[0]][stone[1]] = 0
     return board

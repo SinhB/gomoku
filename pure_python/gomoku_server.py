@@ -104,7 +104,11 @@ def apply_move(player: int, move: str, room: str):
 
     rooms[room].empty_board = False
 
-    rooms[room].board, eat, eaten_pos = board_functions.place_stone(rooms[room].board, move, player)
+    try:
+        rooms[room].board, eat, eaten_pos = board_functions.place_stone(rooms[room].board, move, player)
+    except board_functions.ForbiddenMove:
+        ret_total_eat = {'black': rooms[room].total_eat[1], 'white': rooms[room].total_eat[-1]}
+        return {'forbidden_move': True, "win": False, "total_eat": ret_total_eat, 'eaten_pos': json.dumps({"eaten_pos": []})}
     rooms[room].total_eat[player] += eat
 
     ret_total_eat = {'black': rooms[room].total_eat[1], 'white': rooms[room].total_eat[-1]}
@@ -114,9 +118,9 @@ def apply_move(player: int, move: str, room: str):
     if check_win(rooms[room].board, move, player, rooms[room].total_eat[player]):
         board_functions.print_board(rooms[room].board, move)
         print(f"Player {player} ({'B' if player == -1 else 'N'}) won the game")
-        return {"win": True, "total_eat": ret_total_eat, "eaten_pos": json.dumps({"eaten_pos": eaten_pos})}
+        return {'forbidden_move': False, "win": True, "total_eat": ret_total_eat, "eaten_pos": json.dumps({"eaten_pos": eaten_pos})}
     else:
-        return {"win": False, "total_eat": ret_total_eat, "eaten_pos": json.dumps({"eaten_pos": eaten_pos})}
+        return {'forbidden_move': False, "win": False, "total_eat": ret_total_eat, "eaten_pos": json.dumps({"eaten_pos": eaten_pos})}
 
 if __name__ == "__main__":
     with open('../network.json', 'r') as f:
