@@ -45,20 +45,20 @@ onMounted(() => {
     env.mySocketId = socket.id
   })
 
-  socket.on("getBoard", (data) => {
-    boardStore.board = data
+  socket.on("roomData", (data) => {
+    env.myColor = 'spectator'
+    boardStore.board = data.board
+    if (boardStore.player !== data.playerTurn) {
+      boardStore.swapPlayer()
+    }
+    boardStore.autoplay = data.autoplay
+    boardStore.turnsCounter = data.turnsCounter
   })
 
   socket.on("getAvailableColors", data => {
     env.availableColor = data
-    // boardStore.isAI['white'] = env.availableColor.includes('white') ? true : false
-    // boardStore.isAI['black'] = env.availableColor.includes('black') ? true : false
-    if (env.availableColor.includes('white')) {
-      boardStore.isAI['white'] = true
-    }
-    if (env.availableColor.includes('black')) {
-      boardStore.isAI['black'] = true
-    }
+    boardStore.isAI['white'] = env.availableColor.includes('white') ? true : false
+    boardStore.isAI['black'] = env.availableColor.includes('black') ? true : false
   })
   socket.on("whitePlayer", data => {
     updatePlayer(data, 'white')
@@ -70,15 +70,38 @@ onMounted(() => {
     env.myColor = 'spectator'
   })
 
+  socket.on('gameOver', player => {
+    boardStore.win(player)
+  })
+
   // BOARD ACTION
-  socket.on("receivePlaceStone", data => {
-    performMove(data)
+  socket.on("receivePlaceStone", async (move) => {
+    boardStore.placeStone(move[0], move[1])
+    const currentPlayer = boardStore.playerString
+    const currentPlayerIsAI = boardStore.isAI[boardStore.playerString]
+    boardStore.swapPlayer()
+    if (
+      (currentPlayerIsAI || env.myColor === currentPlayer)
+      && boardStore.autoplay
+      && boardStore.isAI[boardStore.playerString]
+      && boardStore.winner === ''
+    ) {
+      await getNextMove()
+    }
   })
   socket.on("receiveRemoveStone", eatenPos => {
     boardStore.removeStone(eatenPos[0], eatenPos[1])
   })
   socket.on('reset', () => {
     init()
+  })
+
+  socket.on('autoplay', (autoplay) => {
+    boardStore.autoplay = autoplay
+  })
+
+  socket.on('updateEat', total_eat => {
+    boardStore.updateTotalEat(total_eat)
   })
 
   socket.emit("joinedRoom", route.params.roomName)
@@ -90,12 +113,6 @@ onBeforeUnmount(() => {
 // BOARD MANAGEMENT
 
 async function getNextMove () {
-  const myParams = {
-    player: boardStore.player.toString(),
-    depth: boardStore.getDepth(),
-    board: boardStore.board,
-    turn: boardStore.turnsCounter
-  }
   const result = await axios.get(`http://${address}:5000/get_best_move?player=${boardStore.player.toString()}&depth=${boardStore.getDepth()}&room=${route.params.roomName}`)
   if (result.status == 200) {
     boardStore.timer = result.data.timer.toFixed(5)
@@ -105,7 +122,7 @@ async function getNextMove () {
 
 async function selectMove(move) {
   if (boardStore.playerString === env.myColor) {
-    socket.emit("placeStone", {room: route.params.roomName, move: move, player: boardStore.player})
+    await performMove(move)
   }
 }
 
@@ -116,22 +133,12 @@ async function performMove(move) {
     for (const pos in eatenPos['eaten_pos']) {
       socket.emit("removeStone", {room: route.params.roomName, move: eatenPos['eaten_pos'][pos]})
     }
+    socket.emit("placeStone", {room: route.params.roomName, move: move, player: boardStore.player})
 
-    boardStore.placeStone(move[0], move[1])
-    boardStore.updateTotalEat(result.data.total_eat)
+    socket.emit('eat', {room: route.params.roomName, total_eat: result.data.total_eat})
 
-    if (boardStore.playerString === env.myColor) {
-      socket.emit('updateBoard', {roomName: route.params.roomName, board: boardStore.board})
-    }
-
-    console.log(boardStore.autoplay, boardStore.isAI[boardStore.playerString])
     if (result.data.win === true) {
-      boardStore.win()
-    } else {
-      boardStore.swapPlayer()
-      if (boardStore.autoplay && boardStore.isAI[boardStore.playerString]) {
-        await getNextMove()
-      }
+      socket.emit("win", {room: route.params.roomName, winner: boardStore.playerString})
     }
   }
 }
@@ -143,6 +150,11 @@ async function reset () {
 
 async function init () {
   boardStore.$reset()
+  env.myColor = 'spectator'
+}
+
+async function switchAutoplay() {
+  socket.emit('switchAutoplay', route.params.roomName)
 }
 
 init()
@@ -159,7 +171,7 @@ init()
           <v-switch
             v-model="boardStore.autoplay"
             :label="boardStore.autoplay === true ? 'Autoplay enabled': 'Autoplay disabled'"
-            @click="(boardStore.autoplay =  !boardStore.autoplay)"
+            @click="switchAutoplay()"
             color="red"
             class="autoplay-switch"
           ></v-switch>

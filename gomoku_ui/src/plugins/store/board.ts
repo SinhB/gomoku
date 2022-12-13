@@ -16,29 +16,29 @@ export const useBoardStore = defineStore("board", {
     }),
     actions: {
         swapPlayer() {
-        this.player = this.player * -1;
-        this.playerString = this.playerString === "black" ? "white" : "black";
+            this.player = this.player * -1;
+            this.playerString = this.playerString === "black" ? "white" : "black";
         },
         placeStone(rowIndex, colIndex) {
-        this.turnsCounter += 1;
-        this.turns[rowIndex][colIndex] = this.turnsCounter;
-        this.board[rowIndex][colIndex] = {
-            player: this.player,
-            turn: this.turnsCounter,
-        };
+            this.turnsCounter += 1;
+            this.turns[rowIndex][colIndex] = this.turnsCounter;
+            this.board[rowIndex][colIndex] = {
+                player: this.player,
+                turn: this.turnsCounter,
+            };
         },
         removeStone(rowIndex, colIndex) {
-        this.board[rowIndex][colIndex] = 0;
+            this.board[rowIndex][colIndex] = 0;
         },
-        win() {
-        this.winner = this.playerString;
+        win(player) {
+            this.winner = player;
         },
         updateTotalEat(totalEat) {
-        this.totalEat["black"] = totalEat["black"];
-        this.totalEat["white"] = totalEat["white"];
+            this.totalEat["black"] = totalEat["black"];
+            this.totalEat["white"] = totalEat["white"];
         },
         getDepth() {
-        return this.aiDepth[this.playerString];
+            return this.aiDepth[this.playerString];
         },
     },
 });

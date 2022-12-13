@@ -7,7 +7,7 @@ from numba import njit, prange, int64, typeof
 from numba.types import bool_
 
 
-multiplicator_five = 50_000_000
+multiplicator_five = 500_000_000
 multiplicator_enemy_five = 45_000_000
 multiplicator_enemy_open_four = 25_000_000
 multiplicator_enemy_semi_closed_four = 20_000_000
@@ -251,7 +251,7 @@ def check_line(line, starting_index, player, player_eat, enemy_eat):
     score += enemy_five * multiplicator_enemy_five
 
     if eat_move:
-        score += (eat_move + player_eat + 1) ** 10
+        score += ((eat_move + player_eat + 1) ** 10) * 10
 
     if open_eat_move:
         score += (open_eat_move + player_eat + 1) ** 7
@@ -264,7 +264,7 @@ def check_line(line, starting_index, player, player_eat, enemy_eat):
 
 @njit("UniTuple(int64[:], 2)(int64[:,:], int64, int64)", fastmath=True)
 def get_diags(board, row_index, col_index):
-    lr_diags = np.diag(board, row_index - col_index)
+    lr_diags = np.diag(board, col_index - row_index)
     w = board.shape[1]
     rl_diags = np.diag(np.fliplr(board), w-col_index-1-row_index)
     return lr_diags, rl_diags

@@ -50,7 +50,7 @@ def check_win(board, position, player, total_eat):
     # lr_diags, rl_diags = get_lines.get_position_diagonals(board, row_index, col_index)
     # rows = get_lines.get_position_rows(board, row_index)
     # columns = get_lines.get_position_columns(board, col_index)
-    lr_diags = np.diag(board, row_index - col_index)
+    lr_diags = np.diag(board, col_index - row_index)
     w = board.shape[1]
     rl_diags = np.diag(np.fliplr(board), w-col_index-1-row_index)
     rows = board[row_index, :]

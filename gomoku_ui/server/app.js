@@ -45,30 +45,52 @@ SocketIo.on("connect", socket => {
 
     socket.on('joinedRoom', roomName => {
         socket.join(roomName)
-        socket.emit('color', 'spectator')
+        socket.emit('roomData', rooms[roomName])
         socket.emit('getAvailableColors', getAvailableColors(roomName))
-        socket.emit('getBoard', rooms[roomName].board)
     })
 
     socket.on("createNewRoom", roomName => {
-        rooms[roomName] = {white: null, black: null, moves: []}
-        rooms[roomName] = {white: null, black: null, board: [...Array(19)].map(e => Array(19).fill(0))}
+        rooms[roomName] = {
+            white: null,
+            black: null,
+            board: [...Array(19)].map(e => Array(19).fill(0)),
+            playerTurn: 1,
+            turnsCounter: 0,
+            autoplay: true
+        }
         SocketIo.emit("getRooms", rooms)
     })
 
-    socket.on("updateBoard", data => {
-        rooms[data.roomName].board = data.board
+    socket.on("switchAutoplay", room => {
+        rooms[room].autoplay = !rooms[room].autoplay
+        SocketIo.to(room).emit("autoplay", rooms[room].autoplay)
     })
 
+    socket.on('win', data => {
+        SocketIo.to(data.room).emit("gameOver", data.winner)
+    })
+
+    socket.on('eat', data => {
+        SocketIo.to(data.room).emit("updateEat", data.total_eat)
+    })
+
+
     socket.on("placeStone", data => {
+        rooms[data.room].turnsCounter += 1
+        rooms[data.room].board[data.move[0]][data.move[1]] = {player: rooms[data.room].playerTurn, turn: rooms[data.room].turnsCounter}
+        rooms[data.room].playerTurn = rooms[data.room].playerTurn * -1
         SocketIo.to(data.room).emit("receivePlaceStone", data.move)
     })
 
     socket.on("removeStone", data => {
+        rooms[data.room].board[data.move[0]][data.move[1]] = {player: 0, turn: 0}
         SocketIo.to(data.room).emit("receiveRemoveStone", data.move)
     })
 
     socket.on("reset", (roomName) => {
+        rooms[roomName].playerTurn = 1
+        rooms[roomName].turnsCounter = 0
+        rooms[roomName].board = [...Array(19)].map(e => Array(19).fill(0))
         SocketIo.to(roomName).emit("reset")
     })
 
