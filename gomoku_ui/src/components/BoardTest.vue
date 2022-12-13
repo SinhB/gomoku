@@ -121,7 +121,7 @@ async function getNextMove () {
 }
 
 async function selectMove(move) {
-  if (boardStore.playerString === env.myColor) {
+  if (boardStore.playerString === env.myColor && boardStore.board[move[0]][move[1]].player === 0 && boardStore.winner === '') {
     await performMove(move)
   }
 }
@@ -133,13 +133,13 @@ async function performMove(move) {
     for (const pos in eatenPos['eaten_pos']) {
       socket.emit("removeStone", {room: route.params.roomName, move: eatenPos['eaten_pos'][pos]})
     }
-    socket.emit("placeStone", {room: route.params.roomName, move: move, player: boardStore.player})
-
-    socket.emit('eat', {room: route.params.roomName, total_eat: result.data.total_eat})
 
     if (result.data.win === true) {
       socket.emit("win", {room: route.params.roomName, winner: boardStore.playerString})
     }
+    socket.emit("placeStone", {room: route.params.roomName, move: move, player: boardStore.player})
+
+    socket.emit('eat', {room: route.params.roomName, total_eat: result.data.total_eat})
   }
 }
 
@@ -149,8 +149,7 @@ async function reset () {
 }
 
 async function init () {
-  boardStore.$reset()
-  env.myColor = 'spectator'
+  await boardStore.reset()
 }
 
 async function switchAutoplay() {

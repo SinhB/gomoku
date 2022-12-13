@@ -53,7 +53,7 @@ SocketIo.on("connect", socket => {
         rooms[roomName] = {
             white: null,
             black: null,
-            board: [...Array(19)].map(e => Array(19).fill(0)),
+            board: [...Array(19)].map(e => Array(19).fill({ player: 0, turn: 0 })),
             playerTurn: 1,
             turnsCounter: 0,
             autoplay: true
@@ -90,7 +90,7 @@ SocketIo.on("connect", socket => {
     socket.on("reset", (roomName) => {
         rooms[roomName].playerTurn = 1
         rooms[roomName].turnsCounter = 0
-        rooms[roomName].board = [...Array(19)].map(e => Array(19).fill(0))
+        rooms[roomName].board = [...Array(19)].map(e => Array(19).fill({ player: 0, turn: 0 }))
         SocketIo.to(roomName).emit("reset")
     })
 

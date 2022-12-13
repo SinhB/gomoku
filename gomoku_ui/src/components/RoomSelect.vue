@@ -22,6 +22,7 @@ function createNewRoom () {
     socket.emit('createNewRoom', newRoomName.value)
     axios.get(`http://${address}:5000/init?room=${newRoomName.value}`)
 }
+
 </script>
 
 <template>
@@ -39,13 +40,11 @@ function createNewRoom () {
             </form>
         </v-col>
         <v-col cols="9" scrollable class="pa-6">
-            <!-- <v-card-actions> -->
-                <v-row>
-                    <v-btn class="spacing" v-for="(roomData, roomName) in rooms" :key="roomName" :to="`/game/${roomName}`">
-                        {{roomName}}
-                    </v-btn>
-                </v-row>
-            <!-- </v-card-actions> -->
+            <v-row>
+                <v-btn class="spacing" v-for="(roomData, roomName) in rooms" :key="roomName" :to="`/game/${roomName}`">
+                    {{roomName}}
+                </v-btn>
+            </v-row>
         </v-col>
     </v-row>
 </template>
@@ -54,5 +53,6 @@ function createNewRoom () {
 .spacing {
     margin-top: 10px;
     margin-bottom: 10px;
+    margin-right: 10px;
 }
 </style>

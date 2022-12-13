@@ -49,7 +49,7 @@ function quit () {
         ></v-slider>
       </v-card-actions>
 
-      <v-btn v-if="props.availableColor.length !== 0 && props.availableColor.includes(props.color)" @click="play()" class="play-button">
+      <v-btn v-if="props.availableColor.length !== 0 && props.availableColor.includes(props.color) && props.myColor === 'spectator'" @click="play()" class="play-button">
           Play
       </v-btn>
       

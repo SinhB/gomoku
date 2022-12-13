@@ -28,7 +28,7 @@ export const useBoardStore = defineStore("board", {
             };
         },
         removeStone(rowIndex, colIndex) {
-            this.board[rowIndex][colIndex] = 0;
+            this.board[rowIndex][colIndex] = { player: 0, turn: 0 };
         },
         win(player) {
             this.winner = player;
@@ -40,5 +40,15 @@ export const useBoardStore = defineStore("board", {
         getDepth() {
             return this.aiDepth[this.playerString];
         },
+        reset() {
+            this.board = [...Array(19)].map((e) => Array(19).fill({ player: 0, turn: 0 }))
+            this.player = 1
+            this.playerString = "black"
+            this.timer = "0.00000"
+            this.winner = ""
+            this.totalEat = { black: 0, white: 0 }
+            this.turns = [...Array(19)].map((e) => Array(19).fill(0))
+            this.turnsCounter = 0
+        }
     },
 });

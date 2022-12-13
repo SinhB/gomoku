@@ -82,7 +82,6 @@ class Env:
         self.total_eat = {-1: 0, 1: 0}
         self.empty_board = True
 
-# env = Env()
 rooms = {}
 
 @app.get("/init")
