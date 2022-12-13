@@ -162,7 +162,6 @@ def place_stone(board, position, player):
 
 def add_stone(board, player, position, captured_stones):
     board[position[0]][position[1]] = player
-    print(captured_stones)
     for stone in captured_stones:
         board[stone[0]][stone[1]] = 0
     return board

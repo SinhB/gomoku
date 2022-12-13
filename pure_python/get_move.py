@@ -14,7 +14,6 @@ def get_next_move(board, size, depth, maximizing_player, player, total_eat, empt
     if empty_board:
         coord = (random.randint(6, 12), random.randint(6, 12))
         return np.array((coord), dtype=np.int64)
-        # return [random.randint(6, 12), random.randint(6, 12)]
     else:
         moves_results = minimax(board, depth, alpha, beta, maximizing_player, size, 0, depth, player, total_eat)
         moves_results.sort(key=lambda tup: tup[0], reverse=True)
@@ -22,31 +21,23 @@ def get_next_move(board, size, depth, maximizing_player, player, total_eat, empt
         return moves_results[0][1]
 
 def get_positions(board, maximizing_player, player, size, total_eat, depth):
-    # print(f"pre sort : {eval_to_pos}")
     available_pos = get_lines.get_available_pos(board)
-    # print(f"ave pos  : {[x for x in available_pos]}")
 
     eval_to_pos = [(p, get_new_threats(board, p, maximizing_player, player, total_eat[player], total_eat[player * -1], depth)) for p in available_pos]
-    # print(eval_to_pos)
-    # input()
 
-    # print(f"non sort : {[x[0] for x in eval_to_pos]}\n")
     eval_to_pos.sort(key=lambda tup: tup[1][0], reverse=maximizing_player)
 
-    # print(f"sorted   : {[x[0] for x in eval_to_pos]}\n")
 
-    cutoff = eval_to_pos[0][1][0] * 0.8
+    cutoff = eval_to_pos[0][1][0] * 0.6
     if maximizing_player:
         eval_to_pos = list(filter(lambda tup: tup[1][0] >= cutoff, eval_to_pos))
     else:
         eval_to_pos = list(filter(lambda tup: tup[1][0] <= cutoff, eval_to_pos))
-    # print(f"Filtered : {[x[0] for x in eval_to_pos]}\n\n\n")
-    # return eval_to_pos
-    return eval_to_pos[:min(4, len(eval_to_pos))]
-
-import uuid
+    return eval_to_pos
+    # return eval_to_pos[:min(4, len(eval_to_pos))]
 
 def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats, max_depth, player, total_eat):
+    print(depth)
     if depth == 0 or current_threats >= 50_000_000 or current_threats <= -50_000_000:
         return current_threats
 
@@ -60,7 +51,6 @@ def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats,
         for position, new_threats in best_position:
             board = board_functions.add_stone(board, player, position, new_threats[1])
 
-            # evaluation = minimax(board, depth - 1, alpha, beta, False, size, new_threats[0], max_depth, player, total_eat)
             evaluation = minimax(board, depth - 1, alpha, beta, False, size, current_threats + new_threats[0], max_depth, player, total_eat)
 
             board = board_functions.remove_stone(board, player, position, new_threats[1])
@@ -82,7 +72,6 @@ def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats,
         for position, new_threats in best_position:
             board = board_functions.add_stone(board, -player, position, new_threats[1])
 
-            # evaluation = minimax(board, depth - 1, alpha, beta, True, size, new_threats[0], max_depth, player, total_eat)
             evaluation = minimax(board, depth - 1, alpha, beta, True, size, current_threats + new_threats[0], max_depth, player, total_eat)
 
             board = board_functions.remove_stone(board, -player, position, new_threats[1])
