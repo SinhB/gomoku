@@ -33,14 +33,16 @@ SocketIo.on("connect", socket => {
     })
 
     socket.on('quit', data => {
-        rooms[data.room][data.color] = null
-        if (data.disconnect === true) {
-            socket.leave(data.room)
-        } else {
-            socket.emit("spectate")
+        if (data.room in rooms) {
+            rooms[data.room][data.color] = null
+            if (data.disconnect === true) {
+                socket.leave(data.room)
+            } else {
+                socket.emit("spectate")
+            }
+            delete players[socket.id]
+            SocketIo.to(data.room).emit('getAvailableColors', getAvailableColors(data.room))    
         }
-        delete players[socket.id]
-        SocketIo.to(data.room).emit('getAvailableColors', getAvailableColors(data.room))
     })
 
     socket.on('joinedRoom', roomName => {
