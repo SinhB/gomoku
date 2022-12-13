@@ -1,2 +1,0 @@
-class NotInBoard(Exception):
-    pass
