@@ -113,7 +113,7 @@ multiplicator_open_eat_move = 200
         
 #     return consecutive, additional, empty_space, eating_enemy, open_eating_move, consecutive_enemy
 
-@njit("Tuple((int64, int64, boolean, boolean, boolean, boolean))(int64[:], int64, boolean)", fastmath=True)
+@njit("Tuple((int64, int64, boolean, boolean, boolean, boolean, boolean, boolean))(int64[:], int64, boolean)", fastmath=True)
 def check_side(side, player, eating=False):
     consec = 0
     consec_op = 0
@@ -123,8 +123,10 @@ def check_side(side, player, eating=False):
     is_additional = True
     check_eating = True
     starting_blank = False
+    starting_op = False
     closing_blank = False
     closing_op = False
+    could_get_eat = False
     
     for i in range(0, min(len(side), 6)):
         if side[i] == player:
@@ -144,6 +146,8 @@ def check_side(side, player, eating=False):
             check_eating = False
             if i == 0:
                 starting_blank = True
+            if i == 1 and consec == 1:
+                could_get_eat = True
             if is_after_blank or consec_op:
                 if consec_op and not eating:
                     closing_op = True
@@ -153,19 +157,21 @@ def check_side(side, player, eating=False):
             is_after_blank = True
             is_consec = False
         if side[i] == -player:
+            if i == 0:
+                starting_op = True
             if is_after_blank:
                 if not additional:
-                    closing_op = False
                     closing_blank = True
                 else:
                     closing_op = True
-                    closing_blank = False
                 break
             consec_op += 1
             is_consec = False
-    if is_after_blank:
+    if is_after_blank and side[i] != 1 and side[i] != -player:
         closing_blank = True
-    return consec, additional, eating, starting_blank, closing_blank, closing_op
+    else:
+        closing_op = True
+    return consec, additional, eating, starting_blank, starting_op, closing_blank, closing_op, could_get_eat
 
 
 @njit("Tuple((int64, boolean, boolean, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64))(int64[:], int64, int64, int64, int64)", fastmath=True)
@@ -173,8 +179,8 @@ def check_line(line, starting_index, player, player_eat, enemy_eat):
     left = line[0:starting_index][::-1]
     right = line[starting_index+1:]
     
-    l_consec, l_additional, l_eating, l_starting_blank, l_closing_blank, l_closing_op = check_side(left, player, False)
-    r_consec, r_additional, r_eating, r_starting_blank, r_closing_blank, r_closing_op = check_side(right, player, False)
+    l_consec, l_additional, l_eating, l_starting_blank, l_starting_op, l_closing_blank, l_closing_op, l_could_get_eat = check_side(left, player, False)
+    r_consec, r_additional, r_eating, r_starting_blank, r_starting_op, r_closing_blank, r_closing_op, r_could_get_eat = check_side(right, player, False)
     
     close_threat = False
     semi_close = False
@@ -251,6 +257,13 @@ def check_line(line, starting_index, player, player_eat, enemy_eat):
         if open_threat:
             open_four += 1
 
+    #Check vulnerability
+    open_get_eat = 0
+    if l_starting_op and r_could_get_eat:
+        open_get_eat += 1
+    if r_starting_op and l_could_get_eat:
+        open_get_eat += 1
+
     score = 1
     # Player series
     score += semi_closed_two * multiplicator_semi_close_two
@@ -268,6 +281,9 @@ def check_line(line, starting_index, player, player_eat, enemy_eat):
 
     if eat_move:
         score += ((eat_move + player_eat + 1) ** 10) * 10
+
+    # if open_get_eat:
+    #     score += (open_get_eat + enemy_eat + 1) ** 7
 
     # print("closed_two:") 
     # print(closed_two)
@@ -462,22 +478,18 @@ def get_new_threats(board, position, maximizing_player, player, player_eat, enem
     
     captured_stones = []
 
-    print("PLAYER")
-    print(player)
-    print("Position:")
+    # print("PLAYER")
+    # print(player)
+    print("POSITION:")
     print(position)
 
 
     print(lr_diags)
-    # result_lr, capture_left_lr, capture_right_lr, open_three_lr = check_line(lr_diags, row_index, player, player_eat, enemy_eat)
     result_lr, capture_left_lr, capture_right_lr, closed_two_lr, semi_closed_two_lr, open_two_lr, closed_three_lr, semi_closed_three_lr, open_three_lr, closed_four_lr, semi_closed_four_lr, open_four_lr, five_lr = check_line(lr_diags, row_index, player, player_eat, enemy_eat)
-    # result_rl, capture_left_rl, capture_right_rl, open_three_rl = check_line(rl_diags, row_index, player, player_eat, enemy_eat)
     print(rl_diags)
     result_rl, capture_left_rl, capture_right_rl, closed_two_rl, semi_closed_two_rl, open_two_rl, closed_three_rl, semi_closed_three_rl, open_three_rl, closed_four_rl, semi_closed_four_rl, open_four_rl, five_rl = check_line(rl_diags, row_index, player, player_eat, enemy_eat)
-    # result_row, capture_left_row, capture_right_row, open_three_row = check_line(rows, col_index, player, player_eat, enemy_eat)
     print(rows)
     result_row, capture_left_row, capture_right_row, closed_two_row, semi_closed_two_row, open_two_row, closed_three_row, semi_closed_three_row, open_three_row, closed_four_row, semi_closed_four_row, open_four_row, five_row = check_line(rows, col_index, player, player_eat, enemy_eat)
-    # result_col, capture_left_col, capture_right_col, open_three_col = check_line(columns, row_index, player, player_eat, enemy_eat)
     print(columns)
     result_col, capture_left_col, capture_right_col, closed_two_col, semi_closed_two_col, open_two_col, closed_three_col, semi_closed_three_col, open_three_col, closed_four_col, semi_closed_four_col, open_four_col, five_col = check_line(columns, row_index, player, player_eat, enemy_eat)
 
@@ -504,16 +516,16 @@ def get_new_threats(board, position, maximizing_player, player, player_eat, enem
 
     score = result_lr + result_rl + result_row + result_col
 
-    op_result_lr, _, _, _, _, _, _, _, _, _, _, _, _ = check_line(lr_diags, row_index, player * -1, player_eat, enemy_eat)
-    op_result_rl, _, _, _, _, _, _, _, _, _, _, _, _ = check_line(rl_diags, row_index, player * -1, player_eat, enemy_eat)
-    op_result_row, _, _, _, _, _, _, _, _, _, _, _, _ = check_line(rows, col_index, player * -1, player_eat, enemy_eat)
-    op_result_col, _, _, _, _, _, _, _, _, _, _, _, _ = check_line(columns, row_index, player * -1, player_eat, enemy_eat)
+    op_result_lr, _, _, _, _, _, _, _, _, _, _, _, _ = check_line(lr_diags, row_index, player * -1, enemy_eat, player_eat)
+    op_result_rl, _, _, _, _, _, _, _, _, _, _, _, _ = check_line(rl_diags, row_index, player * -1, enemy_eat, player_eat)
+    op_result_row, _, _, _, _, _, _, _, _, _, _, _, _ = check_line(rows, col_index, player * -1, enemy_eat, player_eat)
+    op_result_col, _, _, _, _, _, _, _, _, _, _, _, _ = check_line(columns, row_index, player * -1, enemy_eat, player_eat)
 
     score += op_result_lr + op_result_rl + op_result_row + op_result_col
 
     
-    print("Score:")
-    print(score)
+    # print("Score:")
+    # print(score)
 
     if capture_left_lr:
         captured_left_lr_one = np.array((row_index-1, col_index-1), dtype=int64)

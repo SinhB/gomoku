@@ -173,6 +173,8 @@ def remove_stone(board, player, position, captured_stones):
     return board
 
 def print_board(board, last_move=None):
+    from colorama import init
+    init()
     row_len, col_len = board.shape
     index = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
     

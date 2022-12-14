@@ -11,6 +11,9 @@ import get_move
 import get_lines
 import get_threats
 
+from colorama import init
+init()
+
 app = FastAPI()
 
 app.add_middleware(
@@ -86,6 +89,8 @@ rooms = {}
 
 @app.get("/init")
 def init(room: str):
+    from colorama import init
+    init()
     rooms[room] = Env()
 
 @app.get("/get_best_move")
