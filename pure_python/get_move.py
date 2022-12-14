@@ -27,6 +27,8 @@ def get_positions(board, maximizing_player, player, size, total_eat, depth):
 
     eval_to_pos.sort(key=lambda tup: tup[1][0], reverse=maximizing_player)
 
+    # print(f"Sorted: {[pos for pos in eval_to_pos]}")
+
 
     cutoff = eval_to_pos[0][1][0] * 0.6
     if maximizing_player:
