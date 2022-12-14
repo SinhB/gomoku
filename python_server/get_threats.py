@@ -34,7 +34,7 @@ multiplicator_enemy_semi_closed_four = 40_000
 multiplicator_open_four = 35_000
 
 multiplicator_enemy_open_three = 40_000
-multiplicator_open_three = 10_000
+multiplicator_open_three = 1_000
 
 multiplicator_semi_closed_four = 2_000
 multiplicator_enemy_semi_closed_three = 1_000
@@ -277,14 +277,14 @@ def check_line(line, starting_index, player, player_eat, enemy_eat):
     if open_get_eat_move:
         score -= eat_value(open_get_eat_move + enemy_eat)
 
-    print("five", five, "enemy_five", enemy_five)
-    print("open_four", open_four, "enemy_open_four", enemy_open_four)
-    print("semi_closed_four", semi_closed_four, "enemy_semi_closed_four", enemy_semi_closed_four)
-    print("open_three", open_three, "enemy_open_three", enemy_open_three)
-    print("semi_closed_three", semi_closed_three, "enemy_semi_closed_three", enemy_semi_closed_three)
-    print("open_two", open_two, "enemy_open_two", enemy_open_two)
-    print("semi_closed_two", semi_closed_two, "enemy_semi_closed_two", enemy_semi_closed_two)
-    print("eat_move", eat_move, "open_eat_move", open_eat_move, "open_get_eat_move", open_get_eat_move)
+    # print("five", five, "enemy_five", enemy_five)
+    # print("open_four", open_four, "enemy_open_four", enemy_open_four)
+    # print("semi_closed_four", semi_closed_four, "enemy_semi_closed_four", enemy_semi_closed_four)
+    # print("open_three", open_three, "enemy_open_three", enemy_open_three)
+    # print("semi_closed_three", semi_closed_three, "enemy_semi_closed_three", enemy_semi_closed_three)
+    # print("open_two", open_two, "enemy_open_two", enemy_open_two)
+    # print("semi_closed_two", semi_closed_two, "enemy_semi_closed_two", enemy_semi_closed_two)
+    # print("eat_move", eat_move, "open_eat_move", open_eat_move, "open_get_eat_move", open_get_eat_move)
 
     return score, l_eating_enemy, r_eating_enemy, open_three
 

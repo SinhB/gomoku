@@ -7,8 +7,6 @@ from get_threats import get_new_threats
 from board_functions import bcolors
 
 def get_next_move(board, size, depth, maximizing_player, player, total_eat, empty_board):
-    # alpha = -2_000_000_000
-    # beta = 2_000_000_000
     alpha = np.iinfo(np.int64).min
     beta = np.iinfo(np.int64).max
     if empty_board:
@@ -17,37 +15,21 @@ def get_next_move(board, size, depth, maximizing_player, player, total_eat, empt
     else:
         moves_results = minimax(board, depth, alpha, beta, maximizing_player, size, 0, depth, player, total_eat)
         moves_results.sort(key=lambda tup: tup[0], reverse=True)
-        # print(moves_results)
         return moves_results[0][1]
 
 def get_positions(board, maximizing_player, player, size, total_eat, depth):
     available_pos = get_lines.get_available_pos(board)
 
     eval_to_pos = [(p, get_new_threats(board, p, maximizing_player, player, total_eat[player], total_eat[player * -1], depth)) for p in available_pos]
-    # print("HERE")
-    # print(eval_to_pos)
 
     eval_to_pos.sort(key=lambda tup: tup[1][0], reverse=maximizing_player)
-    print("Sorted")
-    print(eval_to_pos)
 
 
-    # cutoff = eval_to_pos[0][1][0] * 0.6 if eval_to_pos[0][1][0] > 0 else eval_to_pos[0][1][0] + eval_to_pos[0][1][0] * 0.6
-    cutoff = eval_to_pos[0][1][0] * 0.6
-    # print("cutoff")
+    cutoff = eval_to_pos[0][1][0] * 0.8
     if maximizing_player:
-        cutoff = eval_to_pos[0][1][0] * 0.6 if eval_to_pos[0][1][0] > 0 else eval_to_pos[0][1][0] + eval_to_pos[0][1][0] * 0.6
-        # cutoff = eval_to_pos[0][1][0] * 0.6 if eval_to_pos[0][1][0] > 0 else eval_to_pos[0][1][0] - eval_to_pos[0][1][0] * 0.6
-        # print(cutoff)
         eval_to_pos = list(filter(lambda tup: tup[1][0] >= cutoff, eval_to_pos))
-        # print(eval_to_pos)
     else:
-        cutoff = eval_to_pos[0][1][0] * 0.6 if eval_to_pos[0][1][0] > 0 else eval_to_pos[0][1][0] - eval_to_pos[0][1][0] * 0.6
-        # cutoff = eval_to_pos[0][1][0] * 0.6
-        # print(cutoff)
         eval_to_pos = list(filter(lambda tup: tup[1][0] <= cutoff, eval_to_pos))
-        # print(eval_to_pos)
-    print("\n")
 
     return eval_to_pos
     # return eval_to_pos[:min(4, len(eval_to_pos))]

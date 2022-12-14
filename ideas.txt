@@ -1,0 +1,4 @@
+Prendre uniquement le meilleur move plutôt que la somme.
+Les répercussions sont calculées dans la récursive.
+Pas de cutoff avant profondeur de 3 et après gros cutoff.
+Chercher les paterns dans l'ordre d'importance pour éviter des calculs inutiles
