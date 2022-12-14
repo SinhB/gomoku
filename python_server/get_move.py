@@ -24,21 +24,37 @@ def get_positions(board, maximizing_player, player, size, total_eat, depth):
     available_pos = get_lines.get_available_pos(board)
 
     eval_to_pos = [(p, get_new_threats(board, p, maximizing_player, player, total_eat[player], total_eat[player * -1], depth)) for p in available_pos]
+    # print("HERE")
+    # print(eval_to_pos)
 
     eval_to_pos.sort(key=lambda tup: tup[1][0], reverse=maximizing_player)
+    print("Sorted")
+    print(eval_to_pos)
 
 
+    # cutoff = eval_to_pos[0][1][0] * 0.6 if eval_to_pos[0][1][0] > 0 else eval_to_pos[0][1][0] + eval_to_pos[0][1][0] * 0.6
     cutoff = eval_to_pos[0][1][0] * 0.6
+    # print("cutoff")
     if maximizing_player:
+        cutoff = eval_to_pos[0][1][0] * 0.6 if eval_to_pos[0][1][0] > 0 else eval_to_pos[0][1][0] + eval_to_pos[0][1][0] * 0.6
+        # cutoff = eval_to_pos[0][1][0] * 0.6 if eval_to_pos[0][1][0] > 0 else eval_to_pos[0][1][0] - eval_to_pos[0][1][0] * 0.6
+        # print(cutoff)
         eval_to_pos = list(filter(lambda tup: tup[1][0] >= cutoff, eval_to_pos))
+        # print(eval_to_pos)
     else:
+        cutoff = eval_to_pos[0][1][0] * 0.6 if eval_to_pos[0][1][0] > 0 else eval_to_pos[0][1][0] - eval_to_pos[0][1][0] * 0.6
+        # cutoff = eval_to_pos[0][1][0] * 0.6
+        # print(cutoff)
         eval_to_pos = list(filter(lambda tup: tup[1][0] <= cutoff, eval_to_pos))
+        # print(eval_to_pos)
+    print("\n")
+
     return eval_to_pos
     # return eval_to_pos[:min(4, len(eval_to_pos))]
 
 def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats, max_depth, player, total_eat):
     # print(depth)
-    if depth == 0 or current_threats >= 50_000_000 or current_threats <= -50_000_000:
+    if depth == 0 or current_threats >= 100_000 or current_threats <= -100_000:
         return current_threats
 
     best_position = get_positions(board, maximizing_player, player, size, total_eat, max_depth - depth + 1)
