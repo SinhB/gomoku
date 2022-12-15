@@ -6,42 +6,10 @@ import numpy as np
 from numba import njit, prange, int64, typeof
 from numba.types import bool_
 
-
-# multiplicator_five = 500_000_000
-# multiplicator_open_four = 1_500_000
-# multiplicator_semi_closed_four = 20_000
-# multiplicator_open_three = 100_000
-# multiplicator_semi_closed_three = 5_000
-# multiplicator_open_two = 50
-# multiplicator_semi_close_two = 5
-
-# multiplicator_enemy_five = 45_000_000
-# multiplicator_enemy_open_four = 25_000_000
-# multiplicator_enemy_semi_closed_four = 20_000_000
-# multiplicator_enemy_open_three = 1_000_000
-# multiplicator_enemy_semi_closed_three = 10_000
-# multiplicator_enemy_open_two = 100
-# multiplicator_enemy_semi_close_two = 10
-
-# multiplicator_five = 500_000_000
-# multiplicator_open_four = 50_000_000
-# multiplicator_semi_closed_four = 500_000
-# multiplicator_open_three = 10_000_000
-# multiplicator_semi_closed_three = 5_000
-# multiplicator_open_two = 50
-# multiplicator_semi_close_two = 5
-
-# multiplicator_enemy_five = 300_000_000
-# multiplicator_enemy_open_four = 100_000_000
-# multiplicator_enemy_semi_closed_four = 1_000_000
-# multiplicator_enemy_open_three = 5_000_000
-# multiplicator_enemy_semi_closed_three = 10_000
-# multiplicator_enemy_open_two = 100
-# multiplicator_enemy_semi_close_two = 10
 multiplicator_five = 10_000
 multiplicator_open_four = 1_490
 multiplicator_semi_closed_four = 500
-multiplicator_open_three = 1_000
+multiplicator_open_three = 1_200
 multiplicator_semi_closed_three = 400
 multiplicator_open_two = 1
 multiplicator_semi_close_two = 0
@@ -50,65 +18,15 @@ multiplicator_enemy_five = 3_000
 multiplicator_enemy_open_four = 1_450
 multiplicator_enemy_semi_closed_four = 1_400
 multiplicator_enemy_open_three = 1_300
-multiplicator_enemy_semi_closed_three = 1_000
+multiplicator_enemy_semi_closed_three = 900
 multiplicator_enemy_open_two = 1
 multiplicator_enemy_semi_close_two = 1
-
-
-# @njit("(int64)(int64)", fastmath=True)
-# def eat_value(eat_number):
-#     if eat_number == 0:
-#         return 9
-#     elif eat_number == 1:
-#         return 100_000 
-#     elif eat_number == 2:
-#         return 500_000
-#     elif eat_number == 3:
-#         return 1_000_000
-#     elif eat_number == 4:
-#         return 10_000_000
-#     return 100_000_000
 
 @njit("(int64)(int64)", fastmath=True)
 def eat_value(eat_number):
     if eat_number == 5:
         return 100_000
     return 1_000
-
-
-# # Player series multiplicator
-# multiplicator_closed_two = 10
-# multiplicator_semi_close_two = 50
-# multiplicator_open_two = 500
-
-# multiplicator_closed_three = 20
-# multiplicator_semi_closed_three = 1_000
-# multiplicator_open_three = 10_000
-
-# multiplicator_closed_four = 40
-# multiplicator_semi_closed_four = 20_000
-# multiplicator_open_four = 100_000
-
-# multiplicator_five = 100_000_000
-
-# # Block enemy series multiplicator
-# multiplicator_enemy_closed_two = 20
-# multiplicator_enemy_semi_close_two = 100
-# multiplicator_enemy_open_two = 1000
-
-# multiplicator_enemy_closed_three = 40
-# multiplicator_enemy_semi_closed_three = 2_000
-# multiplicator_enemy_open_three = 400_000
-
-# multiplicator_enemy_closed_four = 80
-# multiplicator_enemy_semi_closed_four = 1_000_000
-# multiplicator_enemy_open_four = 5_000_000
-
-# multiplicator_enemy_five = 50_000_000
-
-# Eating move
-# multiplicator_open_eat_move = 200
-
 
 @njit("Tuple((int64, int64, boolean, boolean, boolean, boolean, boolean, boolean))(int64[:], int64, boolean)", fastmath=True)
 def check_side(side, player, eating=False):
@@ -302,10 +220,6 @@ def get_score(has_empty, is_enemy, player_eat, enemy_eat, l_eating, r_eating, cl
     minus_empty = 0
     if has_empty:
         minus_empty = 100
-    # adding_eat = 0
-    # eat_move = l_eating + r_eating
-    # if eat_move:
-    #     adding_eat = eat_value(eat_move + player_eat) / 10
 
     if not is_enemy:
         if five:
@@ -353,12 +267,6 @@ def get_new_threats(board, position, maximizing_player, player, player_eat, enem
     columns = board[:, col_index]
     
     captured_stones = []
-
-    # print("PLAYER")
-    # print(player)
-    # print("POSITION:")
-    # print(position)
-
 
     # print(lr_diags)
     lr_starting_index = col_index if row_index > col_index else row_index

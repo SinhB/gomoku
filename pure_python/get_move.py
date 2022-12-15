@@ -7,8 +7,6 @@ from get_threats import get_new_threats
 from board_functions import bcolors
 
 def get_next_move(board, size, depth, maximizing_player, player, total_eat, empty_board):
-    # alpha = -2_000_000_000
-    # beta = 2_000_000_000
     alpha = np.iinfo(np.int64).min
     beta = np.iinfo(np.int64).max
     if empty_board:
@@ -27,20 +25,18 @@ def get_positions(board, maximizing_player, player, size, total_eat, depth):
 
     eval_to_pos.sort(key=lambda tup: tup[1][0], reverse=maximizing_player)
 
-    # print(f"Sorted: {[pos for pos in eval_to_pos]}")
-
-
-    cutoff = eval_to_pos[0][1][0] * 0.6
+    cutoff = eval_to_pos[0][1][0] * 0.8
     if maximizing_player:
         eval_to_pos = list(filter(lambda tup: tup[1][0] >= cutoff, eval_to_pos))
     else:
         eval_to_pos = list(filter(lambda tup: tup[1][0] <= cutoff, eval_to_pos))
-    return eval_to_pos
-    # return eval_to_pos[:min(4, len(eval_to_pos))]
+    if depth < 3:
+        return eval_to_pos
+    else:
+        return eval_to_pos[:min(4, len(eval_to_pos))]
 
 def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats, max_depth, player, total_eat):
-    # print(depth)
-    if depth == 0 or current_threats >= 50_000_000 or current_threats <= -50_000_000:
+    if depth == 0 or current_threats >= 10_000 or current_threats <= -10_000:
         return current_threats
 
     best_position = get_positions(board, maximizing_player, player, size, total_eat, max_depth - depth + 1)
