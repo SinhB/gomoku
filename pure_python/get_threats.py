@@ -6,7 +6,7 @@ import numpy as np
 from numba import njit, prange, int64, typeof
 from numba.types import bool_
 
-multiplicator_five = 10_000
+multiplicator_five = 11_000
 multiplicator_open_four = 1_490
 multiplicator_semi_closed_four = 500
 multiplicator_open_three = 1_200
@@ -219,6 +219,13 @@ def get_diags(board, row_index, col_index):
     rl_diags = np.diag(np.fliplr(board), w-col_index-1-row_index)
     return lr_diags, rl_diags
 
+@njit("UniTuple(int64[:], 4)(int64[:,:], int64, int64)", fastmath=True)
+def get_vectors(board, row_index, col_index):
+    lr_diags, rl_diags = get_diags(board, row_index, col_index)
+    row = board[row_index, :]
+    column = board[:, col_index]
+    return lr_diags, rl_diags, row, column
+
 @njit
 def get_score(has_empty, is_enemy, player_eat, enemy_eat, l_eating, r_eating, closed_two, semi_closed_two, open_two, closed_three, semi_closed_three, open_three, closed_four, semi_closed_four, open_four, five, open_get_eat):
     # Player series
@@ -259,6 +266,145 @@ def get_score(has_empty, is_enemy, player_eat, enemy_eat, l_eating, r_eating, cl
             return multiplicator_enemy_semi_close_two - minus_empty
         return 0
 
+@njit("boolean(boolean, int64)", fastmath=True)
+def five_and_enemy_capture(five, enemy_total_eat):
+    if five and enemy_total_eat == 4:
+        return True
+    return False
+
+@njit("int64[:](boolean, int64, int64, int64, int64)")
+def get_pos(is_left, index, row_index, col_index, line_type):
+    """
+        0: LR
+        1: RL
+        2: ROW
+        3: COL
+        return: (row, col)
+    """
+    if is_left:
+        if line_type == 0:
+            return np.array((row_index - index, col_index - index))
+        if line_type == 1:
+            return np.array((row_index - index, col_index + index))
+        if line_type == 2:
+            return np.array((row_index, col_index - index))
+        if line_type == 3:
+            return np.array((row_index - index, col_index))
+    else:
+        if line_type == 0:
+            return np.array((row_index + index, col_index + index))
+        if line_type == 1:
+            return np.array((row_index + index, col_index - index))
+        if line_type == 2:
+            return np.array((row_index, col_index + index))
+        if line_type == 3:
+            return np.array((row_index + index, col_index))
+    return np.zeros(2, dtype=np.int64)
+
+
+@njit("UniTuple(boolean, 4)(int64[:], int64)")
+def check_vulnerability(side, player):
+    is_consec = True
+    consec = 0
+
+    for i in range(0, min(len(side), 2)):
+        if side[i] == 0:
+            if i == 0:
+                return False, True, False, False
+            if i == 1 and consec == 1:
+                return False, False, False, True
+            else:
+                is_consec = False
+        if side[i] == player:
+            if is_consec:
+                consec += 1
+        if side[i] == -player:
+            if i == 0:
+                return True, False, False, False
+            if i == 1 and consec == 1:
+                return False, False, True, False
+            else:
+                is_consec = False
+    return False, False, False, False
+
+@njit("Tuple((boolean, boolean, int64))(int64[:], int64, int64)", fastmath=True)
+def check_line_breakable(line, starting_index, player):
+    """Return: (is_breakable, is_left)"""
+    left = line[0:starting_index][::-1]
+    right = line[starting_index+1:]
+
+    l_starting_op, l_starting_blank, l_ending_op, l_ending_blank = check_vulnerability(left, player)
+    r_starting_op, r_starting_blank, r_ending_op, r_ending_blank = check_vulnerability(right, player)
+
+    #right
+    if l_starting_op and r_ending_blank:
+        return True, False, 2
+    if r_starting_blank and l_ending_op:
+        return True, False, 1
+    #left
+    if r_starting_op and l_ending_blank:
+        return True, True, 2
+    if l_starting_blank and r_ending_op:
+        return True, True, 1
+
+    return False, False, 0
+
+
+@njit("Tuple((boolean, int64[:]))(int64[:,:], int64[:], int64)", fastmath=True)
+def pos_is_breakable(board, position, player):
+    row_index, col_index = position
+    lr_diags, rl_diags, row, column = get_vectors(board, row_index, col_index)
+
+    lr_starting_index = col_index if row_index > col_index else row_index
+    rl_starting_index = 18 - col_index if row_index > 18 - col_index else row_index
+
+    is_breakable, is_left, index = check_line_breakable(lr_diags, lr_starting_index, player)
+    if is_breakable:
+        pos = get_pos(is_left, index, row_index, col_index, 0)
+        return True, pos
+    is_breakable, is_left, index = check_line_breakable(rl_diags, rl_starting_index, player)
+    if is_breakable:
+        pos = get_pos(is_left, index, row_index, col_index, 1)
+        return True, pos
+    is_breakable, is_left, index = check_line_breakable(row, col_index, player)
+    if is_breakable:
+        pos = get_pos(is_left, index, row_index, col_index, 2)
+        return True, pos
+    is_breakable, is_left, index = check_line_breakable(column, row_index, player)
+    if is_breakable:
+        pos = get_pos(is_left, index, row_index, col_index, 3)
+        return True, pos
+    return False, np.zeros(2, dtype=np.int64)
+
+
+@njit("Tuple((boolean, int64[:]))(int64[:,:], int64, int64[:], int64, int64, int64, int64)", fastmath=True)
+def check_if_breakable(board, line_type, line, starting_index, player, row_index, col_index):
+    left = line[0:starting_index][::-1]
+    right = line[starting_index+1:]
+    pos_list = [np.array((row_index, col_index))]
+    for i in range(0, min(len(left), 6)):
+        if left[i] == player:
+            new_pos = get_pos(True, i + 1, row_index, col_index, line_type)
+            pos_list.append(new_pos)
+        else:
+            break
+    for i in range(0, min(len(right), 6)):
+        if right[i] == player:
+            new_pos = get_pos(False, i + 1, row_index, col_index, line_type)
+            pos_list.append(new_pos)
+        else:
+            break
+    numba_pos_list = nb.typed.List(pos_list)
+    print([pos for pos in numba_pos_list])
+    for pos in numba_pos_list:
+        is_breakable, breaking_pos = pos_is_breakable(board, pos, player)
+        print(pos)
+        print(is_breakable, breaking_pos)
+        if is_breakable:
+            return True, breaking_pos
+    return False, np.zeros(2, dtype=np.int64)
+
+
 @njit
 # @njit("Tuple((int64, List(int64[:])))(int64[:,:], int64[:], boolean, int64, int64, int64)", fastmath=True)
 def get_new_threats(board, position, maximizing_player, player, player_eat, enemy_eat, depth):
@@ -266,26 +412,45 @@ def get_new_threats(board, position, maximizing_player, player, player_eat, enem
         player = player * -1
 
     row_index, col_index = position
-
-    lr_diags, rl_diags = get_diags(board, row_index, col_index)
-    rows = board[row_index, :]
-    columns = board[:, col_index]
+    lr_diags, rl_diags, row, column = get_vectors(board, row_index, col_index)
     
     captured_stones = []
+
+    defend_breaking_five = 0
 
     # print(lr_diags)
     lr_starting_index = col_index if row_index > col_index else row_index
     has_empty_lr, capture_left_lr, capture_right_lr, closed_two_lr, semi_closed_two_lr, open_two_lr, closed_three_lr, semi_closed_three_lr, open_three_lr, closed_four_lr, semi_closed_four_lr, open_four_lr, five_lr, open_get_eat_lr = check_line(lr_diags, lr_starting_index, player)
+    if five_and_enemy_capture(five_lr, enemy_eat):
+        is_breakable, break_pos = check_if_breakable(board, int64(0), lr_diags, lr_starting_index, player, row_index, col_index)
+        if is_breakable:
+            position = break_pos
+            defend_breaking_five = 10_000
     result_lr = get_score(has_empty_lr, False, player_eat, enemy_eat, capture_left_lr, capture_right_lr, closed_two_lr, semi_closed_two_lr, open_two_lr, closed_three_lr, semi_closed_three_lr, open_three_lr, closed_four_lr, semi_closed_four_lr, open_four_lr, five_lr, open_get_eat_lr)
     # print(rl_diags)
     rl_starting_index = 18 - col_index if row_index > 18 - col_index else row_index
     has_empty_rl, capture_left_rl, capture_right_rl, closed_two_rl, semi_closed_two_rl, open_two_rl, closed_three_rl, semi_closed_three_rl, open_three_rl, closed_four_rl, semi_closed_four_rl, open_four_rl, five_rl, open_get_eat_rl = check_line(rl_diags, rl_starting_index, player)
+    if five_and_enemy_capture(five_rl, enemy_eat):
+        is_breakable, break_pos = check_if_breakable(board, int64(1), rl_diags, rl_starting_index, player, row_index, col_index)
+        if is_breakable:
+            position = break_pos
+            defend_breaking_five = 10_000
     result_rl = get_score(has_empty_rl, False, player_eat, enemy_eat, capture_left_rl, capture_right_rl, closed_two_rl, semi_closed_two_rl, open_two_rl, closed_three_rl, semi_closed_three_rl, open_three_rl, closed_four_rl, semi_closed_four_rl, open_four_rl, five_rl, open_get_eat_rl)
-    # print(rows)
-    has_empty_row, capture_left_row, capture_right_row, closed_two_row, semi_closed_two_row, open_two_row, closed_three_row, semi_closed_three_row, open_three_row, closed_four_row, semi_closed_four_row, open_four_row, five_row, open_get_eat_row = check_line(rows, col_index, player)
+    # print(row)
+    has_empty_row, capture_left_row, capture_right_row, closed_two_row, semi_closed_two_row, open_two_row, closed_three_row, semi_closed_three_row, open_three_row, closed_four_row, semi_closed_four_row, open_four_row, five_row, open_get_eat_row = check_line(row, col_index, player)
+    if five_and_enemy_capture(five_row, enemy_eat):
+        is_breakable, break_pos = check_if_breakable(board, int64(2), row, col_index, player, row_index,col_index)
+        if is_breakable:
+            position = break_pos
+            defend_breaking_five = 10_000
     result_row = get_score(has_empty_row, False, player_eat, enemy_eat, capture_left_row, capture_right_row, closed_two_row, semi_closed_two_row, open_two_row, closed_three_row, semi_closed_three_row, open_three_row, closed_four_row, semi_closed_four_row, open_four_row, five_row, open_get_eat_row)
-    # print(columns)
-    has_empty_col, capture_left_col, capture_right_col, closed_two_col, semi_closed_two_col, open_two_col, closed_three_col, semi_closed_three_col, open_three_col, closed_four_col, semi_closed_four_col, open_four_col, five_col, open_get_eat_col = check_line(columns, row_index, player)
+    # print(column)
+    has_empty_col, capture_left_col,capture_right_col, closed_two_col, semi_closed_two_col, open_two_col, closed_three_col, semi_closed_three_col, open_three_col, closed_four_col, semi_closed_four_col, open_four_col, five_col, open_get_eat_col = check_line(column, row_index, player)
+    if five_and_enemy_capture(five_col, enemy_eat):
+        is_breakable, break_pos = check_if_breakable(board, int64(3), column, row_index, player, row_index, col_index)
+        if is_breakable:
+            position = break_pos
+            defend_breaking_five = 10_000
     result_col = get_score(has_empty_col, False, player_eat, enemy_eat, capture_left_col, capture_right_col, closed_two_col, semi_closed_two_col, open_two_col, closed_three_col, semi_closed_three_col, open_three_col, closed_four_col, semi_closed_four_col, open_four_col, five_col, open_get_eat_col)
 
     # print(f"closed_two: {closed_two_lr + closed_two_rl + closed_two_row + closed_two_col}") 
@@ -306,9 +471,9 @@ def get_new_threats(board, position, maximizing_player, player, player_eat, enem
     op_result_lr = get_score(op_has_empty_lr, True, enemy_eat, player_eat, op_capture_left_lr, op_capture_right_lr, op_closed_two_lr, op_semi_closed_two_lr, op_open_two_lr, op_closed_three_lr, op_semi_closed_three_lr, op_open_three_lr, op_closed_four_lr, op_semi_closed_four_lr, op_open_four_lr, op_five_lr, op_open_get_eat_lr)
     op_has_empty_rl, op_capture_left_rl, op_capture_right_rl, op_closed_two_rl, op_semi_closed_two_rl, op_open_two_rl, op_closed_three_rl, op_semi_closed_three_rl, op_open_three_rl, op_closed_four_rl, op_semi_closed_four_rl, op_open_four_rl, op_five_rl, op_open_get_eat_rl = check_line(rl_diags, rl_starting_index, player * -1)
     op_result_rl = get_score(op_has_empty_rl, True, enemy_eat, player_eat, op_capture_left_rl, op_capture_right_rl, op_closed_two_rl, op_semi_closed_two_rl, op_open_two_rl, op_closed_three_rl, op_semi_closed_three_rl, op_open_three_rl, op_closed_four_rl, op_semi_closed_four_rl, op_open_four_rl, op_five_rl, op_open_get_eat_rl)
-    op_has_empty_row, op_capture_left_row, op_capture_right_row, op_closed_two_row, op_semi_closed_two_row, op_open_two_row, op_closed_three_row, op_semi_closed_three_row, op_open_three_row, op_closed_four_row, op_semi_closed_four_row, op_open_four_row, op_five_row, op_open_get_eat_row = check_line(rows, col_index, player * -1)
+    op_has_empty_row, op_capture_left_row, op_capture_right_row, op_closed_two_row, op_semi_closed_two_row, op_open_two_row, op_closed_three_row, op_semi_closed_three_row, op_open_three_row, op_closed_four_row, op_semi_closed_four_row, op_open_four_row, op_five_row, op_open_get_eat_row = check_line(row, col_index, player * -1)
     op_result_row = get_score(op_has_empty_row, True, enemy_eat, player_eat, op_capture_left_row, op_capture_right_row, op_closed_two_row, op_semi_closed_two_row, op_open_two_row, op_closed_three_row, op_semi_closed_three_row, op_open_three_row, op_closed_four_row, op_semi_closed_four_row, op_open_four_row, op_five_row, op_open_get_eat_row)
-    op_has_empty_col, op_capture_left_col, op_capture_right_col, op_closed_two_col, op_semi_closed_two_col, op_open_two_col, op_closed_three_col, op_semi_closed_three_col, op_open_three_col, op_closed_four_col, op_semi_closed_four_col, op_open_four_col, op_five_col, op_open_get_eat_col = check_line(columns, row_index, player * -1)
+    op_has_empty_col, op_capture_left_col, op_capture_right_col, op_closed_two_col, op_semi_closed_two_col, op_open_two_col, op_closed_three_col, op_semi_closed_three_col, op_open_three_col, op_closed_four_col, op_semi_closed_four_col, op_open_four_col, op_five_col, op_open_get_eat_col = check_line(column, row_index, player * -1)
     op_result_col = get_score(op_has_empty_col, True, enemy_eat, player_eat, op_capture_left_col, op_capture_right_col, op_closed_two_col, op_semi_closed_two_col, op_open_two_col, op_closed_three_col, op_semi_closed_three_col, op_open_three_col, op_closed_four_col, op_semi_closed_four_col, op_open_four_col, op_five_col, op_open_get_eat_col)
 
     # print(f"op_closed_two: {op_closed_two_lr + op_closed_two_rl + op_closed_two_row + op_closed_two_col}")
@@ -350,10 +515,11 @@ def get_new_threats(board, position, maximizing_player, player, player_eat, enem
     if open_get_eat:
         minus_vulnerability = eat_value(eat_move + enemy_eat)
 
-    score = score + adding_eat - minus_vulnerability
+    score = score + adding_eat - minus_vulnerability + defend_breaking_five
     # print("Score:")
     # print(score)
 
+    #Fill captured list
     if capture_left_lr:
         captured_left_lr_one = np.array((row_index-1, col_index-1), dtype=int64)
         captured_left_lr_two = np.array((row_index-2, col_index-2), dtype=int64)
@@ -377,6 +543,7 @@ def get_new_threats(board, position, maximizing_player, player, player_eat, enem
         captured_left_row_two = np.array((row_index, col_index-2), dtype=int64)
         captured_stones.extend([captured_left_row_one, captured_left_row_two])
     if capture_right_row:
+
         captured_right_row_one = np.array((row_index, col_index+1), dtype=int64)
         captured_right_row_two = np.array((row_index, col_index+2), dtype=int64)
         captured_stones.extend([captured_right_row_one, captured_right_row_two])
@@ -397,5 +564,4 @@ def get_new_threats(board, position, maximizing_player, player, player_eat, enem
     if not maximizing_player:
         score *= -1
 
-    return score / depth, captured_stones, is_win, is_forbidden, eat_move
-    # return score, captured_stones, is_win, line_axis
+    return position, score / depth, captured_stones, is_win, is_forbidden, eat_move

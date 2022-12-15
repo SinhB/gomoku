@@ -41,10 +41,10 @@ def check_line_win(arr, seq):
 
     return False
 
-def check_win(board, position, player, total_eat):
+def check_win(board, position, player, total_eat, total_enemy_eat):
     if total_eat >= 5:
         print("Win by eating")
-        return True
+        return True, None
     row_index = position[0]
     col_index = position[1]
 
@@ -53,37 +53,62 @@ def check_win(board, position, player, total_eat):
     # lr_diags, rl_diags = get_lines.get_position_diagonals(board, row_index, col_index)
     # rows = get_lines.get_position_rows(board, row_index)
     # columns = get_lines.get_position_columns(board, col_index)
-    lr_diags = np.diag(board, col_index - row_index)
-    w = board.shape[1]
-    rl_diags = np.diag(np.fliplr(board), w-col_index-1-row_index)
-    rows = board[row_index, :]
-    columns = board[:, col_index]
+    # lr_diags = np.diag(board, col_index - row_index)
+    # w = board.shape[1]
+    # rl_diags = np.diag(np.fliplr(board), w-col_index-1-row_index)
+    # rows = board[row_index, :]
+    # columns = board[:, col_index]
+
+    lr_diags, rl_diags, rows, columns = get_threats.get_vectors(board, row_index, col_index)
+
 
     if check_line_win(lr_diags, win_array):
-        print("Win by alignment")
-        return True
+        lr_starting_index = col_index if row_index > col_index else row_index
+        is_breakable, breaking_pos = get_threats.check_if_breakable(board, 0, lr_diags, lr_starting_index, player, row_index, col_index)
+        if is_breakable:
+            return False, breaking_pos
+        else:
+            print("Win by alignment")
+            return True, None
     if check_line_win(rl_diags, win_array):
-        print("Win by alignment")
-        return True
+        rl_starting_index = 18 - col_index if row_index > 18 - col_index else row_index
+        is_breakable, breaking_pos = get_threats.check_if_breakable(board, 1, rl_diags, rl_starting_index, player, row_index, col_index)
+        if is_breakable:
+            return False, breaking_pos
+        else:
+            print("Win by alignment")
+            return True, None
     if check_line_win(rows, win_array):
-        print("Win by alignment")
-        return True
+        is_breakable, breaking_pos = get_threats.check_if_breakable(board, 2, rows, col_index, player, row_index, col_index)
+        print(is_breakable)
+        print(breaking_pos)
+        if is_breakable:
+            return False, breaking_pos
+        else:
+            print("Win by alignment")
+            return True, None
     if check_line_win(columns, win_array):
-        print("Win by alignment")
-        return True
-    return False
+        is_breakable, breaking_pos = get_threats.check_if_breakable(board, 3, columns, row_index, player, row_index, col_index)
+        if is_breakable:
+            return False, breaking_pos
+        else:
+            print("Win by alignment")
+            return True, None
+    return False, None
 
 class Env:
 
     def __init__(self):
         self.board = board_functions.init_board(19)
-        self.total_eat = {-1: 0, 1: 0}
+        self.total_eat = {-1: 0, 1: 4}
         self.empty_board = True
+        self.priority_move = {-1: None, 1: None}
 
     def reset(self):
         self.board = board_functions.init_board(19)
-        self.total_eat = {-1: 0, 1: 0}
+        self.total_eat = {-1: 0, 1: 4}
         self.empty_board = True
+        self.priority_move = {-1: None, 1: None}
 
 rooms = {}
 
@@ -96,8 +121,11 @@ def init(room: str):
 @app.get("/get_best_move")
 def get_best_move(player: int, depth: int, room: str):
     one_move_timer = time.time()
-    initial_board = np.copy(rooms[room].board)
-    next_move = get_move.get_next_move(initial_board, 19, depth, True, player, rooms[room].total_eat, rooms[room].empty_board)
+    if rooms[room].priority_move[player] is not None:
+        next_move = rooms[room].priority_move[player]
+    else:
+        initial_board = np.copy(rooms[room].board)
+        next_move = get_move.get_next_move(initial_board, 19, depth, True, player, rooms[room].total_eat, rooms[room].empty_board)
     one_move_timer_stop = time.time()
     if type(next_move) != list:
         next_move = next_move.tolist()
@@ -109,6 +137,10 @@ def apply_move(player: int, move: str, room: str):
 
     rooms[room].empty_board = False
 
+    if rooms[room].priority_move[player] is not None and rooms[room].priority_move[player].tolist() == move:
+        print(move, type(move))
+        print(rooms[room].priority_move[player].tolist(), type(rooms[room].priority_move[player].tolist()))
+        rooms[room].priority_move[player] = None
     try:
         rooms[room].board, eat, eaten_pos = board_functions.place_stone(rooms[room].board, move, player)
     except board_functions.ForbiddenMove:
@@ -120,7 +152,10 @@ def apply_move(player: int, move: str, room: str):
 
     board_functions.print_board(rooms[room].board, move)
 
-    if check_win(rooms[room].board, move, player, rooms[room].total_eat[player]):
+    is_win, breaking_pos = check_win(rooms[room].board, move, player, rooms[room].total_eat[player], rooms[room].total_eat[-player])
+    if breaking_pos is not None:
+        rooms[room].priority_move[-player] = breaking_pos
+    if is_win:
         board_functions.print_board(rooms[room].board, move)
         print(f"Player {player} ({'B' if player == -1 else 'N'}) won the game")
         return {'forbidden_move': False, "win": True, "total_eat": ret_total_eat, "eaten_pos": json.dumps({"eaten_pos": eaten_pos})}

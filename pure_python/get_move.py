@@ -21,22 +21,20 @@ def get_next_move(board, size, depth, maximizing_player, player, total_eat, empt
 def get_positions(board, maximizing_player, player, size, total_eat, depth):
     available_pos = get_lines.get_available_pos(board)
 
-    eval_to_pos = [(p, get_new_threats(board, p, maximizing_player, player, total_eat[player], total_eat[player * -1], depth)) for p in available_pos]
+    eval_to_pos = [get_new_threats(board, p, maximizing_player, player, total_eat[player], total_eat[player * -1], depth) for p in available_pos]
 
     # Remove is forbidden
-    eval_to_pos = list(filter(lambda tup: tup[1][3] == False, eval_to_pos))
+    eval_to_pos = list(filter(lambda tup: tup[4] == False, eval_to_pos))
 
-    eval_to_pos.sort(key=lambda tup: tup[1][0], reverse=maximizing_player)
+    eval_to_pos.sort(key=lambda tup: tup[1], reverse=maximizing_player)
 
-    if depth < 3:
-        cutoff = eval_to_pos[0][1][0] * 0.8
-        if maximizing_player:
-            eval_to_pos = list(filter(lambda tup: tup[1][0] >= cutoff, eval_to_pos))
-        else:
-            eval_to_pos = list(filter(lambda tup: tup[1][0] <= cutoff, eval_to_pos))
-        return eval_to_pos
+    cutoff = eval_to_pos[0][1] * 0.8
+    if maximizing_player:
+        eval_to_pos = list(filter(lambda tup: tup[1] >= cutoff, eval_to_pos))
     else:
-        return eval_to_pos[:min(4, len(eval_to_pos))]
+        eval_to_pos = list(filter(lambda tup: tup[1] <= cutoff, eval_to_pos))
+    return eval_to_pos
+    # return eval_to_pos[:min(4, len(eval_to_pos))]
 
 def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats, max_depth, player, total_eat, is_win):
     if depth == 0 or is_win:
@@ -49,14 +47,14 @@ def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats,
 
     if maximizing_player:
         maxEval = np.iinfo(np.int32).min
-        for position, new_threats in best_position:
-            board = board_functions.add_stone(board, player, position, new_threats[1])
+        for position, new_threats, captured_stones, is_win, _, new_eat in best_position:
+            board = board_functions.add_stone(board, player, position, captured_stones)
 
-            total_eat[player] += new_threats[4]
-            evaluation = minimax(board, depth - 1, alpha, beta, False, size, new_threats[0], max_depth, player, total_eat, new_threats[2])
-            total_eat[player] -= new_threats[4]
+            total_eat[player] += new_eat
+            evaluation = minimax(board, depth - 1, alpha, beta, False, size, new_threats, max_depth, player, total_eat, is_win)
+            total_eat[player] -= new_eat
 
-            board = board_functions.remove_stone(board, player, position, new_threats[1])
+            board = board_functions.remove_stone(board, player, position, captured_stones)
             if depth == max_depth:
                 moves_results.append((evaluation, position))
 
@@ -71,14 +69,14 @@ def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats,
 
     else:
         minEval = np.iinfo(np.int32).max
-        for position, new_threats in best_position:
-            board = board_functions.add_stone(board, -player, position, new_threats[1])
+        for position, new_threats, captured_stones, is_win, _, new_eat in best_position:
+            board = board_functions.add_stone(board, -player, position, captured_stones)
 
-            total_eat[-player] += new_threats[4]
-            evaluation = minimax(board, depth - 1, alpha, beta, True, size, new_threats[0], max_depth, player, total_eat, new_threats[2])
-            total_eat[-player] -= new_threats[4]
+            total_eat[-player] += new_eat
+            evaluation = minimax(board, depth - 1, alpha, beta, True, size, new_threats, max_depth, player, total_eat, is_win)
+            total_eat[-player] -= new_eat
 
-            board = board_functions.remove_stone(board, -player, position, new_threats[1])
+            board = board_functions.remove_stone(board, -player, position, captured_stones)
 
             minEval = min(minEval, evaluation)
             beta = min(beta, evaluation)
