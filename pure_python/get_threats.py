@@ -10,15 +10,19 @@ multiplicator_five = 10_000
 multiplicator_open_four = 1_490
 multiplicator_semi_closed_four = 500
 multiplicator_open_three = 1_200
-multiplicator_semi_closed_three = 400
+multiplicator_semi_closed_three = 1_390
+# multiplicator_semi_closed_three = 1_100
 multiplicator_open_two = 1
 multiplicator_semi_close_two = 0
+# multiplicator_semi_close_two = -1_000
 
 multiplicator_enemy_five = 3_000
 multiplicator_enemy_open_four = 1_450
+# multiplicator_enemy_open_four = 2_450
+multiplicator_enemy_open_three = 1_440
 multiplicator_enemy_semi_closed_four = 1_400
-multiplicator_enemy_open_three = 1_300
 multiplicator_enemy_semi_closed_three = 900
+# multiplicator_enemy_semi_closed_three = 200
 multiplicator_enemy_open_two = 1
 multiplicator_enemy_semi_close_two = 1
 
@@ -27,6 +31,7 @@ def eat_value(eat_number):
     if eat_number == 5:
         return 100_000
     return 1_000
+    # return 1_250 * eat_number
 
 @njit("Tuple((int64, int64, boolean, boolean, boolean, boolean, boolean, boolean))(int64[:], int64, boolean)", fastmath=True)
 def check_side(side, player, eating=False):
@@ -385,8 +390,12 @@ def get_new_threats(board, position, maximizing_player, player, player_eat, enem
         captured_right_col_two = np.array((row_index+2, col_index), dtype=int64)
         captured_stones.extend([captured_right_col_one, captured_right_col_two])
 
+
+    is_win = True if score >= 10_000 else False
+    is_forbidden = True if open_three_lr + open_three_rl + open_three_row + open_three_col >= 2 else False
+
     if not maximizing_player:
         score *= -1
 
-    return score / depth, captured_stones
+    return score / depth, captured_stones, is_win, is_forbidden, eat_move
     # return score, captured_stones, is_win, line_axis

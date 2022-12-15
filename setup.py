@@ -29,3 +29,6 @@ if __name__ == "__main__":
         clean_and_lint()
     else:
         display_help()
+
+Average time for N : 0.18226001262664795
+Average time for B : 0.20161935091018676
