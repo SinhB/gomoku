@@ -7,7 +7,7 @@ from numba import njit, prange, int64, typeof
 from numba.types import bool_
 
 print_values = False
-print_values = True
+# print_values = True
 
 @njit("(int64)(int64)", fastmath=True)
 def eat_value(eat_number):
@@ -128,7 +128,7 @@ def check_side(side, player):
 
 # @functools.cache
 # @njit("UniTuple(int64, 23)(int64[:], int64, int64)", fastmath=True)
-@njit("Tuple((int64, boolean, boolean, int64))(int64[:], int64, int64, int64, int64)", fastmath=True)
+@njit("Tuple((int64, boolean, boolean, int64, boolean))(int64[:], int64, int64, int64, int64)", fastmath=True)
 def check_line(line, starting_index, player, player_eat, enemy_eat):
     left = line[0:starting_index][::-1]
     right = line[starting_index+1:]
@@ -312,7 +312,9 @@ def check_line(line, starting_index, player, player_eat, enemy_eat):
     # print("semi_closed_two", semi_closed_two, "enemy_semi_closed_two", enemy_semi_closed_two)
     # print("eat_move", eat_move, "open_eat_move", open_eat_move, "open_get_eat_move", open_get_eat_move)
 
-    return score, l_eating_enemy, r_eating_enemy, open_three
+    is_win = True if five or enemy_five or (eat_move and (eat_move + player_eat) >= 5) else False
+
+    return score, l_eating_enemy, r_eating_enemy, open_three, is_win
 
 
 @njit("UniTuple(int64[:], 2)(int64[:,:], int64, int64)", fastmath=True)
@@ -341,20 +343,23 @@ def get_new_threats(board, position, maximizing_player, player, player_eat, enem
     if print_values:
         print("LR")
     lr_starting_index = col_index if row_index > col_index else row_index
-    result_lr, capture_left_lr, capture_right_lr, open_three_lr = check_line(lr_diags, lr_starting_index, player, player_eat, enemy_eat)
+    result_lr, capture_left_lr, capture_right_lr, open_three_lr, is_win_lr = check_line(lr_diags, lr_starting_index, player, player_eat, enemy_eat)
     if print_values:
         print("RL")
     rl_starting_index = 18 - col_index if row_index > 18 - col_index else row_index
-    result_rl, capture_left_rl, capture_right_rl, open_three_rl = check_line(rl_diags, rl_starting_index, player, player_eat, enemy_eat)
+    result_rl, capture_left_rl, capture_right_rl, open_three_rl, is_win_rl = check_line(rl_diags, rl_starting_index, player, player_eat, enemy_eat)
     if print_values:
         print("ROW")
-    result_row, capture_left_row, capture_right_row, open_three_row = check_line(rows, col_index, player, player_eat, enemy_eat)
+    result_row, capture_left_row, capture_right_row, open_three_row, is_win_row = check_line(rows, col_index, player, player_eat, enemy_eat)
     if print_values:
         print("COL")
-    result_col, capture_left_col, capture_right_col, open_three_col = check_line(columns, row_index, player, player_eat, enemy_eat)
+    result_col, capture_left_col, capture_right_col, open_three_col, is_win_col = check_line(columns, row_index, player, player_eat, enemy_eat)
 
     if open_three_lr + open_three_rl + open_three_row + open_three_col >= 2:
-        return 1_000_000 * -1 if maximizing_player else 1, captured_stones
+        is_forbidden = True
+    else:
+        is_forbidden = False
+        # return 1_000_000 * -1 if maximizing_player else 1, captured_stones
     if print_values:
         print("\n")
         # print("\n")
@@ -400,5 +405,6 @@ def get_new_threats(board, position, maximizing_player, player, player_eat, enem
     if not maximizing_player:
         score *= -1
 
-    return score / depth, captured_stones
+    is_win = True if is_win_col + is_win_lr + is_win_row + is_win_rl > 0 else False
+    return score / depth, captured_stones, is_win, is_forbidden
     # return score, captured_stones, is_win, line_axis
