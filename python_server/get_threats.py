@@ -7,22 +7,22 @@ from numba import njit, prange, int64, typeof
 from numba.types import bool_
 
 print_values = False
-# print_values = True
+print_values = True
 
 @njit("(int64)(int64)", fastmath=True)
 def eat_value(eat_number):
     if eat_number == 0:
         return 0
     elif eat_number == 1:
-        return 10_000 
+        return 20_000 
     elif eat_number == 2:
-        return 20_000
-    elif eat_number == 3:
         return 30_000
-    elif eat_number == 4:
+    elif eat_number == 3:
         return 40_000
+    elif eat_number == 4:
+        return 90_000
     # Win by capture
-    return 300_000
+    return 3_000_000
 
 
 multiplicator_five = 200_000
@@ -176,31 +176,31 @@ def check_line(line, starting_index, player, player_eat, enemy_eat):
     open_eat_move = l_open_eating_move + r_open_eating_move
     open_get_eat_move = l_open_get_eat_move + r_open_get_eat_move
 
-    # if l_additional != 0 and l_consecutive + l_additional == 2 and l_empty_space == True:
-    #     open_three += 1
+    if l_additional != 0 and l_consecutive + l_additional == 2 and l_empty_space == True:
+        open_three += 1
 
-    # if l_additional != 0 and l_consecutive + l_additional == 3 and l_empty_space == True:
-    #     open_four += 1
+    if l_additional != 0 and l_consecutive + l_additional == 3 and l_empty_space == True:
+        open_four += 1
 
     if r_empty_space:
-        if r_additional != 0:
+        if r_additional == 0:
             if r_consecutive + r_additional == 2:
                 open_three += 1
             if r_consecutive + r_additional == 3:
                 open_four += 1
-        if r_additional_enemy != 0:
+        if r_additional_enemy == 0:
             if r_consecutive_enemy + r_additional_enemy == 3:
                 enemy_open_three += 1
             if r_consecutive_enemy + r_additional_enemy == 4:
                 enemy_open_four += 1
 
     if l_empty_space:
-        if l_additional != 0:
+        if l_additional == 0:
             if l_consecutive + l_additional == 2:
                 open_three += 1
             if l_consecutive + l_additional == 3:
                 open_four += 1
-        if l_additional_enemy != 0:
+        if l_additional_enemy == 0:
             if l_consecutive_enemy + l_additional_enemy == 3:
                 enemy_open_three += 1
             if l_consecutive_enemy + l_additional_enemy == 4:
@@ -208,74 +208,100 @@ def check_line(line, starting_index, player, player_eat, enemy_eat):
 
     if total_empty_space == 2:
         # Open two
-        if total_consecutive == 1:
+        if total_consecutive == 2:
             open_two += 1
-        if total_consecutive_enemy == 1:
+        if total_consecutive_enemy == 2:
             enemy_open_two += 1
 
         # Open three
-        if total_consecutive == 2:
+        if total_consecutive == 3:
             open_three += 1
-        if total_consecutive_enemy == 2:
+        if total_consecutive_enemy == 3:
             enemy_open_three += 1
 
         # Open four
-        if total_consecutive == 3:
+        if total_consecutive == 4:
             open_four += 1
-        if total_consecutive_enemy == 3:
+        if total_consecutive_enemy == 4:
             enemy_open_four += 1
     elif total_empty_space == 1:
         # Semi closed two
-        if total_consecutive == 1:
+        if total_consecutive == 2:
             semi_closed_two += 1
-        if total_consecutive_enemy == 1:
+        if total_consecutive_enemy == 2:
             enemy_semi_closed_two += 1
 
         # Semi closed three
-        if total_consecutive == 2:
+        if total_consecutive == 3:
             semi_closed_three += 1
-        if total_consecutive_enemy == 2:
+        if total_consecutive_enemy == 3:
             enemy_semi_closed_three += 1
 
         # Semi closed four
-        if total_consecutive == 3:
+        if total_consecutive == 4:
             semi_closed_four += 1
-        if total_consecutive_enemy == 3:
+        if total_consecutive_enemy == 4:
             enemy_semi_closed_four += 1
 
-    score = 1
-    # Player series
-    score += semi_closed_two * multiplicator_semi_closed_two
-    score += open_two * multiplicator_open_two
+    eat_score = eat_value(eat_move + player_eat) if eat_move else 0
+    open_eat_score = eat_value(open_eat_move + player_eat - 1) if eat_move else 0
+    open_get_eat_score = eat_value(open_get_eat_move + player_eat) if eat_move else 0
 
-    score += semi_closed_three * multiplicator_semi_closed_three
-    score += open_three * multiplicator_open_three
+    score = 0
+    if r_consecutive + l_consecutive >= 4:
+        print("five")
+        score = 1_000_000
+    elif r_consecutive_enemy + l_consecutive_enemy >= 4:
+        print("enemy five")
+        score = 125_000
+    elif enemy_semi_closed_four:
+        print("enemy semi open four")
+        score = 100_000
+    elif enemy_open_three > 0:
+        print("enemy open three")
+        score = 90_000
+    elif open_four > 0:
+        print("open four")
+        score = 80_000
+    elif semi_closed_four > 0:
+        print("semi open four")
+        score = 75_000
+    elif enemy_open_four > 0:
+        print("enemy open four")
+        score = 70_000
+    elif semi_closed_two:
+        # Avoid being eaten
+        print("semi closed two")
+        score = 65_000
 
-    score += semi_closed_four * multiplicator_semi_closed_four
-    score += open_four * multiplicator_open_four
+    elif open_three > 0:
+        print("open three")
+        score = 60_000
 
-    score += five * multiplicator_five
+    elif semi_closed_three:
+        print("semi open three")
+        score = 10_000
+    elif enemy_semi_closed_three:
+        print("enemy semi open three")
+        score = 1_000
+    elif open_two:
+        print("open two")
+        score = 1_000
+    elif enemy_open_two > 0:
+        print("enemy open two")
+        score = 100
 
-    # Enemy series
-    score += enemy_semi_closed_two * multiplicator_enemy_semi_closed_two
-    score += enemy_open_two * multiplicator_enemy_open_two
 
-    score += enemy_semi_closed_three * multiplicator_enemy_semi_closed_three
-    score += enemy_open_three * multiplicator_enemy_open_three
+    score += eat_score + open_eat_score - open_get_eat_score
+    print(score, eat_score, open_eat_score, open_get_eat_score)
+    # if eat_move:
+    #     score += eat_value(eat_move + player_eat)
 
-    score += enemy_semi_closed_four * multiplicator_enemy_semi_closed_four
-    score += enemy_open_four * multiplicator_enemy_open_four
+    # if open_eat_move:
+    #     score += eat_value(open_eat_move + player_eat - 1)
 
-    score += enemy_five * multiplicator_enemy_five
-
-    if eat_move:
-        score += eat_value(eat_move + player_eat)
-
-    if open_eat_move:
-        score += eat_value(open_eat_move + player_eat - 1)
-
-    if open_get_eat_move:
-        score -= eat_value(open_get_eat_move + enemy_eat)
+    # if open_get_eat_move:
+    #     score -= eat_value(open_get_eat_move + enemy_eat)
 
     # print("five", five, "enemy_five", enemy_five)
     # print("open_four", open_four, "enemy_open_four", enemy_open_four)
@@ -333,7 +359,7 @@ def get_new_threats(board, position, maximizing_player, player, player_eat, enem
         print("\n")
         # print("\n")
 
-    score = result_lr + result_rl + result_row + result_col
+    score = max([result_lr, result_rl, result_row, result_col])
 
     if capture_left_lr:
         captured_left_lr_one = np.array((row_index-1, col_index-1), dtype=int64)

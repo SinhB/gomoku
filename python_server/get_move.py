@@ -24,7 +24,7 @@ def get_positions(board, maximizing_player, player, size, total_eat, depth):
 
     eval_to_pos.sort(key=lambda tup: tup[1][0], reverse=maximizing_player)
 
-
+    # if depth > 3:
     cutoff = eval_to_pos[0][1][0] * 0.8
     if maximizing_player:
         eval_to_pos = list(filter(lambda tup: tup[1][0] >= cutoff, eval_to_pos))
