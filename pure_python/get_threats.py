@@ -7,49 +7,74 @@ from numba import njit, prange, int64, typeof
 from numba.types import bool_
 
 
-multiplicator_five = 500_000_000
-multiplicator_enemy_five = 45_000_000
-multiplicator_enemy_open_four = 25_000_000
-multiplicator_enemy_semi_closed_four = 20_000_000
-multiplicator_enemy_open_three = 1_000_000
-multiplicator_open_four = 1_500_000
-multiplicator_open_three = 100_000
-multiplicator_semi_closed_four = 20_000
-multiplicator_enemy_semi_closed_three = 10_000
-multiplicator_semi_closed_three = 5_000
-multiplicator_open_two = 50
-multiplicator_semi_close_two = 5
-multiplicator_enemy_semi_close_two = 10
-multiplicator_enemy_open_two = 100
-
-# multiplicator_five = 10_000
-# multiplicator_enemy_five = 3_000
-# multiplicator_open_four = 1_490
-# multiplicator_enemy_open_four = 3_000
-# multiplicator_open_three = 1_000
-# multiplicator_enemy_open_three = 1_300
-# multiplicator_semi_closed_four = 500
-# multiplicator_enemy_semi_closed_four = 3_000
+# multiplicator_five = 500_000_000
+# multiplicator_open_four = 1_500_000
+# multiplicator_semi_closed_four = 20_000
+# multiplicator_open_three = 100_000
 # multiplicator_semi_closed_three = 5_000
+# multiplicator_open_two = 50
+# multiplicator_semi_close_two = 5
+
+# multiplicator_enemy_five = 45_000_000
+# multiplicator_enemy_open_four = 25_000_000
+# multiplicator_enemy_semi_closed_four = 20_000_000
+# multiplicator_enemy_open_three = 1_000_000
 # multiplicator_enemy_semi_closed_three = 10_000
-# multiplicator_open_two = 5
-# multiplicator_enemy_open_two = 5
-# multiplicator_semi_close_two = 1
-# multiplicator_enemy_semi_close_two = 1
+# multiplicator_enemy_open_two = 100
+# multiplicator_enemy_semi_close_two = 10
+
+# multiplicator_five = 500_000_000
+# multiplicator_open_four = 50_000_000
+# multiplicator_semi_closed_four = 500_000
+# multiplicator_open_three = 10_000_000
+# multiplicator_semi_closed_three = 5_000
+# multiplicator_open_two = 50
+# multiplicator_semi_close_two = 5
+
+# multiplicator_enemy_five = 300_000_000
+# multiplicator_enemy_open_four = 100_000_000
+# multiplicator_enemy_semi_closed_four = 1_000_000
+# multiplicator_enemy_open_three = 5_000_000
+# multiplicator_enemy_semi_closed_three = 10_000
+# multiplicator_enemy_open_two = 100
+# multiplicator_enemy_semi_close_two = 10
+multiplicator_five = 10_000
+multiplicator_open_four = 1_490
+multiplicator_semi_closed_four = 500
+multiplicator_open_three = 1_000
+multiplicator_semi_closed_three = 400
+multiplicator_open_two = 1
+multiplicator_semi_close_two = 0
+
+multiplicator_enemy_five = 3_000
+multiplicator_enemy_open_four = 1_450
+multiplicator_enemy_semi_closed_four = 1_400
+multiplicator_enemy_open_three = 1_300
+multiplicator_enemy_semi_closed_three = 1_000
+multiplicator_enemy_open_two = 1
+multiplicator_enemy_semi_close_two = 1
+
+
+# @njit("(int64)(int64)", fastmath=True)
+# def eat_value(eat_number):
+#     if eat_number == 0:
+#         return 9
+#     elif eat_number == 1:
+#         return 100_000 
+#     elif eat_number == 2:
+#         return 500_000
+#     elif eat_number == 3:
+#         return 1_000_000
+#     elif eat_number == 4:
+#         return 10_000_000
+#     return 100_000_000
 
 @njit("(int64)(int64)", fastmath=True)
 def eat_value(eat_number):
-    if eat_number == 0:
-        return 9
-    elif eat_number == 1:
-        return 100_000 
-    elif eat_number == 2:
-        return 500_000
-    elif eat_number == 3:
-        return 1_000_000
-    elif eat_number == 4:
-        return 10_000_000
-    return 100_000_000
+    if eat_number == 5:
+        return 100_000
+    return 1_000
+
 
 # # Player series multiplicator
 # multiplicator_closed_two = 10
@@ -82,7 +107,7 @@ def eat_value(eat_number):
 # multiplicator_enemy_five = 50_000_000
 
 # Eating move
-multiplicator_open_eat_move = 200
+# multiplicator_open_eat_move = 200
 
 
 @njit("Tuple((int64, int64, boolean, boolean, boolean, boolean, boolean, boolean))(int64[:], int64, boolean)", fastmath=True)
@@ -146,7 +171,7 @@ def check_side(side, player, eating=False):
     return consec, additional, eating, starting_blank, starting_op, closing_blank, closing_op, could_get_eat
 
 
-@njit("Tuple((boolean, boolean, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64))(int64[:], int64, int64)", fastmath=True)
+@njit("Tuple((boolean, boolean, boolean, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64))(int64[:], int64, int64)", fastmath=True)
 def check_line(line, starting_index, player):
     left = line[0:starting_index][::-1]
     right = line[starting_index+1:]
@@ -206,28 +231,32 @@ def check_line(line, starting_index, player):
             open_four += 1
     if total_consec >= 4:
         five += 1
-            
+    
+    has_empty = False
     if r_additional and l_consec + r_additional == 2:
         if semi_close:
             semi_closed_three += 1
         if open_threat:
             open_three += 1
+        has_empty = True
     if l_additional and r_consec + l_additional == 2:
         if semi_close:
             semi_closed_three += 1
         if open_threat:
             open_three += 1
-        
+        has_empty = True
     if r_additional and l_consec + r_additional == 3:
         if semi_close:
             semi_closed_four += 1
         if open_threat:
             open_four += 1
+        has_empty = True
     if l_additional and r_consec + l_additional == 3:
         if semi_close:
             semi_closed_four += 1
         if open_threat:
             open_four += 1
+        has_empty = True
 
     #Check vulnerability
     open_get_eat = 0
@@ -235,43 +264,6 @@ def check_line(line, starting_index, player):
         open_get_eat += 1
     if r_starting_op and l_could_get_eat:
         open_get_eat += 1
-
-    # score = 1
-    # # Player series
-    # if not is_enemy:
-    #     score += semi_closed_two * multiplicator_semi_close_two
-    #     score += open_two * multiplicator_open_two
-
-    #     score += semi_closed_three * multiplicator_semi_closed_three
-    #     score += open_three * multiplicator_open_three
-
-    #     score += semi_closed_four * multiplicator_semi_closed_four
-    #     score += open_four * multiplicator_open_four
-
-    #     score += five * multiplicator_five
-
-    #     eat_move = l_eating + r_eating
-    # else:
-    #     score += semi_closed_two * multiplicator_enemy_semi_close_two
-    #     score += open_two * multiplicator_enemy_open_two
-
-    #     score += semi_closed_three * multiplicator_enemy_semi_closed_three
-    #     score += open_three * multiplicator_enemy_open_three
-
-    #     score += semi_closed_four * multiplicator_enemy_semi_closed_four
-    #     score += open_four * multiplicator_enemy_open_four
-
-    #     score += five * multiplicator_enemy_five
-
-    #     eat_move = l_eating + r_eating
-
-    # if eat_move:
-    #     score += eat_value(eat_move + player_eat) / 10
-    #     # score += ((eat_move + player_eat + 1) ** 10) * 10
-
-    # if open_get_eat:
-    #     score -= eat_value(eat_move + enemy_eat)
-    # #     score += (open_get_eat + enemy_eat + 1) ** 7
 
     # print("closed_two:") 
     # print(closed_two)
@@ -294,7 +286,7 @@ def check_line(line, starting_index, player):
     # print("five")
     # print(five)
     
-    return l_eating, r_eating, closed_two, semi_closed_two, open_two, closed_three, semi_closed_three, open_three, closed_four, semi_closed_four, open_four, five, open_get_eat
+    return has_empty, l_eating, r_eating, closed_two, semi_closed_two, open_two, closed_three, semi_closed_three, open_three, closed_four, semi_closed_four, open_four, five, open_get_eat
 
 
 @njit("UniTuple(int64[:], 2)(int64[:,:], int64, int64)", fastmath=True)
@@ -305,50 +297,54 @@ def get_diags(board, row_index, col_index):
     return lr_diags, rl_diags
 
 @njit
-def get_score(is_enemy, player_eat, enemy_eat, l_eating, r_eating, closed_two, semi_closed_two, open_two, closed_three, semi_closed_three, open_three, closed_four, semi_closed_four, open_four, five, open_get_eat):
-    score = 1
+def get_score(has_empty, is_enemy, player_eat, enemy_eat, l_eating, r_eating, closed_two, semi_closed_two, open_two, closed_three, semi_closed_three, open_three, closed_four, semi_closed_four, open_four, five, open_get_eat):
     # Player series
+    minus_empty = 0
+    if has_empty:
+        minus_empty = 100
+    # adding_eat = 0
+    # eat_move = l_eating + r_eating
+    # if eat_move:
+    #     adding_eat = eat_value(eat_move + player_eat) / 10
+
     if not is_enemy:
-        score += semi_closed_two * multiplicator_semi_close_two
-        score += open_two * multiplicator_open_two
-
-        score += semi_closed_three * multiplicator_semi_closed_three
-        score += open_three * multiplicator_open_three
-
-        score += semi_closed_four * multiplicator_semi_closed_four
-        score += open_four * multiplicator_open_four
-
-        score += five * multiplicator_five
-
-        eat_move = l_eating + r_eating
+        if five:
+            return multiplicator_five - minus_empty
+        elif open_four:
+            return multiplicator_open_four - minus_empty
+        elif semi_closed_four:
+            return multiplicator_semi_closed_four - minus_empty
+        elif open_three:
+            return multiplicator_open_three - minus_empty
+        elif semi_closed_three:
+            return multiplicator_semi_closed_three - minus_empty
+        elif open_two:
+            return multiplicator_open_two
+        elif semi_closed_two:
+            return multiplicator_semi_close_two - minus_empty
+        return 0
     else:
-        score += semi_closed_two * multiplicator_enemy_semi_close_two
-        score += open_two * multiplicator_enemy_open_two
-
-        score += semi_closed_three * multiplicator_enemy_semi_closed_three
-        score += open_three * multiplicator_enemy_open_three
-
-        score += semi_closed_four * multiplicator_enemy_semi_closed_four
-        score += open_four * multiplicator_enemy_open_four
-
-        score += five * multiplicator_enemy_five
-
-        eat_move = l_eating + r_eating
-
-    if eat_move:
-        score += eat_value(eat_move + player_eat) / 10
-        # score += ((eat_move + player_eat + 1) ** 10) * 10
-
-    if open_get_eat:
-        score -= eat_value(eat_move + enemy_eat)
-    #     score += (open_get_eat + enemy_eat + 1) ** 7
-    return score
+        if five:
+            return multiplicator_enemy_five - minus_empty
+        elif open_four:
+            return multiplicator_enemy_open_four - minus_empty
+        elif semi_closed_four:
+            return multiplicator_enemy_semi_closed_four - minus_empty
+        elif open_three:
+            return multiplicator_enemy_open_three - minus_empty
+        elif semi_closed_three:
+            return multiplicator_enemy_semi_closed_three - minus_empty
+        elif open_two:
+            return multiplicator_enemy_open_two - minus_empty
+        elif semi_closed_two:
+            return multiplicator_enemy_semi_close_two - minus_empty
+        return 0
 
 @njit
 # @njit("Tuple((int64, List(int64[:])))(int64[:,:], int64[:], boolean, int64, int64, int64)", fastmath=True)
 def get_new_threats(board, position, maximizing_player, player, player_eat, enemy_eat, depth):
-    # if not maximizing_player:
-    #     player = player * -1
+    if not maximizing_player:
+        player = player * -1
 
     row_index, col_index = position
 
@@ -366,71 +362,82 @@ def get_new_threats(board, position, maximizing_player, player, player_eat, enem
 
     # print(lr_diags)
     lr_starting_index = col_index if row_index > col_index else row_index
-    capture_left_lr, capture_right_lr, closed_two_lr, semi_closed_two_lr, open_two_lr, closed_three_lr, semi_closed_three_lr, open_three_lr, closed_four_lr, semi_closed_four_lr, open_four_lr, five_lr, open_get_eat_lr = check_line(lr_diags, lr_starting_index, player)
-    result_lr = get_score(False, player_eat, enemy_eat, capture_left_lr, capture_right_lr, closed_two_lr, semi_closed_two_lr, open_two_lr, closed_three_lr, semi_closed_three_lr, open_three_lr, closed_four_lr, semi_closed_four_lr, open_four_lr, five_lr, open_get_eat_lr)
+    has_empty_lr, capture_left_lr, capture_right_lr, closed_two_lr, semi_closed_two_lr, open_two_lr, closed_three_lr, semi_closed_three_lr, open_three_lr, closed_four_lr, semi_closed_four_lr, open_four_lr, five_lr, open_get_eat_lr = check_line(lr_diags, lr_starting_index, player)
+    result_lr = get_score(has_empty_lr, False, player_eat, enemy_eat, capture_left_lr, capture_right_lr, closed_two_lr, semi_closed_two_lr, open_two_lr, closed_three_lr, semi_closed_three_lr, open_three_lr, closed_four_lr, semi_closed_four_lr, open_four_lr, five_lr, open_get_eat_lr)
     # print(rl_diags)
     rl_starting_index = 18 - col_index if row_index > 18 - col_index else row_index
-    capture_left_rl, capture_right_rl, closed_two_rl, semi_closed_two_rl, open_two_rl, closed_three_rl, semi_closed_three_rl, open_three_rl, closed_four_rl, semi_closed_four_rl, open_four_rl, five_rl, open_get_eat_rl = check_line(rl_diags, rl_starting_index, player)
-    result_rl = get_score(False, player_eat, enemy_eat, capture_left_rl, capture_right_rl, closed_two_rl, semi_closed_two_rl, open_two_rl, closed_three_rl, semi_closed_three_rl, open_three_rl, closed_four_rl, semi_closed_four_rl, open_four_rl, five_rl, open_get_eat_rl)
+    has_empty_rl, capture_left_rl, capture_right_rl, closed_two_rl, semi_closed_two_rl, open_two_rl, closed_three_rl, semi_closed_three_rl, open_three_rl, closed_four_rl, semi_closed_four_rl, open_four_rl, five_rl, open_get_eat_rl = check_line(rl_diags, rl_starting_index, player)
+    result_rl = get_score(has_empty_rl, False, player_eat, enemy_eat, capture_left_rl, capture_right_rl, closed_two_rl, semi_closed_two_rl, open_two_rl, closed_three_rl, semi_closed_three_rl, open_three_rl, closed_four_rl, semi_closed_four_rl, open_four_rl, five_rl, open_get_eat_rl)
     # print(rows)
-    capture_left_row, capture_right_row, closed_two_row, semi_closed_two_row, open_two_row, closed_three_row, semi_closed_three_row, open_three_row, closed_four_row, semi_closed_four_row, open_four_row, five_row, open_get_eat_row = check_line(rows, col_index, player)
-    result_row = get_score(False, player_eat, enemy_eat, capture_left_row, capture_right_row, closed_two_row, semi_closed_two_row, open_two_row, closed_three_row, semi_closed_three_row, open_three_row, closed_four_row, semi_closed_four_row, open_four_row, five_row, open_get_eat_row)
+    has_empty_row, capture_left_row, capture_right_row, closed_two_row, semi_closed_two_row, open_two_row, closed_three_row, semi_closed_three_row, open_three_row, closed_four_row, semi_closed_four_row, open_four_row, five_row, open_get_eat_row = check_line(rows, col_index, player)
+    result_row = get_score(has_empty_row, False, player_eat, enemy_eat, capture_left_row, capture_right_row, closed_two_row, semi_closed_two_row, open_two_row, closed_three_row, semi_closed_three_row, open_three_row, closed_four_row, semi_closed_four_row, open_four_row, five_row, open_get_eat_row)
     # print(columns)
-    capture_left_col, capture_right_col, closed_two_col, semi_closed_two_col, open_two_col, closed_three_col, semi_closed_three_col, open_three_col, closed_four_col, semi_closed_four_col, open_four_col, five_col, open_get_eat_col = check_line(columns, row_index, player)
-    result_col = get_score(False, player_eat, enemy_eat, capture_left_col, capture_right_col, closed_two_col, semi_closed_two_col, open_two_col, closed_three_col, semi_closed_three_col, open_three_col, closed_four_col, semi_closed_four_col, open_four_col, five_col, open_get_eat_col)
+    has_empty_col, capture_left_col, capture_right_col, closed_two_col, semi_closed_two_col, open_two_col, closed_three_col, semi_closed_three_col, open_three_col, closed_four_col, semi_closed_four_col, open_four_col, five_col, open_get_eat_col = check_line(columns, row_index, player)
+    result_col = get_score(has_empty_col, False, player_eat, enemy_eat, capture_left_col, capture_right_col, closed_two_col, semi_closed_two_col, open_two_col, closed_three_col, semi_closed_three_col, open_three_col, closed_four_col, semi_closed_four_col, open_four_col, five_col, open_get_eat_col)
 
-    # print("closed_two:") 
-    # print(closed_two_lr + closed_two_rl + closed_two_row + closed_two_col)
-    # print("semi_close_two:")
-    # print(semi_closed_two_lr + semi_closed_two_rl + semi_closed_two_row + semi_closed_two_col)
-    # print("open_two:")
-    # print(open_two_lr + open_two_rl + open_two_row + open_two_col)
-    # print("closed_three:")
-    # print(closed_three_lr + closed_three_rl + closed_three_row + closed_three_col)
-    # print("semi_closed_three")
-    # print(semi_closed_three_lr + semi_closed_three_rl + semi_closed_three_row + semi_closed_three_col)
-    # print("open_three")
-    # print(open_three_lr + open_three_rl + open_three_row + open_three_col)
-    # print("closed_four")
-    # print(closed_four_lr + closed_four_rl + closed_four_row + closed_four_col)
-    # print("semi_close_four")
-    # print(semi_closed_four_lr + semi_closed_four_rl + semi_closed_four_row + semi_closed_four_col)
-    # print("open_four")
-    # print(open_four_lr + open_four_rl + open_four_row + open_four_col)
-    # print("five")
-    # print(five_lr + five_rl + five_row + five_col)
+    # print(f"closed_two: {closed_two_lr + closed_two_rl + closed_two_row + closed_two_col}") 
+    # # print(closed_two_lr + closed_two_rl + closed_two_row + closed_two_col)
+    # print(f"semi_close_two: {semi_closed_two_lr + semi_closed_two_rl + semi_closed_two_row + semi_closed_two_col}")
+    # print(f"open_two: {open_two_lr + open_two_rl + open_two_row + open_two_col}")
+    # print(f"closed_three: {closed_three_lr + closed_three_rl + closed_three_row + closed_three_col}")
+    # print(f"semi_closed_three: {semi_closed_three_lr + semi_closed_three_rl + semi_closed_three_row + semi_closed_three_col}")
+    # print(f"open_three: {open_three_lr + open_three_rl + open_three_row + open_three_col}")
+    # print(f"closed_four: {closed_four_lr + closed_four_rl + closed_four_row + closed_four_col}")
+    # print(f"semi_close_four: {semi_closed_four_lr + semi_closed_four_rl + semi_closed_four_row + semi_closed_four_col}")
+    # print(f"open_four: {open_four_lr + open_four_rl + open_four_row + open_four_col}")
+    # print(f"five: {five_lr + five_rl + five_row + five_col}")
 
-    score = result_lr + result_rl + result_row + result_col
+    # score = max(result_lr, result_rl, result_row, result_col)
 
-    op_result_lr, op_capture_left_lr, op_capture_right_lr, op_closed_two_lr, op_semi_closed_two_lr, op_open_two_lr, op_closed_three_lr, op_semi_closed_three_lr, op_open_three_lr, op_closed_four_lr, op_semi_closed_four_lr, op_open_four_lr, op_five_lr, op_open_get_eat_lr = check_line(lr_diags, lr_starting_index, player * -1, enemy_eat, player_eat, True)
-    op_result_rl, op_capture_left_rl, op_capture_right_rl, op_closed_two_rl, op_semi_closed_two_rl, op_open_two_rl, op_closed_three_rl, op_semi_closed_three_rl, op_open_three_rl, op_closed_four_rl, op_semi_closed_four_rl, op_open_four_rl, op_five_rl, op_open_get_eat_rl = check_line(rl_diags, rl_starting_index, player * -1, enemy_eat, player_eat, True)
-    op_result_row, op_capture_left_row, op_capture_right_row, op_closed_two_row, op_semi_closed_two_row, op_open_two_row, op_closed_three_row, op_semi_closed_three_row, op_open_three_row, op_closed_four_row, op_semi_closed_four_row, op_open_four_row, op_five_row, op_open_get_eat_row = check_line(rows, col_index, player * -1, enemy_eat, player_eat, True)
-    op_result_col, op_capture_left_col, op_capture_right_col, op_closed_two_col, op_semi_closed_two_col, op_open_two_col, op_closed_three_col, op_semi_closed_three_col, op_open_three_col, op_closed_four_col, op_semi_closed_four_col, op_open_four_col, op_five_col, op_open_get_eat_col = check_line(columns, row_index, player * -1, enemy_eat, player_eat, True)
+    op_has_empty_lr, op_capture_left_lr, op_capture_right_lr, op_closed_two_lr, op_semi_closed_two_lr, op_open_two_lr, op_closed_three_lr, op_semi_closed_three_lr, op_open_three_lr, op_closed_four_lr, op_semi_closed_four_lr, op_open_four_lr, op_five_lr, op_open_get_eat_lr = check_line(lr_diags, lr_starting_index, player * -1)
+    op_result_lr = get_score(op_has_empty_lr, True, enemy_eat, player_eat, op_capture_left_lr, op_capture_right_lr, op_closed_two_lr, op_semi_closed_two_lr, op_open_two_lr, op_closed_three_lr, op_semi_closed_three_lr, op_open_three_lr, op_closed_four_lr, op_semi_closed_four_lr, op_open_four_lr, op_five_lr, op_open_get_eat_lr)
+    op_has_empty_rl, op_capture_left_rl, op_capture_right_rl, op_closed_two_rl, op_semi_closed_two_rl, op_open_two_rl, op_closed_three_rl, op_semi_closed_three_rl, op_open_three_rl, op_closed_four_rl, op_semi_closed_four_rl, op_open_four_rl, op_five_rl, op_open_get_eat_rl = check_line(rl_diags, rl_starting_index, player * -1)
+    op_result_rl = get_score(op_has_empty_rl, True, enemy_eat, player_eat, op_capture_left_rl, op_capture_right_rl, op_closed_two_rl, op_semi_closed_two_rl, op_open_two_rl, op_closed_three_rl, op_semi_closed_three_rl, op_open_three_rl, op_closed_four_rl, op_semi_closed_four_rl, op_open_four_rl, op_five_rl, op_open_get_eat_rl)
+    op_has_empty_row, op_capture_left_row, op_capture_right_row, op_closed_two_row, op_semi_closed_two_row, op_open_two_row, op_closed_three_row, op_semi_closed_three_row, op_open_three_row, op_closed_four_row, op_semi_closed_four_row, op_open_four_row, op_five_row, op_open_get_eat_row = check_line(rows, col_index, player * -1)
+    op_result_row = get_score(op_has_empty_row, True, enemy_eat, player_eat, op_capture_left_row, op_capture_right_row, op_closed_two_row, op_semi_closed_two_row, op_open_two_row, op_closed_three_row, op_semi_closed_three_row, op_open_three_row, op_closed_four_row, op_semi_closed_four_row, op_open_four_row, op_five_row, op_open_get_eat_row)
+    op_has_empty_col, op_capture_left_col, op_capture_right_col, op_closed_two_col, op_semi_closed_two_col, op_open_two_col, op_closed_three_col, op_semi_closed_three_col, op_open_three_col, op_closed_four_col, op_semi_closed_four_col, op_open_four_col, op_five_col, op_open_get_eat_col = check_line(columns, row_index, player * -1)
+    op_result_col = get_score(op_has_empty_col, True, enemy_eat, player_eat, op_capture_left_col, op_capture_right_col, op_closed_two_col, op_semi_closed_two_col, op_open_two_col, op_closed_three_col, op_semi_closed_three_col, op_open_three_col, op_closed_four_col, op_semi_closed_four_col, op_open_four_col, op_five_col, op_open_get_eat_col)
 
-    # print("op_closed_two:") 
-    # print(op_closed_two_lr + op_closed_two_rl + op_closed_two_row + op_closed_two_col)
-    # print("op_semi_close_two:")
-    # print(op_semi_closed_two_lr + op_semi_closed_two_rl + op_semi_closed_two_row + op_semi_closed_two_col)
-    # print("op_open_two:")
-    # print(op_open_two_lr + op_open_two_rl + op_open_two_row + op_open_two_col)
-    # print("op_closed_three:")
-    # print(op_closed_three_lr + op_closed_three_rl + op_closed_three_row + op_closed_three_col)
-    # print("op_semi_closed_three")
-    # print(op_semi_closed_three_lr + op_semi_closed_three_rl + op_semi_closed_three_row + op_semi_closed_three_col)
-    # print("op_open_three")
-    # print(open_three_lr + op_open_three_rl + op_open_three_row + op_open_three_col)
-    # print("op_closed_four")
-    # print(op_closed_four_lr + op_closed_four_rl + op_closed_four_row + op_closed_four_col)
-    # print("op_semi_close_four")
-    # print(op_semi_closed_four_lr + op_semi_closed_four_rl + op_semi_closed_four_row + op_semi_closed_four_col)
-    # print("op_open_four")
-    # print(op_open_four_lr + op_open_four_rl + op_open_four_row + op_open_four_col)
-    # print("op_five")
-    # print(op_five_lr + op_five_rl + op_five_row + op_five_col)
+    # print(f"op_closed_two: {op_closed_two_lr + op_closed_two_rl + op_closed_two_row + op_closed_two_col}")
+    # print(f"op_semi_close_two: {op_semi_closed_two_lr + op_semi_closed_two_rl + op_semi_closed_two_row + op_semi_closed_two_col}")
+    # print(f"op_open_two: {op_open_two_lr + op_open_two_rl + op_open_two_row + op_open_two_col}")
+    # print(f"op_closed_three: {op_closed_three_lr + op_closed_three_rl + op_closed_three_row + op_closed_three_col}")
+    # print(f"op_semi_closed_three: {op_semi_closed_three_lr + op_semi_closed_three_rl + op_semi_closed_three_row + op_semi_closed_three_col}")
+    # print(f"op_open_three: {open_three_lr + op_open_three_rl + op_open_three_row + op_open_three_col}")
+    # print(f"op_closed_four: {op_closed_four_lr + op_closed_four_rl + op_closed_four_row + op_closed_four_col}")
+    # print(f"op_semi_close_four: {op_semi_closed_four_lr + op_semi_closed_four_rl + op_semi_closed_four_row + op_semi_closed_four_col}")
+    # print(f"op_open_four: {op_open_four_lr + op_open_four_rl + op_open_four_row + op_open_four_col}")
+    # print(f"op_five: {op_five_lr + op_five_rl + op_five_row + op_five_col}")
 
-    score += op_result_lr + op_result_rl + op_result_row + op_result_col
+    score = max(result_lr, result_rl, result_row, result_col, op_result_lr, op_result_rl, op_result_row, op_result_col)
 
-    
+    eat_move = 0
+    if capture_left_lr:
+        eat_move += 1
+    if capture_left_rl:
+        eat_move += 1
+    if capture_left_row:
+        eat_move += 1 
+    if capture_left_col:
+        eat_move += 1
+    if capture_right_lr:
+        eat_move += 1
+    if capture_right_rl:
+        eat_move += 1
+    if capture_right_row:
+        eat_move += 1
+    if capture_right_col:
+        eat_move += 1
+
+    if eat_move:
+        adding_eat = eat_value(eat_move + player_eat) #/ 10
+
+    open_get_eat = open_get_eat_lr + open_get_eat_rl + open_get_eat_row + open_get_eat_col
+    minus_vulnerability = 0
+    if open_get_eat:
+        minus_vulnerability = eat_value(eat_move + enemy_eat)
+
+    score = score + adding_eat - minus_vulnerability
     # print("Score:")
     # print(score)
 
