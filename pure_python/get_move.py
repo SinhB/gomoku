@@ -51,7 +51,7 @@ def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats,
             board = board_functions.add_stone(board, player, position, captured_stones)
 
             total_eat[player] += new_eat
-            evaluation = minimax(board, depth - 1, alpha, beta, False, size, new_threats, max_depth, player, total_eat, is_win)
+            evaluation = minimax(board, depth - 1, alpha, beta, False, size, current_threats + new_threats, max_depth, player, total_eat, is_win)
             total_eat[player] -= new_eat
 
             board = board_functions.remove_stone(board, player, position, captured_stones)
@@ -73,7 +73,7 @@ def minimax(board, depth, alpha, beta, maximizing_player, size, current_threats,
             board = board_functions.add_stone(board, -player, position, captured_stones)
 
             total_eat[-player] += new_eat
-            evaluation = minimax(board, depth - 1, alpha, beta, True, size, new_threats, max_depth, player, total_eat, is_win)
+            evaluation = minimax(board, depth - 1, alpha, beta, True, size, current_threats + new_threats, max_depth, player, total_eat, is_win)
             total_eat[-player] -= new_eat
 
             board = board_functions.remove_stone(board, -player, position, captured_stones)

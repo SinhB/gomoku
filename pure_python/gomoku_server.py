@@ -65,7 +65,7 @@ def check_win(board, position, player, total_eat, total_enemy_eat):
     if check_line_win(lr_diags, win_array):
         lr_starting_index = col_index if row_index > col_index else row_index
         is_breakable, breaking_pos = get_threats.check_if_breakable(board, 0, lr_diags, lr_starting_index, player, row_index, col_index)
-        if is_breakable:
+        if is_breakable and total_enemy_eat == 4:
             return False, breaking_pos
         else:
             print("Win by alignment")
@@ -73,7 +73,7 @@ def check_win(board, position, player, total_eat, total_enemy_eat):
     if check_line_win(rl_diags, win_array):
         rl_starting_index = 18 - col_index if row_index > 18 - col_index else row_index
         is_breakable, breaking_pos = get_threats.check_if_breakable(board, 1, rl_diags, rl_starting_index, player, row_index, col_index)
-        if is_breakable:
+        if is_breakable and total_enemy_eat == 4:
             return False, breaking_pos
         else:
             print("Win by alignment")
@@ -82,14 +82,14 @@ def check_win(board, position, player, total_eat, total_enemy_eat):
         is_breakable, breaking_pos = get_threats.check_if_breakable(board, 2, rows, col_index, player, row_index, col_index)
         print(is_breakable)
         print(breaking_pos)
-        if is_breakable:
+        if is_breakable and total_enemy_eat == 4:
             return False, breaking_pos
         else:
             print("Win by alignment")
             return True, None
     if check_line_win(columns, win_array):
         is_breakable, breaking_pos = get_threats.check_if_breakable(board, 3, columns, row_index, player, row_index, col_index)
-        if is_breakable:
+        if is_breakable and total_enemy_eat == 4:
             return False, breaking_pos
         else:
             print("Win by alignment")
@@ -100,13 +100,13 @@ class Env:
 
     def __init__(self):
         self.board = board_functions.init_board(19)
-        self.total_eat = {-1: 0, 1: 4}
+        self.total_eat = {-1: 0, 1: 0}
         self.empty_board = True
         self.priority_move = {-1: None, 1: None}
 
     def reset(self):
         self.board = board_functions.init_board(19)
-        self.total_eat = {-1: 0, 1: 4}
+        self.total_eat = {-1: 0, 1: 0}
         self.empty_board = True
         self.priority_move = {-1: None, 1: None}
 

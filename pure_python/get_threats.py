@@ -94,6 +94,32 @@ def check_side(side, player, eating=False):
     return consec, additional, eating, starting_blank, starting_op, closing_blank, closing_op, could_get_eat
 
 
+@njit("UniTuple(boolean, 4)(int64[:], int64)")
+def check_vulnerability(side, player):
+    is_consec = True
+    consec = 0
+
+    for i in range(0, min(len(side), 2)):
+        if side[i] == 0:
+            if i == 0:
+                return False, True, False, False
+            if i == 1 and consec == 1:
+                return False, False, False, True
+            else:
+                is_consec = False
+        if side[i] == player:
+            if is_consec:
+                consec += 1
+        if side[i] == -player:
+            if i == 0:
+                return True, False, False, False
+            if i == 1 and consec == 1:
+                return False, False, True, False
+            else:
+                is_consec = False
+    return False, False, False, False
+
+
 @njit("Tuple((boolean, boolean, boolean, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64))(int64[:], int64, int64)", fastmath=True)
 def check_line(line, starting_index, player):
     left = line[0:starting_index][::-1]
@@ -183,9 +209,22 @@ def check_line(line, starting_index, player):
 
     #Check vulnerability
     open_get_eat = 0
-    if l_starting_op and r_could_get_eat:
+    # if l_starting_op and r_could_get_eat:
+    #     open_get_eat += 1
+    # if r_starting_op and l_could_get_eat:
+    #     open_get_eat += 1
+    l_starting_op, l_starting_blank, l_ending_op, l_ending_blank = check_vulnerability(left, player)
+    r_starting_op, r_starting_blank, r_ending_op, r_ending_blank = check_vulnerability(right, player)
+
+    #right
+    if l_starting_op and r_ending_blank:
         open_get_eat += 1
-    if r_starting_op and l_could_get_eat:
+    if r_starting_blank and l_ending_op:
+        open_get_eat += 1
+    #left
+    if r_starting_op and l_ending_blank:
+        open_get_eat += 1
+    if l_starting_blank and r_ending_op:
         open_get_eat += 1
 
     # print("closed_two:") 
@@ -302,31 +341,6 @@ def get_pos(is_left, index, row_index, col_index, line_type):
     return np.zeros(2, dtype=np.int64)
 
 
-@njit("UniTuple(boolean, 4)(int64[:], int64)")
-def check_vulnerability(side, player):
-    is_consec = True
-    consec = 0
-
-    for i in range(0, min(len(side), 2)):
-        if side[i] == 0:
-            if i == 0:
-                return False, True, False, False
-            if i == 1 and consec == 1:
-                return False, False, False, True
-            else:
-                is_consec = False
-        if side[i] == player:
-            if is_consec:
-                consec += 1
-        if side[i] == -player:
-            if i == 0:
-                return True, False, False, False
-            if i == 1 and consec == 1:
-                return False, False, True, False
-            else:
-                is_consec = False
-    return False, False, False, False
-
 @njit("Tuple((boolean, boolean, int64))(int64[:], int64, int64)", fastmath=True)
 def check_line_breakable(line, starting_index, player):
     """Return: (is_breakable, is_left)"""
@@ -395,11 +409,8 @@ def check_if_breakable(board, line_type, line, starting_index, player, row_index
         else:
             break
     numba_pos_list = nb.typed.List(pos_list)
-    print([pos for pos in numba_pos_list])
     for pos in numba_pos_list:
         is_breakable, breaking_pos = pos_is_breakable(board, pos, player)
-        print(pos)
-        print(is_breakable, breaking_pos)
         if is_breakable:
             return True, breaking_pos
     return False, np.zeros(2, dtype=np.int64)
@@ -513,7 +524,7 @@ def get_new_threats(board, position, maximizing_player, player, player_eat, enem
     open_get_eat = open_get_eat_lr + open_get_eat_rl + open_get_eat_row + open_get_eat_col
     minus_vulnerability = 0
     if open_get_eat:
-        minus_vulnerability = eat_value(eat_move + enemy_eat)
+        minus_vulnerability = eat_value(open_get_eat + enemy_eat)
 
     score = score + adding_eat - minus_vulnerability + defend_breaking_five
     # print("Score:")
@@ -564,4 +575,5 @@ def get_new_threats(board, position, maximizing_player, player, player_eat, enem
     if not maximizing_player:
         score *= -1
 
-    return position, score / depth, captured_stones, is_win, is_forbidden, eat_move
+    return position, score, captured_stones, is_win, is_forbidden, eat_move
+    # return position, score / depth, captured_stones, is_win, is_forbidden, eat_move
