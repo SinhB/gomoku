@@ -184,7 +184,7 @@ init()
     <br />
     
     <v-row justify="center">
-      <h3 :class="`player-turn bg-${boardStore.playerString}`">Player turn</h3>
+      <h3 :class="`player-turn bg-${boardStore.playerString}`">PLAYER TURN</h3>
     </v-row>
 
     <v-row>
@@ -217,7 +217,7 @@ init()
 .player-turn {
   display: flex;
   justify-content: center;
-  padding-top: 10px;
+  padding-top: 11px;
   width: 600px;
   height: 50px;
   margin-bottom: 20px;

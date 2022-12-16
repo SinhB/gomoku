@@ -134,7 +134,7 @@ def update_board(board, eating_left, eating_right, position, step_x, step_y, eat
 
 def place_stone(board, position, player):
     eaten_pos = []
-    lr_open_three = check_open_three(board, position, -1, -1, player)
+    lr_open_three = check_open_three(board, position, 1, 1, player)
     rl_open_three = check_open_three(board, position, -1, 1, player)
     row_open_three = check_open_three(board, position, 0, 1, player)
     col_open_three = check_open_three(board, position, 1, 0, player)
