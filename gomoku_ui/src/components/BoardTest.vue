@@ -25,7 +25,8 @@ const socket = io(`http://${address}:3000`)
 const env = reactive({
   myColor: 'spectator',
   availableColor: [],
-  mySocketId: ''
+  mySocketId: '',
+  freePlay: 0
 })
 
 
@@ -75,6 +76,10 @@ onMounted(() => {
   })
 
   // BOARD ACTION
+  socket.on("receivePlaceFreeStone", async (move) => {
+    boardStore.placeStone(move[0], move[1])
+    boardStore.swapPlayer()
+  })
   socket.on("receivePlaceStone", async (move) => {
     boardStore.placeStone(move[0], move[1])
     const currentPlayer = boardStore.playerString
@@ -121,8 +126,13 @@ async function getNextMove () {
 }
 
 async function selectMove(move) {
-  if (boardStore.playerString === env.myColor && boardStore.board[move[0]][move[1]].player === 0 && boardStore.winner === '') {
-    await performMove(move)
+  if (boardStore.board[move[0]][move[1]].player === 0 && boardStore.winner === '') {
+    if (env.freePlay > 0) {
+      socket.emit("placeFreeStone", {room: route.params.roomName, move: move, player: boardStore.player})
+      env.freePlay -= 1
+    } else if (boardStore.playerString === env.myColor) {
+      await performMove(move)
+    }
   }
 }
 
@@ -145,6 +155,10 @@ async function performMove(move) {
       socket.emit('eat', {room: route.params.roomName, total_eat: result.data.total_eat})
     }
   }
+}
+
+async function createOpeningBoard () {
+  env.freePlay = 3
 }
 
 async function reset () {
@@ -176,6 +190,7 @@ init()
             color="red"
             class="autoplay-switch"
           ></v-switch>
+          <v-btn @click="createOpeningBoard()">OPENING</v-btn>
           <v-btn @click="getNextMove()">Get next move</v-btn>
           <v-btn @click="reset()">Restart</v-btn>
         </v-card-actions>

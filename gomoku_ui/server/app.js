@@ -76,6 +76,12 @@ SocketIo.on("connect", socket => {
         SocketIo.to(data.room).emit("updateEat", data.total_eat)
     })
 
+    socket.on("placeFreeStone", data => {
+        rooms[data.room].turnsCounter += 1
+        rooms[data.room].board[data.move[0]][data.move[1]] = {player: rooms[data.room].playerTurn, turn: rooms[data.room].turnsCounter}
+        rooms[data.room].playerTurn = rooms[data.room].playerTurn * -1
+        SocketIo.to(data.room).emit("receivePlaceFreeStone", data.move)
+    })
 
     socket.on("placeStone", data => {
         rooms[data.room].turnsCounter += 1
