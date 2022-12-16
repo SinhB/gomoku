@@ -8,25 +8,23 @@ from numba.types import bool_
 
 multiplicator_five = 11_000
 multiplicator_open_four = 1_490
+multiplicator_open_three = 1_450
 multiplicator_semi_closed_four = 500
-multiplicator_open_three = 1_200
-multiplicator_semi_closed_three = 1_390
+multiplicator_semi_closed_three = 390
 multiplicator_open_two = 1
 multiplicator_semi_close_two = 0
 
-multiplicator_enemy_five = 3_000
-multiplicator_enemy_open_four = 1_450
-multiplicator_enemy_open_three = 1_440
-multiplicator_enemy_semi_closed_four = 1_400
-multiplicator_enemy_semi_closed_three = 900
-multiplicator_enemy_open_two = 1
-multiplicator_enemy_semi_close_two = 1
-
 @njit("(int64)(int64)", fastmath=True)
 def eat_value(eat_number):
-    if eat_number == 5:
+    if eat_number >= 5:
         return 100_000
-    return 1_000 * eat_number * 0.5
+    if eat_number == 4:
+        return 1_400
+    if eat_number == 3:
+        return 1_100
+    if eat_number == 2:
+        return 1_050
+    return 1_000
 
 @njit("Tuple((int64, int64, boolean, boolean, boolean, boolean, boolean, boolean))(int64[:], int64, boolean)", fastmath=True)
 def check_side(side, player, eating=False):

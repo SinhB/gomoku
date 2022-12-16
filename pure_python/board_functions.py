@@ -34,38 +34,47 @@ def check_open_three(board, position, step_x, step_y, player):
     empty_space_right = False
 
     is_consecutive = True
-    is_after_blank = False
+    is_after_blank_left = False
+    print('LEFT')
+    a = []
     for i in range(0, 4):
         if left[0] >= 0 and left[1] >= 0 and left[0] <= 18 and left[1] <= 18:
+            a.append(board[left[0]][left[1]])
             if board[left[0]][left[1]] == player and is_consecutive:
                 consecutive_left += 1
-            elif board[left[0]][left[1]] == 0 and is_after_blank == False:
-                is_after_blank = True
-            elif board[left[0]][left[1]] == 0 and is_after_blank == True:
+            elif board[left[0]][left[1]] == 0 and is_after_blank_left == False:
+                is_after_blank_left = True
+            elif board[left[0]][left[1]] == 0 and is_after_blank_left == True:
                 empty_space_left = True
                 break
             else:
                 break
         left[0] -= step_x
         left[1] -= step_y
+    print(a)
 
     is_consecutive = True
-    is_after_blank = False
+    is_after_blank_right = False
+    b = []
+    print("RIGHT")
     for i in range(0, 4):
         if right[0] >= 0 and right[1] >= 0 and right[0] <= 18 and right[1] <= 18:
+            b.append(board[right[0]][right[1]])
             if board[right[0]][right[1]] == player and is_consecutive:
                 consecutive_right += 1
-            elif board[right[0]][right[1]] == 0 and is_after_blank == False:
-                is_after_blank = True
-            elif board[right[0]][right[1]] == 0 and is_after_blank == True:
+            elif board[right[0]][right[1]] == 0 and is_after_blank_right == False:
+                is_after_blank_right = True
+            elif board[right[0]][right[1]] == 0 and is_after_blank_right == True:
                 empty_space_right = True
                 break
             else:
                 break
         right[0] += step_x
         right[1] += step_y
+    print(b)
 
-    if consecutive_left + consecutive_right == 2 and empty_space_left and empty_space_right:
+    print(consecutive_left, consecutive_right, empty_space_left, empty_space_right)
+    if consecutive_left + consecutive_right == 2 and empty_space_left and empty_space_right and is_after_blank_left + is_after_blank_right < 2:
         return True
 
     return False
@@ -134,11 +143,20 @@ def update_board(board, eating_left, eating_right, position, step_x, step_y, eat
 
 def place_stone(board, position, player):
     eaten_pos = []
+    print("LR")
     lr_open_three = check_open_three(board, position, 1, 1, player)
+    print(lr_open_three)
+    print("RL")
     rl_open_three = check_open_three(board, position, -1, 1, player)
+    print(rl_open_three)
+    print("ROW")
     row_open_three = check_open_three(board, position, 0, 1, player)
+    print(row_open_three)
+    print("COL")
     col_open_three = check_open_three(board, position, 1, 0, player)
+    print(col_open_three)
 
+    print(lr_open_three + rl_open_three + row_open_three + col_open_three)
     if lr_open_three + rl_open_three + row_open_three + col_open_three >= 2:
         raise ForbiddenMove()
 
