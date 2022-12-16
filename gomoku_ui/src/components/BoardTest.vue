@@ -165,9 +165,6 @@ init()
 
 <template>
   <v-container>
-
-    <h3 :class="`autoplay-switch ${env.myColor}--text`">{{`You are ${env.myColor === 'spectator' ? "spectating" : `playing ${env.myColor}`} -- Wating for player ${boardStore.playerString} to play`}}</h3>
-
     <v-row justify="center">
       <v-card class="general-card" flat>
         <v-card-actions>
@@ -185,6 +182,10 @@ init()
       </v-card>
     </v-row>
     <br />
+    
+    <v-row justify="center">
+      <h3 :class="`player-turn bg-${boardStore.playerString}`">Player turn</h3>
+    </v-row>
 
     <v-row>
       <v-col>
@@ -213,13 +214,23 @@ init()
 </template>
 
 <style scoped lang="scss">
+.player-turn {
+  display: flex;
+  justify-content: center;
+  padding-top: 10px;
+  width: 600px;
+  height: 50px;
+  margin-bottom: 20px;
+}
 .autoplay-switch {
   display: flex;
   justify-content: center;
 }
 .general-card {
   width: 900px;
-  margin: 40px 0;
+  // margin: 40px 0;
+  margin-top: 10px;
+  margin-bottom: 20px;
   background-color: #35393C;
 }
 .tile {
