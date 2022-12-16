@@ -11,18 +11,14 @@ multiplicator_open_four = 1_490
 multiplicator_semi_closed_four = 500
 multiplicator_open_three = 1_200
 multiplicator_semi_closed_three = 1_390
-# multiplicator_semi_closed_three = 1_100
 multiplicator_open_two = 1
 multiplicator_semi_close_two = 0
-# multiplicator_semi_close_two = -1_000
 
 multiplicator_enemy_five = 3_000
 multiplicator_enemy_open_four = 1_450
-# multiplicator_enemy_open_four = 2_450
 multiplicator_enemy_open_three = 1_440
 multiplicator_enemy_semi_closed_four = 1_400
 multiplicator_enemy_semi_closed_three = 900
-# multiplicator_enemy_semi_closed_three = 200
 multiplicator_enemy_open_two = 1
 multiplicator_enemy_semi_close_two = 1
 
@@ -30,8 +26,7 @@ multiplicator_enemy_semi_close_two = 1
 def eat_value(eat_number):
     if eat_number == 5:
         return 100_000
-    return 1_000
-    # return 1_250 * eat_number
+    return 1_000 * eat_number * 0.5
 
 @njit("Tuple((int64, int64, boolean, boolean, boolean, boolean, boolean, boolean))(int64[:], int64, boolean)", fastmath=True)
 def check_side(side, player, eating=False):
@@ -120,7 +115,7 @@ def check_vulnerability(side, player):
     return False, False, False, False
 
 
-@njit("Tuple((boolean, boolean, boolean, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64))(int64[:], int64, int64)", fastmath=True)
+@njit("Tuple((boolean, boolean, boolean, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64))(int64[:], int64, int64)", fastmath=True)
 def check_line(line, starting_index, player):
     left = line[0:starting_index][::-1]
     right = line[starting_index+1:]
@@ -138,7 +133,6 @@ def check_line(line, starting_index, player):
         semi_close = True
     else:
         open_threat = True
-    # print(close_threat, semi_close, open_threat)
     
     total_consec = l_consec + r_consec
     
@@ -207,48 +201,7 @@ def check_line(line, starting_index, player):
             open_four += 1
         has_empty = True
 
-    #Check vulnerability
-    open_get_eat = 0
-    # if l_starting_op and r_could_get_eat:
-    #     open_get_eat += 1
-    # if r_starting_op and l_could_get_eat:
-    #     open_get_eat += 1
-    l_starting_op, l_starting_blank, l_ending_op, l_ending_blank = check_vulnerability(left, player)
-    r_starting_op, r_starting_blank, r_ending_op, r_ending_blank = check_vulnerability(right, player)
-
-    #right
-    if l_starting_op and r_ending_blank:
-        open_get_eat += 1
-    if r_starting_blank and l_ending_op:
-        open_get_eat += 1
-    #left
-    if r_starting_op and l_ending_blank:
-        open_get_eat += 1
-    if l_starting_blank and r_ending_op:
-        open_get_eat += 1
-
-    # print("closed_two:") 
-    # print(closed_two)
-    # print("semi_close_two:")
-    # print(semi_closed_two)
-    # print("open_two:")
-    # print(open_two)
-    # print("closed_three:")
-    # print(closed_three)
-    # print("semi_closed_three")
-    # print(semi_closed_three)
-    # print("open_three")
-    # print(open_three)
-    # print("closed_four")
-    # print(closed_four)
-    # print("semi_close_four")
-    # print(semi_closed_four)
-    # print("open_four")
-    # print(open_four)
-    # print("five")
-    # print(five)
-    
-    return has_empty, l_eating, r_eating, closed_two, semi_closed_two, open_two, closed_three, semi_closed_three, open_three, closed_four, semi_closed_four, open_four, five, open_get_eat
+    return has_empty, l_eating, r_eating, closed_two, semi_closed_two, open_two, closed_three, semi_closed_three, open_three, closed_four, semi_closed_four, open_four, five
 
 
 @njit("UniTuple(int64[:], 2)(int64[:,:], int64, int64)", fastmath=True)
@@ -265,45 +218,28 @@ def get_vectors(board, row_index, col_index):
     column = board[:, col_index]
     return lr_diags, rl_diags, row, column
 
-@njit
-def get_score(has_empty, is_enemy, player_eat, enemy_eat, l_eating, r_eating, closed_two, semi_closed_two, open_two, closed_three, semi_closed_three, open_three, closed_four, semi_closed_four, open_four, five, open_get_eat):
+@njit("(int64)(boolean, int64, int64, int64, int64, int64, int64, int64)", fastmath=True)
+def get_score(has_empty, semi_closed_two, open_two, semi_closed_three, open_three, semi_closed_four, open_four, five):
     # Player series
     minus_empty = 0
     if has_empty:
         minus_empty = 100
 
-    if not is_enemy:
-        if five:
-            return multiplicator_five - minus_empty
-        elif open_four:
-            return multiplicator_open_four - minus_empty
-        elif semi_closed_four:
-            return multiplicator_semi_closed_four - minus_empty
-        elif open_three:
-            return multiplicator_open_three - minus_empty
-        elif semi_closed_three:
-            return multiplicator_semi_closed_three - minus_empty
-        elif open_two:
-            return multiplicator_open_two
-        elif semi_closed_two:
-            return multiplicator_semi_close_two - minus_empty
-        return 0
-    else:
-        if five:
-            return multiplicator_enemy_five - minus_empty
-        elif open_four:
-            return multiplicator_enemy_open_four - minus_empty
-        elif semi_closed_four:
-            return multiplicator_enemy_semi_closed_four - minus_empty
-        elif open_three:
-            return multiplicator_enemy_open_three - minus_empty
-        elif semi_closed_three:
-            return multiplicator_enemy_semi_closed_three - minus_empty
-        elif open_two:
-            return multiplicator_enemy_open_two - minus_empty
-        elif semi_closed_two:
-            return multiplicator_enemy_semi_close_two - minus_empty
-        return 0
+    if five:
+        return multiplicator_five - minus_empty
+    elif open_four:
+        return multiplicator_open_four - minus_empty
+    elif semi_closed_four:
+        return multiplicator_semi_closed_four - minus_empty
+    elif open_three:
+        return multiplicator_open_three - minus_empty
+    elif semi_closed_three:
+        return multiplicator_semi_closed_three - minus_empty
+    elif open_two:
+        return multiplicator_open_two
+    elif semi_closed_two:
+        return multiplicator_semi_close_two - minus_empty
+    return 0
 
 @njit("boolean(boolean, int64)", fastmath=True)
 def five_and_enemy_capture(five, enemy_total_eat):
@@ -417,7 +353,6 @@ def check_if_breakable(board, line_type, line, starting_index, player, row_index
 
 
 @njit
-# @njit("Tuple((int64, List(int64[:])))(int64[:,:], int64[:], boolean, int64, int64, int64)", fastmath=True)
 def get_new_threats(board, position, maximizing_player, player, player_eat, enemy_eat, depth):
     if not maximizing_player:
         player = player * -1
@@ -429,76 +364,41 @@ def get_new_threats(board, position, maximizing_player, player, player_eat, enem
 
     defend_breaking_five = 0
 
-    # print(lr_diags)
     lr_starting_index = col_index if row_index > col_index else row_index
-    has_empty_lr, capture_left_lr, capture_right_lr, closed_two_lr, semi_closed_two_lr, open_two_lr, closed_three_lr, semi_closed_three_lr, open_three_lr, closed_four_lr, semi_closed_four_lr, open_four_lr, five_lr, open_get_eat_lr = check_line(lr_diags, lr_starting_index, player)
+    has_empty_lr, capture_left_lr, capture_right_lr, closed_two_lr, semi_closed_two_lr, open_two_lr, closed_three_lr, semi_closed_three_lr, open_three_lr, closed_four_lr, semi_closed_four_lr, open_four_lr, five_lr = check_line(lr_diags, lr_starting_index, player)
     if five_and_enemy_capture(five_lr, enemy_eat):
         is_breakable, break_pos = check_if_breakable(board, int64(0), lr_diags, lr_starting_index, player, row_index, col_index)
         if is_breakable:
             position = break_pos
             defend_breaking_five = 10_000
-    result_lr = get_score(has_empty_lr, False, player_eat, enemy_eat, capture_left_lr, capture_right_lr, closed_two_lr, semi_closed_two_lr, open_two_lr, closed_three_lr, semi_closed_three_lr, open_three_lr, closed_four_lr, semi_closed_four_lr, open_four_lr, five_lr, open_get_eat_lr)
-    # print(rl_diags)
+    result_lr = get_score(has_empty_lr, semi_closed_two_lr, open_two_lr, semi_closed_three_lr, open_three_lr, semi_closed_four_lr, open_four_lr, five_lr)
+
     rl_starting_index = 18 - col_index if row_index > 18 - col_index else row_index
-    has_empty_rl, capture_left_rl, capture_right_rl, closed_two_rl, semi_closed_two_rl, open_two_rl, closed_three_rl, semi_closed_three_rl, open_three_rl, closed_four_rl, semi_closed_four_rl, open_four_rl, five_rl, open_get_eat_rl = check_line(rl_diags, rl_starting_index, player)
+    has_empty_rl, capture_left_rl, capture_right_rl, closed_two_rl, semi_closed_two_rl, open_two_rl, closed_three_rl, semi_closed_three_rl, open_three_rl, closed_four_rl, semi_closed_four_rl, open_four_rl, five_rl = check_line(rl_diags, rl_starting_index, player)
     if five_and_enemy_capture(five_rl, enemy_eat):
         is_breakable, break_pos = check_if_breakable(board, int64(1), rl_diags, rl_starting_index, player, row_index, col_index)
         if is_breakable:
             position = break_pos
             defend_breaking_five = 10_000
-    result_rl = get_score(has_empty_rl, False, player_eat, enemy_eat, capture_left_rl, capture_right_rl, closed_two_rl, semi_closed_two_rl, open_two_rl, closed_three_rl, semi_closed_three_rl, open_three_rl, closed_four_rl, semi_closed_four_rl, open_four_rl, five_rl, open_get_eat_rl)
-    # print(row)
-    has_empty_row, capture_left_row, capture_right_row, closed_two_row, semi_closed_two_row, open_two_row, closed_three_row, semi_closed_three_row, open_three_row, closed_four_row, semi_closed_four_row, open_four_row, five_row, open_get_eat_row = check_line(row, col_index, player)
+    result_rl = get_score(has_empty_rl, semi_closed_two_rl, open_two_rl, semi_closed_three_rl, open_three_rl, semi_closed_four_rl, open_four_rl, five_rl)
+
+    has_empty_row, capture_left_row, capture_right_row, closed_two_row, semi_closed_two_row, open_two_row, closed_three_row, semi_closed_three_row, open_three_row, closed_four_row, semi_closed_four_row, open_four_row, five_row = check_line(row, col_index, player)
     if five_and_enemy_capture(five_row, enemy_eat):
         is_breakable, break_pos = check_if_breakable(board, int64(2), row, col_index, player, row_index,col_index)
         if is_breakable:
             position = break_pos
             defend_breaking_five = 10_000
-    result_row = get_score(has_empty_row, False, player_eat, enemy_eat, capture_left_row, capture_right_row, closed_two_row, semi_closed_two_row, open_two_row, closed_three_row, semi_closed_three_row, open_three_row, closed_four_row, semi_closed_four_row, open_four_row, five_row, open_get_eat_row)
-    # print(column)
-    has_empty_col, capture_left_col,capture_right_col, closed_two_col, semi_closed_two_col, open_two_col, closed_three_col, semi_closed_three_col, open_three_col, closed_four_col, semi_closed_four_col, open_four_col, five_col, open_get_eat_col = check_line(column, row_index, player)
+    result_row = get_score(has_empty_row, semi_closed_two_row, open_two_row, semi_closed_three_row, open_three_row, semi_closed_four_row, open_four_row, five_row)
+
+    has_empty_col, capture_left_col,capture_right_col, closed_two_col, semi_closed_two_col, open_two_col, closed_three_col, semi_closed_three_col, open_three_col, closed_four_col, semi_closed_four_col, open_four_col, five_col = check_line(column, row_index, player)
     if five_and_enemy_capture(five_col, enemy_eat):
         is_breakable, break_pos = check_if_breakable(board, int64(3), column, row_index, player, row_index, col_index)
         if is_breakable:
             position = break_pos
             defend_breaking_five = 10_000
-    result_col = get_score(has_empty_col, False, player_eat, enemy_eat, capture_left_col, capture_right_col, closed_two_col, semi_closed_two_col, open_two_col, closed_three_col, semi_closed_three_col, open_three_col, closed_four_col, semi_closed_four_col, open_four_col, five_col, open_get_eat_col)
+    result_col = get_score(has_empty_col, semi_closed_two_col, open_two_col, semi_closed_three_col, open_three_col, semi_closed_four_col, open_four_col, five_col)
 
-    # print(f"closed_two: {closed_two_lr + closed_two_rl + closed_two_row + closed_two_col}") 
-    # # print(closed_two_lr + closed_two_rl + closed_two_row + closed_two_col)
-    # print(f"semi_close_two: {semi_closed_two_lr + semi_closed_two_rl + semi_closed_two_row + semi_closed_two_col}")
-    # print(f"open_two: {open_two_lr + open_two_rl + open_two_row + open_two_col}")
-    # print(f"closed_three: {closed_three_lr + closed_three_rl + closed_three_row + closed_three_col}")
-    # print(f"semi_closed_three: {semi_closed_three_lr + semi_closed_three_rl + semi_closed_three_row + semi_closed_three_col}")
-    # print(f"open_three: {open_three_lr + open_three_rl + open_three_row + open_three_col}")
-    # print(f"closed_four: {closed_four_lr + closed_four_rl + closed_four_row + closed_four_col}")
-    # print(f"semi_close_four: {semi_closed_four_lr + semi_closed_four_rl + semi_closed_four_row + semi_closed_four_col}")
-    # print(f"open_four: {open_four_lr + open_four_rl + open_four_row + open_four_col}")
-    # print(f"five: {five_lr + five_rl + five_row + five_col}")
-
-    # score = max(result_lr, result_rl, result_row, result_col)
-
-    op_has_empty_lr, op_capture_left_lr, op_capture_right_lr, op_closed_two_lr, op_semi_closed_two_lr, op_open_two_lr, op_closed_three_lr, op_semi_closed_three_lr, op_open_three_lr, op_closed_four_lr, op_semi_closed_four_lr, op_open_four_lr, op_five_lr, op_open_get_eat_lr = check_line(lr_diags, lr_starting_index, player * -1)
-    op_result_lr = get_score(op_has_empty_lr, True, enemy_eat, player_eat, op_capture_left_lr, op_capture_right_lr, op_closed_two_lr, op_semi_closed_two_lr, op_open_two_lr, op_closed_three_lr, op_semi_closed_three_lr, op_open_three_lr, op_closed_four_lr, op_semi_closed_four_lr, op_open_four_lr, op_five_lr, op_open_get_eat_lr)
-    op_has_empty_rl, op_capture_left_rl, op_capture_right_rl, op_closed_two_rl, op_semi_closed_two_rl, op_open_two_rl, op_closed_three_rl, op_semi_closed_three_rl, op_open_three_rl, op_closed_four_rl, op_semi_closed_four_rl, op_open_four_rl, op_five_rl, op_open_get_eat_rl = check_line(rl_diags, rl_starting_index, player * -1)
-    op_result_rl = get_score(op_has_empty_rl, True, enemy_eat, player_eat, op_capture_left_rl, op_capture_right_rl, op_closed_two_rl, op_semi_closed_two_rl, op_open_two_rl, op_closed_three_rl, op_semi_closed_three_rl, op_open_three_rl, op_closed_four_rl, op_semi_closed_four_rl, op_open_four_rl, op_five_rl, op_open_get_eat_rl)
-    op_has_empty_row, op_capture_left_row, op_capture_right_row, op_closed_two_row, op_semi_closed_two_row, op_open_two_row, op_closed_three_row, op_semi_closed_three_row, op_open_three_row, op_closed_four_row, op_semi_closed_four_row, op_open_four_row, op_five_row, op_open_get_eat_row = check_line(row, col_index, player * -1)
-    op_result_row = get_score(op_has_empty_row, True, enemy_eat, player_eat, op_capture_left_row, op_capture_right_row, op_closed_two_row, op_semi_closed_two_row, op_open_two_row, op_closed_three_row, op_semi_closed_three_row, op_open_three_row, op_closed_four_row, op_semi_closed_four_row, op_open_four_row, op_five_row, op_open_get_eat_row)
-    op_has_empty_col, op_capture_left_col, op_capture_right_col, op_closed_two_col, op_semi_closed_two_col, op_open_two_col, op_closed_three_col, op_semi_closed_three_col, op_open_three_col, op_closed_four_col, op_semi_closed_four_col, op_open_four_col, op_five_col, op_open_get_eat_col = check_line(column, row_index, player * -1)
-    op_result_col = get_score(op_has_empty_col, True, enemy_eat, player_eat, op_capture_left_col, op_capture_right_col, op_closed_two_col, op_semi_closed_two_col, op_open_two_col, op_closed_three_col, op_semi_closed_three_col, op_open_three_col, op_closed_four_col, op_semi_closed_four_col, op_open_four_col, op_five_col, op_open_get_eat_col)
-
-    # print(f"op_closed_two: {op_closed_two_lr + op_closed_two_rl + op_closed_two_row + op_closed_two_col}")
-    # print(f"op_semi_close_two: {op_semi_closed_two_lr + op_semi_closed_two_rl + op_semi_closed_two_row + op_semi_closed_two_col}")
-    # print(f"op_open_two: {op_open_two_lr + op_open_two_rl + op_open_two_row + op_open_two_col}")
-    # print(f"op_closed_three: {op_closed_three_lr + op_closed_three_rl + op_closed_three_row + op_closed_three_col}")
-    # print(f"op_semi_closed_three: {op_semi_closed_three_lr + op_semi_closed_three_rl + op_semi_closed_three_row + op_semi_closed_three_col}")
-    # print(f"op_open_three: {open_three_lr + op_open_three_rl + op_open_three_row + op_open_three_col}")
-    # print(f"op_closed_four: {op_closed_four_lr + op_closed_four_rl + op_closed_four_row + op_closed_four_col}")
-    # print(f"op_semi_close_four: {op_semi_closed_four_lr + op_semi_closed_four_rl + op_semi_closed_four_row + op_semi_closed_four_col}")
-    # print(f"op_open_four: {op_open_four_lr + op_open_four_rl + op_open_four_row + op_open_four_col}")
-    # print(f"op_five: {op_five_lr + op_five_rl + op_five_row + op_five_col}")
-
-    score = max(result_lr, result_rl, result_row, result_col, op_result_lr, op_result_rl, op_result_row, op_result_col)
+    score = max(result_lr, result_rl, result_row, result_col)
 
     eat_move = 0
     if capture_left_lr:
@@ -521,14 +421,7 @@ def get_new_threats(board, position, maximizing_player, player, player_eat, enem
     if eat_move:
         adding_eat = eat_value(eat_move + player_eat) #/ 10
 
-    open_get_eat = open_get_eat_lr + open_get_eat_rl + open_get_eat_row + open_get_eat_col
-    minus_vulnerability = 0
-    if open_get_eat:
-        minus_vulnerability = eat_value(open_get_eat + enemy_eat)
-
-    score = score + adding_eat - minus_vulnerability + defend_breaking_five
-    # print("Score:")
-    # print(score)
+    score = score + adding_eat + defend_breaking_five
 
     #Fill captured list
     if capture_left_lr:
@@ -576,4 +469,3 @@ def get_new_threats(board, position, maximizing_player, player, player_eat, enem
         score *= -1
 
     return position, score / depth, captured_stones, is_win, is_forbidden, eat_move
-    # return position, score / depth, captured_stones, is_win, is_forbidden, eat_move

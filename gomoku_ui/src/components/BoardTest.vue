@@ -42,6 +42,9 @@ function updatePlayer (data, color) {
 }
 
 onMounted(() => {
+  console.log("INIT")
+  init()
+
   socket.on("connect", () => {
     env.mySocketId = socket.id
   })
@@ -104,7 +107,10 @@ onMounted(() => {
   socket.on('autoplay', (autoplay) => {
     boardStore.autoplay = autoplay
   })
-
+  
+  socket.on('hardMode', (hardMode) => {
+    boardStore.hardMode = hardMode
+  })
   socket.on('updateEat', total_eat => {
     boardStore.updateTotalEat(total_eat)
   })
@@ -118,7 +124,7 @@ onBeforeUnmount(() => {
 // BOARD MANAGEMENT
 
 async function getNextMove () {
-  const result = await axios.get(`http://${address}:5000/get_best_move?player=${boardStore.player.toString()}&depth=${boardStore.getDepth()}&room=${route.params.roomName}`)
+  const result = await axios.get(`http://${address}:5000/get_best_move?player=${boardStore.player.toString()}&depth=${boardStore.getDepth()}&room=${route.params.roomName}&hard_mode=${boardStore.hardMode}`)
   if (result.status == 200) {
     boardStore.timer = result.data.timer.toFixed(5)
     await performMove(result.data.best_move)
@@ -128,8 +134,15 @@ async function getNextMove () {
 async function selectMove(move) {
   if (boardStore.board[move[0]][move[1]].player === 0 && boardStore.winner === '') {
     if (env.freePlay > 0) {
-      socket.emit("placeFreeStone", {room: route.params.roomName, move: move, player: boardStore.player})
-      env.freePlay -= 1
+      const result = await axios.get(`http://${address}:5000/apply_move?player=${boardStore.player.toString()}&move=${move}&room=${route.params.roomName}`)
+      if (result.status === 200) {
+        if (result.data.forbidden_move === true) {
+          boardStore.fireAlert('Forbidden move', 'red')
+        } else {
+          socket.emit("placeFreeStone", {room: route.params.roomName, move: move, player: boardStore.player})
+          env.freePlay -= 1
+        }
+      }
     } else if (boardStore.playerString === env.myColor) {
       await performMove(move)
     }
@@ -174,7 +187,9 @@ async function switchAutoplay() {
   socket.emit('switchAutoplay', route.params.roomName)
 }
 
-init()
+async function switchHardMode() {
+  socket.emit('switchHardMode', route.params.roomName)
+}
 </script>
 
 <template>
@@ -187,6 +202,13 @@ init()
             v-model="boardStore.autoplay"
             :label="boardStore.autoplay === true ? 'Autoplay enabled': 'Autoplay disabled'"
             @click="switchAutoplay()"
+            color="red"
+            class="autoplay-switch"
+          ></v-switch>
+          <v-switch
+            v-model="boardStore.hardMode"
+            :label="boardStore.hardMode === true ? 'Hard mode enabled': 'Hard mode disabled'"
+            @click="switchHardMode()"
             color="red"
             class="autoplay-switch"
           ></v-switch>
@@ -242,7 +264,7 @@ init()
   justify-content: center;
 }
 .general-card {
-  width: 900px;
+  width: 1200px;
   // margin: 40px 0;
   margin-top: 10px;
   margin-bottom: 20px;

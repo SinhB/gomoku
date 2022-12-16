@@ -8,6 +8,7 @@ import json
 
 import board_functions
 import get_move
+import hard_mode_get_move
 import get_lines
 import get_threats
 
@@ -49,15 +50,6 @@ def check_win(board, position, player, total_eat, total_enemy_eat):
     col_index = position[1]
 
     win_array = (player, player, player, player, player)
-
-    # lr_diags, rl_diags = get_lines.get_position_diagonals(board, row_index, col_index)
-    # rows = get_lines.get_position_rows(board, row_index)
-    # columns = get_lines.get_position_columns(board, col_index)
-    # lr_diags = np.diag(board, col_index - row_index)
-    # w = board.shape[1]
-    # rl_diags = np.diag(np.fliplr(board), w-col_index-1-row_index)
-    # rows = board[row_index, :]
-    # columns = board[:, col_index]
 
     lr_diags, rl_diags, rows, columns = get_threats.get_vectors(board, row_index, col_index)
 
@@ -119,13 +111,16 @@ def init(room: str):
     rooms[room] = Env()
 
 @app.get("/get_best_move")
-def get_best_move(player: int, depth: int, room: str):
+def get_best_move(player: int, depth: int, room: str, hard_mode: bool):
     one_move_timer = time.time()
     if rooms[room].priority_move[player] is not None:
         next_move = rooms[room].priority_move[player]
     else:
         initial_board = np.copy(rooms[room].board)
-        next_move = get_move.get_next_move(initial_board, depth, True, player, rooms[room].total_eat, rooms[room].empty_board)
+        if hard_mode:
+            next_move = hard_mode_get_move.get_next_move(initial_board, depth, True, player, rooms[room].total_eat, rooms[room].empty_board)
+        else:
+            next_move = get_move.get_next_move(initial_board, depth, True, player, rooms[room].total_eat, rooms[room].empty_board)
     one_move_timer_stop = time.time()
     if type(next_move) != list:
         next_move = next_move.tolist()

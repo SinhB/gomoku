@@ -10,7 +10,8 @@ export const useBoardStore = defineStore("board", {
         totalEat: { black: 0, white: 0 },
         isAI: { black: true, white: true },
         autoplay: true,
-        aiDepth: { black: 10, white: 10 },
+        hardMode: false,
+        aiDepth: { black: 6, white: 6 },
         turns: [...Array(19)].map((e) => Array(19).fill(0)),
         turnsCounter: 0,
         alert: false,
@@ -42,6 +43,9 @@ export const useBoardStore = defineStore("board", {
             this.totalEat["white"] = totalEat["white"];
         },
         getDepth() {
+            if (this.turnsCounter === 1) {
+                return 1
+            }
             return this.aiDepth[this.playerString];
         },
         async fireAlert(text, color) {

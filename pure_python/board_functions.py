@@ -138,6 +138,7 @@ def place_stone(board, position, player):
     rl_open_three = check_open_three(board, position, -1, 1, player)
     row_open_three = check_open_three(board, position, 0, 1, player)
     col_open_three = check_open_three(board, position, 1, 0, player)
+
     if lr_open_three + rl_open_three + row_open_three + col_open_three >= 2:
         raise ForbiddenMove()
 
