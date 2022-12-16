@@ -34,12 +34,14 @@ def check_open_three(board, position, step_x, step_y, player):
     empty_space_right = False
 
     is_consecutive = True
-
-    for i in range(0, 3):
+    is_after_blank = False
+    for i in range(0, 4):
         if left[0] >= 0 and left[1] >= 0 and left[0] <= 18 and left[1] <= 18:
             if board[left[0]][left[1]] == player and is_consecutive:
                 consecutive_left += 1
-            elif board[left[0]][left[1]] == 0:
+            elif board[left[0]][left[1]] == 0 and is_after_blank == False:
+                is_after_blank = True
+            elif board[left[0]][left[1]] == 0 and is_after_blank == True:
                 empty_space_left = True
                 break
             else:
@@ -48,11 +50,14 @@ def check_open_three(board, position, step_x, step_y, player):
         left[1] -= step_y
 
     is_consecutive = True
-    for i in range(0, 3):
+    is_after_blank = False
+    for i in range(0, 4):
         if right[0] >= 0 and right[1] >= 0 and right[0] <= 18 and right[1] <= 18:
             if board[right[0]][right[1]] == player and is_consecutive:
                 consecutive_right += 1
-            elif board[right[0]][right[1]] == 0:
+            elif board[right[0]][right[1]] == 0 and is_after_blank == False:
+                is_after_blank = True
+            elif board[right[0]][right[1]] == 0 and is_after_blank == True:
                 empty_space_right = True
                 break
             else:
