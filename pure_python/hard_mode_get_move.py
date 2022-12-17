@@ -1,5 +1,6 @@
 import numpy as np
 import random
+# import functools
 
 import get_lines
 import board_functions
@@ -15,8 +16,14 @@ def get_next_move(board, depth, maximizing_player, player, total_eat, empty_boar
     else:
         moves_results = minimax(board, depth, alpha, beta, maximizing_player, 0, depth, player, total_eat, False)
         moves_results.sort(key=lambda tup: tup[0], reverse=True)
+        print(">>>????>/")
         print(moves_results)
-        return moves_results[0][1]
+        best_score = moves_results[0][0]
+        best_scores = list(filter(lambda tup: tup[0] == best_score, moves_results))
+        random.shuffle(best_scores)
+        print(best_scores)
+        # print(moves_results)
+        return best_scores[0][1]
 
 def get_positions(board, maximizing_player, player, total_eat, depth):
     available_pos = get_lines.get_available_pos(board)
