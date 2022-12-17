@@ -6,21 +6,42 @@ import numpy as np
 from numba import njit, prange, int64, typeof
 from numba.types import bool_
 
-multiplicator_five = 11_000
+# multiplicator_five = 11_000
+# multiplicator_open_four = 1_490
+# multiplicator_semi_closed_four = 500
+# multiplicator_open_three = 1_200
+# multiplicator_semi_closed_three = 1_390
+# # multiplicator_semi_closed_three = 1_100
+# multiplicator_open_two = 1
+# multiplicator_semi_close_two = 0
+# # multiplicator_semi_close_two = -1_000
+
+# multiplicator_enemy_five = 3_000
+# multiplicator_enemy_open_four = 1_450
+# # multiplicator_enemy_open_four = 2_450
+# multiplicator_enemy_open_three = 1_440
+# multiplicator_enemy_semi_closed_four = 1_400
+# multiplicator_enemy_semi_closed_three = 900
+# # multiplicator_enemy_semi_closed_three = 200
+# multiplicator_enemy_open_two = 1
+# multiplicator_enemy_semi_close_two = 1
+
+
+multiplicator_five = 10_000
 multiplicator_open_four = 1_490
 multiplicator_semi_closed_four = 500
-multiplicator_open_three = 1_200
-multiplicator_semi_closed_three = 1_390
+multiplicator_open_three = 1_000
+multiplicator_semi_closed_three = 400
 # multiplicator_semi_closed_three = 1_100
 multiplicator_open_two = 1
 multiplicator_semi_close_two = 0
 # multiplicator_semi_close_two = -1_000
 
 multiplicator_enemy_five = 3_000
-multiplicator_enemy_open_four = 1_450
+multiplicator_enemy_open_four = 3_000
 # multiplicator_enemy_open_four = 2_450
-multiplicator_enemy_open_three = 1_440
-multiplicator_enemy_semi_closed_four = 1_400
+multiplicator_enemy_open_three = 1_300
+multiplicator_enemy_semi_closed_four = 1_300
 multiplicator_enemy_semi_closed_three = 900
 # multiplicator_enemy_semi_closed_three = 200
 multiplicator_enemy_open_two = 1
@@ -87,9 +108,10 @@ def check_side(side, player, eating=False):
                 break
             consec_op += 1
             is_consec = False
-    if is_after_blank and side[i] != 1 and side[i] != -player:
+
+    if i == len(side) - 1 and is_after_blank and side[i] != player:
         closing_blank = True
-    else:
+    elif i == len(side) - 1:
         closing_op = True
     return consec, additional, eating, starting_blank, starting_op, closing_blank, closing_op, could_get_eat
 
@@ -128,9 +150,11 @@ def check_line(line, starting_index, player):
     l_consec, l_additional, l_eating, l_starting_blank, l_starting_op, l_closing_blank, l_closing_op, l_could_get_eat = check_side(left, player, False)
     r_consec, r_additional, r_eating, r_starting_blank, r_starting_op, r_closing_blank, r_closing_op, r_could_get_eat = check_side(right, player, False)
     
+    
     close_threat = False
     semi_close = False
     open_threat = False
+    
     
     if l_closing_op and r_closing_op:
         close_threat = True
@@ -138,7 +162,6 @@ def check_line(line, starting_index, player):
         semi_close = True
     else:
         open_threat = True
-    # print(close_threat, semi_close, open_threat)
     
     total_consec = l_consec + r_consec
     
@@ -182,37 +205,37 @@ def check_line(line, starting_index, player):
         five += 1
     
     has_empty = False
-    if r_additional and l_consec + r_additional == 2:
-        if semi_close:
-            semi_closed_three += 1
-        if open_threat:
-            open_three += 1
-        has_empty = True
-    if l_additional and r_consec + l_additional == 2:
-        if semi_close:
-            semi_closed_three += 1
-        if open_threat:
-            open_three += 1
-        has_empty = True
-    if r_additional and l_consec + r_additional == 3:
-        if semi_close:
-            semi_closed_four += 1
-        if open_threat:
-            open_four += 1
-        has_empty = True
-    if l_additional and r_consec + l_additional == 3:
-        if semi_close:
-            semi_closed_four += 1
-        if open_threat:
-            open_four += 1
-        has_empty = True
+    if r_additional:
+        if (l_consec + r_additional == 2) or (r_consec + r_additional == 2):
+            if semi_close:
+                semi_closed_three += 1
+            if open_threat:
+                open_three += 1
+            has_empty = True
+    if l_additional:
+        if (r_consec + l_additional == 2) or (l_consec + l_additional == 2):
+            if semi_close:
+                semi_closed_three += 1
+            if open_threat:
+                open_three += 1
+            has_empty = True
+    if r_additional:
+        if (l_consec + r_additional == 3) or (r_consec + r_additional == 3):
+            if semi_close:
+                semi_closed_four += 1
+            if open_threat:
+                open_four += 1
+            has_empty = True
+    if l_additional:
+        if (r_consec + l_additional == 3) or (l_consec + l_additional == 3):
+            if semi_close:
+                semi_closed_four += 1
+            if open_threat:
+                open_four += 1
+            has_empty = True
 
     #Check vulnerability
     open_get_eat = 0
-    # if l_starting_op and r_could_get_eat:
-    #     open_get_eat += 1
-    # if r_starting_op and l_could_get_eat:
-    #     open_get_eat += 1
     l_starting_op, l_starting_blank, l_ending_op, l_ending_blank = check_vulnerability(left, player)
     r_starting_op, r_starting_blank, r_ending_op, r_ending_blank = check_vulnerability(right, player)
 
@@ -227,29 +250,7 @@ def check_line(line, starting_index, player):
     if l_starting_blank and r_ending_op:
         open_get_eat += 1
 
-    # print("closed_two:") 
-    # print(closed_two)
-    # print("semi_close_two:")
-    # print(semi_closed_two)
-    # print("open_two:")
-    # print(open_two)
-    # print("closed_three:")
-    # print(closed_three)
-    # print("semi_closed_three")
-    # print(semi_closed_three)
-    # print("open_three")
-    # print(open_three)
-    # print("closed_four")
-    # print(closed_four)
-    # print("semi_close_four")
-    # print(semi_closed_four)
-    # print("open_four")
-    # print(open_four)
-    # print("five")
-    # print(five)
-    
     return has_empty, l_eating, r_eating, closed_two, semi_closed_two, open_two, closed_three, semi_closed_three, open_three, closed_four, semi_closed_four, open_four, five, open_get_eat
-
 
 @njit("UniTuple(int64[:], 2)(int64[:,:], int64, int64)", fastmath=True)
 def get_diags(board, row_index, col_index):
