@@ -1,10 +1,11 @@
-import get_lines
-import functools
-from operator import add
+import board_utils
+
 import numba as nb
 import numpy as np
+
 from numba import njit, prange, int64, typeof
 from numba.types import bool_
+from check_breakable import check_if_breakable
 
 # multiplicator_five = 11_000
 # multiplicator_open_four = 1_490
@@ -252,19 +253,7 @@ def check_line(line, starting_index, player):
 
     return has_empty, l_eating, r_eating, closed_two, semi_closed_two, open_two, closed_three, semi_closed_three, open_three, closed_four, semi_closed_four, open_four, five, open_get_eat
 
-@njit("UniTuple(int64[:], 2)(int64[:,:], int64, int64)", fastmath=True)
-def get_diags(board, row_index, col_index):
-    lr_diags = np.diag(board, col_index - row_index)
-    w = board.shape[1]
-    rl_diags = np.diag(np.fliplr(board), w-col_index-1-row_index)
-    return lr_diags, rl_diags
 
-@njit("UniTuple(int64[:], 4)(int64[:,:], int64, int64)", fastmath=True)
-def get_vectors(board, row_index, col_index):
-    lr_diags, rl_diags = get_diags(board, row_index, col_index)
-    row = board[row_index, :]
-    column = board[:, col_index]
-    return lr_diags, rl_diags, row, column
 
 @njit
 def get_score(has_empty, is_enemy, player_eat, enemy_eat, l_eating, r_eating, closed_two, semi_closed_two, open_two, closed_three, semi_closed_three, open_three, closed_four, semi_closed_four, open_four, five, open_get_eat):
@@ -312,111 +301,6 @@ def five_and_enemy_capture(five, enemy_total_eat):
         return True
     return False
 
-@njit("int64[:](boolean, int64, int64, int64, int64)")
-def get_pos(is_left, index, row_index, col_index, line_type):
-    """
-        0: LR
-        1: RL
-        2: ROW
-        3: COL
-        return: (row, col)
-    """
-    if is_left:
-        if line_type == 0:
-            return np.array((row_index - index, col_index - index))
-        if line_type == 1:
-            return np.array((row_index - index, col_index + index))
-        if line_type == 2:
-            return np.array((row_index, col_index - index))
-        if line_type == 3:
-            return np.array((row_index - index, col_index))
-    else:
-        if line_type == 0:
-            return np.array((row_index + index, col_index + index))
-        if line_type == 1:
-            return np.array((row_index + index, col_index - index))
-        if line_type == 2:
-            return np.array((row_index, col_index + index))
-        if line_type == 3:
-            return np.array((row_index + index, col_index))
-    return np.zeros(2, dtype=np.int64)
-
-
-@njit("Tuple((boolean, boolean, int64))(int64[:], int64, int64)", fastmath=True)
-def check_line_breakable(line, starting_index, player):
-    """Return: (is_breakable, is_left)"""
-    left = line[0:starting_index][::-1]
-    right = line[starting_index+1:]
-
-    l_starting_op, l_starting_blank, l_ending_op, l_ending_blank = check_vulnerability(left, player)
-    r_starting_op, r_starting_blank, r_ending_op, r_ending_blank = check_vulnerability(right, player)
-
-    #right
-    if l_starting_op and r_ending_blank:
-        return True, False, 2
-    if r_starting_blank and l_ending_op:
-        return True, False, 1
-    #left
-    if r_starting_op and l_ending_blank:
-        return True, True, 2
-    if l_starting_blank and r_ending_op:
-        return True, True, 1
-
-    return False, False, 0
-
-
-@njit("Tuple((boolean, int64[:]))(int64[:,:], int64[:], int64)", fastmath=True)
-def pos_is_breakable(board, position, player):
-    row_index, col_index = position
-    lr_diags, rl_diags, row, column = get_vectors(board, row_index, col_index)
-
-    lr_starting_index = col_index if row_index > col_index else row_index
-    rl_starting_index = 18 - col_index if row_index > 18 - col_index else row_index
-
-    is_breakable, is_left, index = check_line_breakable(lr_diags, lr_starting_index, player)
-    if is_breakable:
-        pos = get_pos(is_left, index, row_index, col_index, 0)
-        return True, pos
-    is_breakable, is_left, index = check_line_breakable(rl_diags, rl_starting_index, player)
-    if is_breakable:
-        pos = get_pos(is_left, index, row_index, col_index, 1)
-        return True, pos
-    is_breakable, is_left, index = check_line_breakable(row, col_index, player)
-    if is_breakable:
-        pos = get_pos(is_left, index, row_index, col_index, 2)
-        return True, pos
-    is_breakable, is_left, index = check_line_breakable(column, row_index, player)
-    if is_breakable:
-        pos = get_pos(is_left, index, row_index, col_index, 3)
-        return True, pos
-    return False, np.zeros(2, dtype=np.int64)
-
-
-@njit("Tuple((boolean, int64[:]))(int64[:,:], int64, int64[:], int64, int64, int64, int64)", fastmath=True)
-def check_if_breakable(board, line_type, line, starting_index, player, row_index, col_index):
-    left = line[0:starting_index][::-1]
-    right = line[starting_index+1:]
-    pos_list = [np.array((row_index, col_index))]
-    for i in range(0, min(len(left), 6)):
-        if left[i] == player:
-            new_pos = get_pos(True, i + 1, row_index, col_index, line_type)
-            pos_list.append(new_pos)
-        else:
-            break
-    for i in range(0, min(len(right), 6)):
-        if right[i] == player:
-            new_pos = get_pos(False, i + 1, row_index, col_index, line_type)
-            pos_list.append(new_pos)
-        else:
-            break
-    numba_pos_list = nb.typed.List(pos_list)
-    for pos in numba_pos_list:
-        is_breakable, breaking_pos = pos_is_breakable(board, pos, player)
-        if is_breakable:
-            return True, breaking_pos
-    return False, np.zeros(2, dtype=np.int64)
-
-
 @njit
 # @njit("Tuple((int64, List(int64[:])))(int64[:,:], int64[:], boolean, int64, int64, int64)", fastmath=True)
 def get_new_threats(board, position, maximizing_player, player, player_eat, enemy_eat, depth):
@@ -424,7 +308,7 @@ def get_new_threats(board, position, maximizing_player, player, player_eat, enem
         player = player * -1
 
     row_index, col_index = position
-    lr_diags, rl_diags, row, column = get_vectors(board, row_index, col_index)
+    lr_diags, rl_diags, row, column = board_utils.get_vectors(board, row_index, col_index)
     
     captured_stones = []
 

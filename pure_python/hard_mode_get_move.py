@@ -2,10 +2,9 @@ import numpy as np
 import random
 # import functools
 
-import get_lines
+import board_utils
 import board_functions
-from hard_mode_get_threats import get_new_threats 
-from board_functions import bcolors
+from hard_mode_get_threats import get_new_threats
 
 def get_next_move(board, depth, maximizing_player, player, total_eat, empty_board):
     alpha = np.iinfo(np.int64).min
@@ -26,7 +25,7 @@ def get_next_move(board, depth, maximizing_player, player, total_eat, empty_boar
         return best_scores[0][1]
 
 def get_positions(board, maximizing_player, player, total_eat, depth):
-    available_pos = get_lines.get_available_pos(board)
+    available_pos = board_utils.get_available_pos(board)
 
     eval_to_pos = [get_new_threats(board, p, maximizing_player, player, total_eat[player], total_eat[player * -1], depth) for p in available_pos]
 

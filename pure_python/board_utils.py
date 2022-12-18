@@ -83,3 +83,17 @@ def get_available_pos(board):
     np_possible_pos = remove_stones(np_possible_pos, stones)
     np_possible_pos = remove_double(np_possible_pos)
     return np_possible_pos
+
+@njit("UniTuple(int64[:], 2)(int64[:,:], int64, int64)", fastmath=True)
+def get_diags(board, row_index, col_index):
+    lr_diags = np.diag(board, col_index - row_index)
+    w = board.shape[1]
+    rl_diags = np.diag(np.fliplr(board), w-col_index-1-row_index)
+    return lr_diags, rl_diags
+
+@njit("UniTuple(int64[:], 4)(int64[:,:], int64, int64)", fastmath=True)
+def get_vectors(board, row_index, col_index):
+    lr_diags, rl_diags = get_diags(board, row_index, col_index)
+    row = board[row_index, :]
+    column = board[:, col_index]
+    return lr_diags, rl_diags, row, column

@@ -6,12 +6,15 @@ import numpy as np
 import time
 import json
 
+import board_utils
 import board_functions
 import get_move
 import hard_mode_get_move
-import get_lines
 import get_threats
 
+from check_breakable import check_if_breakable
+
+## FOR WINDOWS TERM
 from colorama import init
 init()
 
@@ -51,12 +54,12 @@ def check_win(board, position, player, total_eat, total_enemy_eat):
 
     win_array = (player, player, player, player, player)
 
-    lr_diags, rl_diags, rows, columns = get_threats.get_vectors(board, row_index, col_index)
+    lr_diags, rl_diags, rows, columns = board_utils.get_vectors(board, row_index, col_index)
 
 
     if check_line_win(lr_diags, win_array):
         lr_starting_index = col_index if row_index > col_index else row_index
-        is_breakable, breaking_pos = get_threats.check_if_breakable(board, 0, lr_diags, lr_starting_index, player, row_index, col_index)
+        is_breakable, breaking_pos = check_if_breakable(board, 0, lr_diags, lr_starting_index, player, row_index, col_index)
         if is_breakable and total_enemy_eat == 4:
             return False, breaking_pos
         else:
@@ -64,14 +67,14 @@ def check_win(board, position, player, total_eat, total_enemy_eat):
             return True, None
     if check_line_win(rl_diags, win_array):
         rl_starting_index = 18 - col_index if row_index > 18 - col_index else row_index
-        is_breakable, breaking_pos = get_threats.check_if_breakable(board, 1, rl_diags, rl_starting_index, player, row_index, col_index)
+        is_breakable, breaking_pos = check_if_breakable(board, 1, rl_diags, rl_starting_index, player, row_index, col_index)
         if is_breakable and total_enemy_eat == 4:
             return False, breaking_pos
         else:
             print("Win by alignment")
             return True, None
     if check_line_win(rows, win_array):
-        is_breakable, breaking_pos = get_threats.check_if_breakable(board, 2, rows, col_index, player, row_index, col_index)
+        is_breakable, breaking_pos = check_if_breakable(board, 2, rows, col_index, player, row_index, col_index)
         print(is_breakable)
         print(breaking_pos)
         if is_breakable and total_enemy_eat == 4:
@@ -80,7 +83,7 @@ def check_win(board, position, player, total_eat, total_enemy_eat):
             print("Win by alignment")
             return True, None
     if check_line_win(columns, win_array):
-        is_breakable, breaking_pos = get_threats.check_if_breakable(board, 3, columns, row_index, player, row_index, col_index)
+        is_breakable, breaking_pos = check_if_breakable(board, 3, columns, row_index, player, row_index, col_index)
         if is_breakable and total_enemy_eat == 4:
             return False, breaking_pos
         else:
