@@ -7,9 +7,9 @@ from check_breakable import check_if_breakable
 
 multiplicator_five = 11_000
 multiplicator_open_four = 1_490
-multiplicator_open_three = 1_450
-multiplicator_semi_closed_four = 500
-multiplicator_semi_closed_three = 390
+multiplicator_open_three = 450
+multiplicator_semi_closed_four = 50
+multiplicator_semi_closed_three = 39
 multiplicator_open_two = 1
 multiplicator_semi_close_two = 0
 
@@ -210,7 +210,8 @@ def get_new_threats(board, position, maximizing_player, player, player_eat, enem
             defend_breaking_five = 10_000
     result_col = get_score(has_empty_col, semi_closed_two_col, open_two_col, semi_closed_three_col, open_three_col, semi_closed_four_col, open_four_col, five_col)
 
-    score = max(result_lr, result_rl, result_row, result_col)
+    score = result_lr + result_rl + result_row + result_col
+    # score = max(result_lr, result_rl, result_row, result_col)
 
     eat_move = 0
     if capture_left_lr:

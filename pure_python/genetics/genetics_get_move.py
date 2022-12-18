@@ -3,7 +3,7 @@ import random
 
 import get_lines
 import board_functions
-from genetics_get_threats import get_new_threats 
+from genetics_get_threats import get_threats 
 from board_functions import bcolors
 
 def get_next_move(board, depth, maximizing_player, player, total_eat, empty_board, multiplicators):
@@ -23,11 +23,12 @@ def get_next_move(board, depth, maximizing_player, player, total_eat, empty_boar
 def get_positions(board, maximizing_player, player, total_eat, depth, multiplicators):
     available_pos = get_lines.get_available_pos(board)
 
-    eval_to_pos = [get_new_threats(board, p, maximizing_player, player, total_eat[player], total_eat[player * -1], depth, multiplicators[0], multiplicators[1]) for p in available_pos]
+    eval_to_pos = [get_threats(board, p, maximizing_player, player, total_eat[player], total_eat[player * -1], depth, multiplicators) for p in available_pos]
 
     eval_to_pos = list(filter(lambda tup: tup[4] == False, eval_to_pos))
 
     eval_to_pos.sort(key=lambda tup: tup[1], reverse=maximizing_player)
+    # eval_to_pos.sort(key=lambda tup: tup[1], reverse=maximizing_player)
     if depth > 4:
         return eval_to_pos[:min(4, len(eval_to_pos))]
     return eval_to_pos
@@ -55,7 +56,7 @@ def minimax(board, depth, alpha, beta, maximizing_player, score, max_depth, play
                 moves_results.append((evaluation, position))
 
             maxEval = max(maxEval, evaluation)
-            alpha = max(alpha, maxEval)
+            alpha = max(alpha, evaluation)
             if beta <= alpha:
                 break
         if depth == max_depth:
@@ -74,7 +75,7 @@ def minimax(board, depth, alpha, beta, maximizing_player, score, max_depth, play
             board = board_functions.remove_stone(board, -player, position, captured_stones)
 
             minEval = min(minEval, evaluation)
-            beta = min(beta, minEval)
+            beta = min(beta, evaluation)
             if beta <= alpha:
                 break
 

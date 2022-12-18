@@ -4,7 +4,7 @@ import numpy as np
 import time
 import json
 
-multiplicators = [
+default_multiplicators = [
     11069,
     1536,
     1372,
@@ -15,7 +15,8 @@ multiplicators = [
     10137
 ]
 
-def get_hash():
+def get_hash(multiplicators, test=False):
+    # print(multiplicators)
     sides = [np.array(x) for x in itertools.product([-1, 0, 1], repeat=6)]
 
     lines = []
@@ -34,11 +35,15 @@ def get_hash():
 
             total += 1
 
-    print("TIME", time.time() - start)
-    print("TOTAL", total)
+    # print("TIME", time.time() - start)
+    # print("TOTAL", total)
+    # print(f"Different hash : {len(hash_table.keys())}")
 
     # print(len(sides))
-    return lines, hash_table
+    if test:
+        return lines, hash_table
+    else:
+        return hash_table
 
 
 def check_hash_speed(lines, hash_table):
@@ -70,7 +75,7 @@ def test_consistency(lines, hash_table):
     print("Is equal")
 
 if __name__ == "__main__":
-    lines, hash_table = get_hash()
+    lines, hash_table = get_hash(default_multiplicators, True)
     print(len(hash_table.keys()))
     time_no_hash = 0
     time_hash = 0

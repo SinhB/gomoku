@@ -8,6 +8,7 @@ import genetics_get_move
 # import hard_mode_get_move
 # import get_lines
 import genetics_get_threats
+import genetics_get_hash
 
 def is_array_equal(arr, seq):
     for arri, seqi in zip(arr, seq):
@@ -65,28 +66,27 @@ def check_win(board, position, player, total_eat, total_enemy_eat):
             return True, None
     return False, None
 
-def get_best_move(black_multis, display_board):
+def get_best_move(black_multis, white_multis, display_board):
     board = board_functions.init_board(19)
     total_eat = {-1: 0, 1: 0}
     empty_board = True
     priority_move = {-1: None, 1: None}
     timers = {-1: 0, 1: 0}
     player = 1
-    depth = 4
+    depth = 6
     total_move = 0
 
     while True:
-        
-        # print(" ????")
-        # print(multiplicators)
-        # print(" ????!!!!")
         one_move_timer = time.time()
         if type(priority_move[player]) is np.ndarray:
             move = priority_move[player]
             priority_move[player] = None
         else:
             initial_board = np.copy(board)
-            move = genetics_get_move.get_next_move(initial_board, depth, True, player, total_eat, empty_board, black_multis)
+            if player == 1:
+                move = genetics_get_move.get_next_move(initial_board, depth, True, player, total_eat, empty_board, black_multis)
+            else:
+                move = genetics_get_move.get_next_move(initial_board, depth, True, player, total_eat, empty_board, white_multis)
             # if player == 1:
             #     move = genetics_get_move.get_next_move(initial_board, depth, True, player, total_eat, empty_board, black_multis)
             # else:
@@ -129,6 +129,8 @@ def rv(x=None):
 def generate_multiplicators():
     multiplicators = [
         [rv(), rv(), rv(), rv(), rv()],
+        0,
+        rv(),
         [
             rv(),
             rv(),
@@ -145,15 +147,18 @@ def generate_multiplicators():
 def update_weight(inital_weights, generations, number_of_childrens):
     all_multis = []
     for weights in inital_weights:
-        all_multis.append(weights)
+        # all_multis.append(weights)
         for i in range(0, number_of_childrens):
             new_eat_weights = []
             for weigth in weights[0]:
                 new_eat_weights.append(weigth + rv(1))
             new_multis = []
-            for i in range(0, len(weights[1])):
-                new_multis.append(weights[1][i] + rv(1))
-            all_multis.append([new_eat_weights, new_multis])
+            for i in range(0, len(weights[3])):
+                new_multis.append(weights[3][i] + rv(1))
+                # genetics_get_hash
+            all_multis.append([new_eat_weights, 0, weights[2] + rv(1), new_multis])
+            # all_multis.append([new_eat_weights, genetics_get_hash.get_hash(new_multis, False), weights[2] + rv(1), new_multis])
+            # all_multis.append([new_eat_weights, new_multis])
     return all_multis
 
 
@@ -183,53 +188,48 @@ def evaluate(winner, timers, total_eat, total_move, player, multis):
     return score
 
 
-def fitness(black_multis, number_of_ancestors):
+def fitness(multis, number_of_ancestors):
     count = 0
-    total_results_black = []
 
-    # print(len(black_multis))
-    # print(len(white_multis))
+    total_results = [[0, multis[i]] for i in range(0, len(multis))]
 
-    score_white = []
+    for i in range(0, len(multis)):
+        black_multi = multis[i]
+        for j in range(i, len(multis)):
+            print(f"Round  : {count}")
+            white_multi = multis[j]
+            winner, timers, total_eat, total_move = get_best_move(black_multi, white_multi, False)
+            print(f"Winner : {winner} {timers} {total_move}")
+            count += 1
+            total_results[i][0] += evaluate(winner, timers, total_eat, total_move, 1, black_multi)
+            total_results[j][0] += evaluate(winner, timers, total_eat, total_move, -1, white_multi)
 
-    for black_multi in black_multis:
-        score_black = 0
-        # try:
-        winner, timers, total_eat, total_move = get_best_move(black_multi, True)
-        # except Exception as e:
-        #     print(e)
-        count += 1
-        print(count, winner)
-        score_black = evaluate(winner, timers, total_eat, total_move, 1, black_multi)
-
-        total_results_black.append([score_black, black_multi, total_move])
+    total_results.sort(key=lambda tup: tup[0], reverse=True)
 
 
-    total_results_black.sort(key=lambda tup: tup[0], reverse=True)
-
-
-    best_black_weights = [x[1] for x in total_results_black[0:int(number_of_ancestors/2)]]
-    json_black = json.dumps({"multis": best_black_weights}, indent=2)
+    best_weights = [x[1] for x in total_results[0:int(number_of_ancestors/2)]]
+    json_black = json.dumps({"multis": best_weights}, indent=2)
     with open("black.json", "w") as outfile:
         outfile.write(json_black)
 
-    get_best_move(total_results_black[0][1], True)
+    get_best_move(total_results[0][1], total_results[1][1], True)
 
-    return best_black_weights
-    # print(total_results)
+    return best_weights
 
 
 if __name__ == "__main__":
-    number_of_ancestors = 6
+    number_of_ancestors = 10
     generations = 10
-    with open('black.json') as f:
-        data_black = json.load(f)
-    best_black = data_black['multis']
+    # with open('black.json') as f:
+    #     data_black = json.load(f)
+    # best_black = data_black['multis']
 
     # with open('white.json') as f:
     #     data_white = json.load(f)
     # best_white = data_black['multis']
     # best_black = [generate_multiplicators() for i in range(0, number_of_ancestors)]
+
+    best_black = [generate_multiplicators() for i in range(0, number_of_ancestors)]
 
     # for i in range(1, generations):
     number_of_childrens = 2
@@ -237,8 +237,8 @@ if __name__ == "__main__":
     while True:
         print(f"Generation {i}")
         # try:
-        black_multis = update_weight(best_black, generations, number_of_childrens)
-        best_black = fitness(black_multis, number_of_ancestors)
+        multis = update_weight(best_black, generations, number_of_childrens)
+        best_black = fitness(multis, number_of_ancestors)
         # except Exception as e:
         #     print(e)
         i += 1
