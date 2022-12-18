@@ -26,7 +26,7 @@ const env = reactive({
   myColor: 'spectator',
   availableColor: [],
   mySocketId: '',
-  freePlay: 100
+  freePlay: 0
 })
 
 
@@ -172,7 +172,7 @@ async function performMove(move) {
 }
 
 async function createOpeningBoard () {
-  env.freePlay = 100
+  env.freePlay = 0
 }
 
 async function reset () {
