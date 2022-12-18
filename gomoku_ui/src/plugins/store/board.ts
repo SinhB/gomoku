@@ -10,7 +10,6 @@ export const useBoardStore = defineStore("board", {
         totalEat: { black: 0, white: 0 },
         isAI: { black: true, white: true },
         autoplay: true,
-        hardMode: false,
         aiDepth: { black: 6, white: 6 },
         turns: [...Array(19)].map((e) => Array(19).fill(0)),
         turnsCounter: 0,

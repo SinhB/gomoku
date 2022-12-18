@@ -24,7 +24,6 @@ def is_array_equal(arr, seq):
             return False
     return True
 
-# @njit("int64[:,:](ListType(int64[:]))", fastmath=True)
 @njit
 def make_2d(array_list):
     width = len(array_list)
@@ -36,11 +35,13 @@ def make_2d(array_list):
 
 @njit("int64[:,:](int64[:,:])", fastmath=True)
 def remove_oob(arr):
+    """Remove position that are out of board"""
     mask = ((arr[:, 0] >= 0) & (arr[:, 0] < 19) & (arr[:, 1] >= 0) & (arr[:, 1] < 19))
     return arr[mask, :]
 
 @njit("int64[:,:](int64[:,:], int64[:,:])", fastmath=True)
 def remove_stones(possible_pos, stones):
+    """Remove position that already have a stone"""
     mask = np.zeros(possible_pos.shape[0], dtype=bool_)
     lstones = len(stones)
     lpossible_pos = len(possible_pos)

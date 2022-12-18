@@ -1,10 +1,10 @@
 import numpy as np
 import random
+# import functools
 
 import board_utils
 import board_functions
-from get_threats import get_new_threats 
-from board_functions import bcolors
+from get_threats import get_new_threats
 
 def get_next_move(board, depth, maximizing_player, player, total_eat, empty_board):
     alpha = np.iinfo(np.int64).min
@@ -15,8 +15,14 @@ def get_next_move(board, depth, maximizing_player, player, total_eat, empty_boar
     else:
         moves_results = minimax(board, depth, alpha, beta, maximizing_player, 0, depth, player, total_eat, False)
         moves_results.sort(key=lambda tup: tup[0], reverse=True)
+        print(">>>????>/")
         print(moves_results)
-        return moves_results[0][1]
+        best_score = moves_results[0][0]
+        best_scores = list(filter(lambda tup: tup[0] == best_score, moves_results))
+        random.shuffle(best_scores)
+        print(best_scores)
+        # print(moves_results)
+        return best_scores[0][1]
 
 def get_positions(board, maximizing_player, player, total_eat, depth):
     available_pos = board_utils.get_available_pos(board)
@@ -27,14 +33,9 @@ def get_positions(board, maximizing_player, player, total_eat, depth):
     eval_to_pos = list(filter(lambda tup: tup[4] == False, eval_to_pos))
 
     eval_to_pos.sort(key=lambda tup: tup[1], reverse=maximizing_player)
-
-    cutoff = eval_to_pos[0][1] * 0.8
-    if maximizing_player:
-        eval_to_pos = list(filter(lambda tup: tup[1] >= cutoff, eval_to_pos))
-    else:
-        eval_to_pos = list(filter(lambda tup: tup[1] <= cutoff, eval_to_pos))
-    # return eval_to_pos
-    return eval_to_pos[:min(4, len(eval_to_pos))]
+    if depth > 4:
+        return eval_to_pos[:min(4, len(eval_to_pos))]
+    return eval_to_pos
 
 def minimax(board, depth, alpha, beta, maximizing_player, score, max_depth, player, total_eat, is_win):
     if depth == 0 or is_win:

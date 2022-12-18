@@ -1,6 +1,0 @@
-V Voir si on passe current threat et new threat dans la minimax
-X Si alignment de 5 et enemies a mang'e 4 fois -> Check si l'alignement est cassable
-V Supprimer les current threat
-V suivie des eat
-V faire un filtre is_win
-Check 

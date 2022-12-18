@@ -26,7 +26,7 @@ const env = reactive({
   myColor: 'spectator',
   availableColor: [],
   mySocketId: '',
-  freePlay: 0
+  freePlay: 100
 })
 
 
@@ -108,9 +108,6 @@ onMounted(() => {
     boardStore.autoplay = autoplay
   })
   
-  socket.on('hardMode', (hardMode) => {
-    boardStore.hardMode = hardMode
-  })
   socket.on('updateEat', total_eat => {
     boardStore.updateTotalEat(total_eat)
   })
@@ -124,7 +121,7 @@ onBeforeUnmount(() => {
 // BOARD MANAGEMENT
 
 async function getNextMove () {
-  const result = await axios.get(`http://${address}:5000/get_best_move?player=${boardStore.player.toString()}&depth=${boardStore.getDepth()}&room=${route.params.roomName}&hard_mode=${boardStore.hardMode}`)
+  const result = await axios.get(`http://${address}:5000/get_best_move?player=${boardStore.player.toString()}&depth=${boardStore.getDepth()}&room=${route.params.roomName}`)
   if (result.status == 200) {
     boardStore.timer = result.data.timer.toFixed(5)
     await performMove(result.data.best_move)
@@ -139,6 +136,10 @@ async function selectMove(move) {
         if (result.data.forbidden_move === true) {
           boardStore.fireAlert('Forbidden move', 'red')
         } else {
+          const eatenPos = JSON.parse(result.data.eaten_pos)
+          for (const pos in eatenPos['eaten_pos']) {
+            socket.emit("removeStone", {room: route.params.roomName, move: eatenPos['eaten_pos'][pos]})
+          }
           socket.emit("placeFreeStone", {room: route.params.roomName, move: move, player: boardStore.player})
           env.freePlay -= 1
         }
@@ -171,7 +172,7 @@ async function performMove(move) {
 }
 
 async function createOpeningBoard () {
-  env.freePlay = 3
+  env.freePlay = 100
 }
 
 async function reset () {
@@ -187,9 +188,6 @@ async function switchAutoplay() {
   socket.emit('switchAutoplay', route.params.roomName)
 }
 
-async function switchHardMode() {
-  socket.emit('switchHardMode', route.params.roomName)
-}
 </script>
 
 <template>
@@ -202,13 +200,6 @@ async function switchHardMode() {
             v-model="boardStore.autoplay"
             :label="boardStore.autoplay === true ? 'Autoplay enabled': 'Autoplay disabled'"
             @click="switchAutoplay()"
-            color="red"
-            class="autoplay-switch"
-          ></v-switch>
-          <v-switch
-            v-model="boardStore.hardMode"
-            :label="boardStore.hardMode === true ? 'Hard mode enabled': 'Hard mode disabled'"
-            @click="switchHardMode()"
             color="red"
             class="autoplay-switch"
           ></v-switch>

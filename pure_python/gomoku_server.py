@@ -9,14 +9,11 @@ import json
 import board_utils
 import board_functions
 import get_move
-import hard_mode_get_move
 import get_threats
 
 from check_breakable import check_if_breakable
 
 ## FOR WINDOWS TERM
-from colorama import init
-init()
 
 app = FastAPI()
 
@@ -28,19 +25,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-def is_array_equal(arr, seq):
-    for arri, seqi in zip(arr, seq):
-        if arri != seqi:
-            return False
-    return True
-
 def check_line_win(arr, seq):
     # Check for sequence in the flatten board
     seq_len = len(seq)
     upper_bound = len(arr) - seq_len + 1
     for i in range(upper_bound):
         
-        if is_array_equal(arr[i : i + seq_len], seq):
+        if board_utils.is_array_equal(arr[i : i + seq_len], seq):
             return True
 
     return False
@@ -52,7 +43,7 @@ def check_win(board, position, player, total_eat, total_enemy_eat):
     row_index = position[0]
     col_index = position[1]
 
-    win_array = (player, player, player, player, player)
+    win_array = np.array((player, player, player, player, player))
 
     lr_diags, rl_diags, rows, columns = board_utils.get_vectors(board, row_index, col_index)
 
@@ -109,21 +100,16 @@ rooms = {}
 
 @app.get("/init")
 def init(room: str):
-    from colorama import init
-    init()
     rooms[room] = Env()
 
 @app.get("/get_best_move")
-def get_best_move(player: int, depth: int, room: str, hard_mode: bool):
+def get_best_move(player: int, depth: int, room: str):
     one_move_timer = time.time()
     if rooms[room].priority_move[player] is not None:
         next_move = rooms[room].priority_move[player]
     else:
         initial_board = np.copy(rooms[room].board)
-        if hard_mode:
-            next_move = hard_mode_get_move.get_next_move(initial_board, depth, True, player, rooms[room].total_eat, rooms[room].empty_board)
-        else:
-            next_move = get_move.get_next_move(initial_board, depth, True, player, rooms[room].total_eat, rooms[room].empty_board)
+        next_move = get_move.get_next_move(initial_board, depth, True, player, rooms[room].total_eat, rooms[room].empty_board)
     one_move_timer_stop = time.time()
     if type(next_move) != list:
         next_move = next_move.tolist()

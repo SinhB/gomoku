@@ -58,8 +58,7 @@ SocketIo.on("connect", socket => {
             board: [...Array(19)].map(e => Array(19).fill({ player: 0, turn: 0 })),
             playerTurn: 1,
             turnsCounter: 0,
-            autoplay: true,
-            hardMode: false
+            autoplay: true
         }
         SocketIo.emit("getRooms", rooms)
     })
@@ -67,11 +66,6 @@ SocketIo.on("connect", socket => {
     socket.on("switchAutoplay", room => {
         rooms[room].autoplay = !rooms[room].autoplay
         SocketIo.to(room).emit("autoplay", rooms[room].autoplay)
-    })
-
-    socket.on("switchHardMode", room => {
-        rooms[room].hardMode = !rooms[room].hardMode
-        SocketIo.to(room).emit("hardMode", rooms[room].hardMode)
     })
 
     socket.on('win', data => {
