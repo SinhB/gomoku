@@ -130,7 +130,7 @@ async function getNextMove () {
 
 async function selectMove(move) {
   if (boardStore.board[move[0]][move[1]].player === 0 && boardStore.winner === '') {
-    if (env.freePlay > 0) {
+    if (env.freePlay > 0 && boardStore.turnsCounter < 3) {
       const result = await axios.get(`http://${address}:5000/apply_move?player=${boardStore.player.toString()}&move=${move}&room=${route.params.roomName}`)
       if (result.status === 200) {
         if (result.data.forbidden_move === true) {
@@ -172,7 +172,7 @@ async function performMove(move) {
 }
 
 async function createOpeningBoard () {
-  env.freePlay = 0
+  env.freePlay = 3
 }
 
 async function reset () {
@@ -203,7 +203,7 @@ async function switchAutoplay() {
             color="red"
             class="autoplay-switch"
           ></v-switch>
-          <v-btn @click="createOpeningBoard()">OPENING</v-btn>
+          <v-btn @click="createOpeningBoard()" :disabled="boardStore.turnsCounter !== 0">OPENING</v-btn>
           <v-btn @click="getNextMove()">Get next move</v-btn>
           <v-btn @click="reset()">Restart</v-btn>
         </v-card-actions>
