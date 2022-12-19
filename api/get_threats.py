@@ -111,7 +111,8 @@ def check_line(line, starting_index, player):
     elif (l_block and not r_block) or (not l_block and r_block):
         semi_closed = True
     else:
-        open_threat = True
+        if (l_consec or r_consec) or (not r_consec and not r_additional and l_additional) or (not l_consec and not l_additional and r_additional):
+            open_threat = True
 
     total_stone = l_consec + l_additional + r_consec + r_additional
     has_empty = True if (l_additional or r_additional) else False

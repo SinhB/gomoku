@@ -638,6 +638,12 @@ class TestOpenThree(unittest.TestCase):
         result = check_line(line, index, 1)
         assert result == asserting_result
 
+        #Inside  with 2 empty
+        index = 3
+        line = np.array((0,1,0,0,0,1,0))
+        result = check_line(line, index, 1)
+        assert result != asserting_result
+
     def test_left_side_open_three_with_empty(self):
         """Left side"""
         asserting_result = (True, False, False, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0)

@@ -38,7 +38,6 @@ def check_line_win(arr, seq):
 
 def check_win(board, position, player, total_eat, total_enemy_eat):
     if total_eat >= 5:
-        print("Win by eating")
         return True, None
     row_index = position[0]
     col_index = position[1]
@@ -54,7 +53,6 @@ def check_win(board, position, player, total_eat, total_enemy_eat):
         if is_breakable and total_enemy_eat == 4:
             return False, breaking_pos
         else:
-            print("Win by alignment")
             return True, None
     if check_line_win(rl_diags, win_array):
         rl_starting_index = 18 - col_index if row_index > 18 - col_index else row_index
@@ -62,23 +60,18 @@ def check_win(board, position, player, total_eat, total_enemy_eat):
         if is_breakable and total_enemy_eat == 4:
             return False, breaking_pos
         else:
-            print("Win by alignment")
             return True, None
     if check_line_win(rows, win_array):
         is_breakable, breaking_pos = check_if_breakable(board, 2, rows, col_index, player, row_index, col_index)
-        print(is_breakable)
-        print(breaking_pos)
         if is_breakable and total_enemy_eat == 4:
             return False, breaking_pos
         else:
-            print("Win by alignment")
             return True, None
     if check_line_win(columns, win_array):
         is_breakable, breaking_pos = check_if_breakable(board, 3, columns, row_index, player, row_index, col_index)
         if is_breakable and total_enemy_eat == 4:
             return False, breaking_pos
         else:
-            print("Win by alignment")
             return True, None
     return False, None
 
@@ -104,16 +97,16 @@ def init(room: str):
 
 @app.get("/get_best_move")
 def get_best_move(player: int, depth: int, room: str, cutoff: int, quick_play: bool):
-    one_move_timer = time.time()
+    move_timer = time.time()
     if rooms[room].priority_move[player] is not None:
         next_move = rooms[room].priority_move[player]
     else:
         initial_board = np.copy(rooms[room].board)
-        next_move = get_move.get_next_move(initial_board, depth, True, player, rooms[room].total_eat, rooms[room].empty_board, cutoff / 10, quick_play)
-    one_move_timer_stop = time.time()
+        next_move = get_move.get_next_move(initial_board, depth, True, player, rooms[room].total_eat, rooms[room].empty_board, cutoff / 10, quick_play, move_timer)
+    move_timer_stop = time.time()
     if type(next_move) != list:
         next_move = next_move.tolist()
-    return {"best_move": next_move, "timer": one_move_timer_stop - one_move_timer}
+    return {"best_move": next_move, "timer": move_timer_stop - move_timer}
 
 @app.get("/apply_move")
 def apply_move(player: int, move: str, room: str):
