@@ -9,8 +9,10 @@ export const useBoardStore = defineStore("board", {
         winner: "",
         totalEat: { black: 0, white: 0 },
         isAI: { black: true, white: true },
+        isQuickPlay: { black: true, white: true },
         autoplay: true,
         aiDepth: { black: 6, white: 6 },
+        aiCutoff: { black: 6, white: 6 },
         turns: [...Array(19)].map((e) => Array(19).fill(0)),
         turnsCounter: 0,
         alert: false,
@@ -46,6 +48,12 @@ export const useBoardStore = defineStore("board", {
                 return 1
             }
             return this.aiDepth[this.playerString];
+        },
+        getCutoff() {
+            return this.aiCutoff[this.playerString];
+        },
+        getQuickPlay() {
+            return this.isQuickPlay[this.playerString];
         },
         async fireAlert(text, color) {
             this.alertColor = color

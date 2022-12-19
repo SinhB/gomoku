@@ -103,13 +103,13 @@ def init(room: str):
     rooms[room] = Env()
 
 @app.get("/get_best_move")
-def get_best_move(player: int, depth: int, room: str):
+def get_best_move(player: int, depth: int, room: str, cutoff: int, quick_play: bool):
     one_move_timer = time.time()
     if rooms[room].priority_move[player] is not None:
         next_move = rooms[room].priority_move[player]
     else:
         initial_board = np.copy(rooms[room].board)
-        next_move = get_move.get_next_move(initial_board, depth, True, player, rooms[room].total_eat, rooms[room].empty_board)
+        next_move = get_move.get_next_move(initial_board, depth, True, player, rooms[room].total_eat, rooms[room].empty_board, cutoff / 10, quick_play)
     one_move_timer_stop = time.time()
     if type(next_move) != list:
         next_move = next_move.tolist()

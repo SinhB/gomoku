@@ -121,7 +121,7 @@ onBeforeUnmount(() => {
 // BOARD MANAGEMENT
 
 async function getNextMove () {
-  const result = await axios.get(`http://${address}:5000/get_best_move?player=${boardStore.player.toString()}&depth=${boardStore.getDepth()}&room=${route.params.roomName}`)
+  const result = await axios.get(`http://${address}:5000/get_best_move?player=${boardStore.player.toString()}&depth=${boardStore.getDepth()}&room=${route.params.roomName}&cutoff=${boardStore.getCutoff()}&quick_play=${boardStore.getQuickPlay()}`)
   if (result.status == 200) {
     boardStore.timer = result.data.timer.toFixed(5)
     await performMove(result.data.best_move)

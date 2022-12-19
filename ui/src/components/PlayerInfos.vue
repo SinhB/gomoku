@@ -30,11 +30,11 @@ function quit () {
     </div>
     <div class="player-card-ai">
       <hr/>
-      <v-card-actions v-if="boardStore.isAI[props.color]">
+      <v-card-actions v-if="availableColor.includes(color)">
         <v-switch
-          v-model="boardStore.isAI[props.color]"
-          label="AI"
-          @click="(boardStore.isAI[props.color] = !boardStore.isAI[props.color])"
+          v-model="boardStore.isQuickPlay[props.color]"
+          label="Quick play"
+          @click="(boardStore.isQuickPlay[props.color] = !boardStore.isQuickPlay[props.color])"
           color="green lighten-1"
         ></v-switch>
         <v-slider
@@ -45,6 +45,16 @@ function quit () {
           show-ticks="always"
           :max="20"
           :min="1"
+          :step="1"
+        ></v-slider>
+        <v-slider
+          v-model="boardStore.aiCutoff[props.color]"
+          color="green lighten-1"
+          :thumb-color="props.color === 'black' ? 'white' : 'black'"
+          :label="`AI cutoff percentage : (${boardStore.aiCutoff[props.color] * 10})%`"
+          show-ticks="always"
+          :max="10"
+          :min="0"
           :step="1"
         ></v-slider>
       </v-card-actions>
