@@ -5,6 +5,7 @@ from numba import njit
 
 @njit("UniTuple(boolean, 4)(int64[:], int64)")
 def check_vulnerability(side, player):
+    """starting_op, starting_blank, ending_op, ending_blank"""
     is_consec = True
     consec = 0
 
@@ -60,7 +61,7 @@ def get_pos(is_left, index, row_index, col_index, line_type):
 
 @njit("Tuple((boolean, boolean, int64))(int64[:], int64, int64)", fastmath=True)
 def check_line_breakable(line, starting_index, player):
-    """Return: (is_breakable, is_left)"""
+    """Return: (is_breakable, is_left, index)"""
     left = line[0:starting_index][::-1]
     right = line[starting_index+1:]
 
