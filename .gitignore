@@ -1,5 +1,6 @@
 #Node
 node_modules/
+ui/node_modules/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
